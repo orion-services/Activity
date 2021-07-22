@@ -1,0 +1,47 @@
+@startuml
+  title "Create activity use-case"
+
+  actor "Logged client" as client
+  box "Protected stack" #LightCyan
+  participant BFF
+  participant User
+  participant Activity
+  end box
+  database DB
+
+
+  client -> BFF: create activity
+  activate BFF
+  BFF -> User: Check authentication
+  activate User
+
+  alt Authorized
+    BFF <-- User: Authorized
+    deactivate User
+    BFF -> Activity: create activity
+    activate Activity
+    Activity -> User: Get client information
+
+    alt User found
+      activate User
+      Activity <-- User: Send client data
+      Activity -> Activity: Creation processing
+      Activity -> DB: save activity
+      BFF <-- Activity: send activity group
+      client <-- BFF: send activity group
+    else user **NOT** found
+      Activity <-- User: Client not found
+      deactivate User
+      BFF <-- Activity: not created error
+      client <-- BFF: Not created
+    end
+      deactivate Activity
+  else Expired Token
+    BFF <-- User: Token expired
+    note right of BFF
+      Refresh token diagram
+      in  **User** service docs
+    end note
+    client <-- BFF: Not authorized \n[token expired]   
+  end
+@enduml
