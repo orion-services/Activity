@@ -1,0 +1,69 @@
+@startuml
+  autonumber
+  title "Join in activity use-case"
+
+  actor "Logged client" as client
+  box "Protected stack" #LightCyan
+  participant BFF
+  participant User
+  participant Activity
+  end box
+  database DB
+
+
+  client -> BFF: join activity \n<<web socket>>
+  activate BFF
+  BFF -> User: Check authentication
+  activate User
+
+  alt Authorized
+    User --> BFF: Authorized
+    deactivate User
+    BFF -> Activity: include client in activity
+    activate Activity
+    Activity -> DB: get activity
+    activate DB
+
+    alt Activity found
+      Activity <-- DB: activity
+      deactivate DB
+      User <- Activity: get client data
+      activate User
+
+      alt User found
+        User --> Activity: client data
+        deactivate User
+        Activity -> Activity: Verify rules to create
+        alt add client to activity
+          BFF <-- Activity: activity room
+          client <-- BFF: open socket
+        else client can't join
+          BFF <-- Activity: Error \n[User cannot join]
+          client <-- BFF: Error \n[User cannot join]
+          activate User
+        end
+      else client **NOT** found
+        Activity <-- User: Client not found
+        deactivate User
+        BFF <-- Activity: "Not created" error
+        client <-- BFF: Not created
+        activate DB
+      end
+    else  Activity **NOT** found
+      Activity <-- DB: Not found
+      deactivate DB
+      BFF <-- Activity: Activity not found
+      deactivate Activity
+      client <-- BFF: Activity not found
+      activate User
+    end
+  else Expired Token
+    BFF <-- User: Not authorized \n[token expired]
+    deactivate User
+    note right of BFF
+      Refresh token diagram
+      in  **User** service docs
+    end note
+    client <-- BFF: Not authorized \n[token expired]   
+  end
+@enduml
