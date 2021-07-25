@@ -1,4 +1,5 @@
 @startuml
+  autonumber
   title "Create activity use-case"
 
   actor "Logged client" as client
@@ -25,19 +26,23 @@
     alt User found
       activate User
       Activity <-- User: Send client data
+      deactivate User
       Activity -> Activity: Creation processing
       Activity -> DB: save activity
       BFF <-- Activity: send activity group
       client <-- BFF: send activity group
+      activate User
     else user **NOT** found
       Activity <-- User: Client not found
       deactivate User
       BFF <-- Activity: Not created error
       client <-- BFF: Not created
-    end
       deactivate Activity
+      activate User
+    end
   else Expired Token
     BFF <-- User: Not authorized \n[token expired]
+    deactivate User
     note right of BFF
       Refresh token diagram
       in  **User** service docs
