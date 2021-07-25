@@ -36,8 +36,8 @@
       Activity <-- User: Client not found
       deactivate User
       BFF <-- Activity: Not created error
-      client <-- BFF: Not created
       deactivate Activity
+      client <-- BFF: Not created
       activate User
     end
   else Expired Token
