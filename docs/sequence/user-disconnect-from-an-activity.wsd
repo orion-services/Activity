@@ -15,7 +15,7 @@
   database Redis
 
   client -> BFF: user disconnect \n[socket]
-  BFF -> Activity: disconnect warn
+  BFF -> Activity: deactivate user \nin activity
   Activity -> SQL: Update user \nin activity
   alt Successful updated
     Activity <-- SQL: updated data
