@@ -7,8 +7,8 @@
 
   actor "Same activity \nclients" as colleageClients
   actor "client \n[disconnecting]" as client
-  box "Protected stack" #LightCyan
   participant "BFF \n [socket]" as BFF
+  box "Protected stack" #LightCyan
   participant Activity
   end box
   database SQL
