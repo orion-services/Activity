@@ -3,8 +3,8 @@
   title "Join in activity use-case"
 
   actor "Logged client" as client
-  box "Protected stack" #LightCyan
   participant BFF
+  box "Protected stack" #LightCyan
   participant User
   participant Activity
   end box
