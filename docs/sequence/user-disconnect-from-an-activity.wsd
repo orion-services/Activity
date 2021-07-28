@@ -1,0 +1,30 @@
+@startuml
+  title "User disconnect from activity use-case"
+
+  autonumber
+  autoactivate on
+  skinparam sequenceMessageAlign center
+
+  actor "Same activity \nclients" as colleageClients
+  actor "client \n[disconnecting]" as client
+  participant "BFF \n [socket]" as BFF
+  box "Protected stack" #LightCyan
+  participant Activity
+  end box
+  database SQL
+  database Redis
+
+  client -> BFF: user disconnect \n[socket]
+  BFF -> Activity: deactivate user \nin activity
+  Activity -> SQL: Update user \nin activity
+  alt Successful updated
+    Activity <-- SQL: updated data
+  else Unsuccessfull
+    Activity <-- SQL: <<Error>>
+    Activity -> Redis: Add to fallback
+    deactivate Redis
+  end
+  BFF <-- Activity: Ok
+  colleageClients <-- BFF: Update activity participants \n[socket]
+
+@enduml
