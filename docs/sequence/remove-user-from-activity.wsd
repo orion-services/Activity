@@ -2,6 +2,7 @@
   autonumber
   title "Remove user from activity use-case"
 
+
   actor "Activity \nparticipant" as client
   participant BFF
   box "Protected stack" #LightCyan
@@ -9,6 +10,11 @@
   participant Activity
   end box
   database DB
+  note right of client #LightGreen
+    Doesn't remove the 
+    hisotry of the user in 
+    Activity history
+  end note
 
   client -> BFF: remove me \nof activity
   activate BFF
