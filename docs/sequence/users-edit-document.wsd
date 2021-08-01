@@ -1,0 +1,40 @@
+@startuml
+  autonumber
+  title "Create activity use-case"
+
+  actor "plugged in socket" as client
+  actor "Another participant" as colleage
+  box "Protected stack" #LightCyan
+  participant BFF
+  queue "edit document" as EditQueue
+  queue "activity update" as UpdateQueue 
+  participant Activity
+  end box
+  database DB
+
+  client -> BFF: send documention edited
+  BFF -> BFF: prepare message
+  BFF -> EditQueue: send message
+  EditQueue --> Activity: consume message
+  Activity -> DB: get activity information
+  alt Activity found
+    Activity <-- DB: Activity data
+    Activity -> Activity: valid user action
+    alt Document edited
+      Activity -> DB: Update editor
+      Activity -> DB: Update history of activity
+    else User dont have permission on activity
+      
+    else user can't perform due the round
+    end
+  else Activity NOT found
+
+  end
+  
+  Activity -> Activity: prepare message
+  UpdateQueue <- Activity: send message
+  BFF <-- UpdateQueue: consume message
+  BFF --> colleage: Broadcast with update
+  BFF --> client: Broadcast with update
+
+@enduml
