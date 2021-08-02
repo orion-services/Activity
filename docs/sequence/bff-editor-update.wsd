@@ -9,5 +9,5 @@
   end box
   BFF <-- EditorUpdateQueue: consume message
   BFF -> BFF: format body to \nupdate document
-  client <- BFF: <<Broadcast>> \document update
+  client <- BFF: <<Broadcast>> \ndocument update
 @enduml

@@ -5,7 +5,7 @@
   actor "plugged in socket clients" as client
   participant "BFF \n [socket]" as BFF
   box "Protected stack" #LightCyan
-    queue "editor update queue" as EditorUpdateQueue
+    queue "activity update queue" as EditorUpdateQueue
   end box
   BFF <-- EditorUpdateQueue: consume message
   BFF -> BFF: format body to \nupdate activity
