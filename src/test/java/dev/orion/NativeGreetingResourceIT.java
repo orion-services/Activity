@@ -1,4 +1,4 @@
-package edu.ifrs.orion;
+package dev.orion;
 
 import io.quarkus.test.junit.NativeImageTest;
 
