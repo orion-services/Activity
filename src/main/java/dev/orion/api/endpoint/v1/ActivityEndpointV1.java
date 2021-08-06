@@ -11,20 +11,20 @@ import javax.ws.rs.core.MediaType;
 @Transactional
 public class ActivityEndpointV1 {
 
-    @Inject
-    Activity activity;
-
     @GET
     @Produces(MediaType.TEXT_PLAIN)
     public String getActivity() {
-
         return "Just an activity";
     }
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public void createActivity() {
+    public Activity createActivity() {
+        Activity activity = new Activity();
+        activity.Title = "Uma atividade";
+        activity.persist();
 
+        return activity;
     }
 }
