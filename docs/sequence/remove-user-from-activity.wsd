@@ -12,11 +12,11 @@
   database DB
   note right of client #LightGreen
     Doesn't remove the 
-    hisotry of the user in 
+    history of the user in
     Activity history
   end note
 
-  client -> BFF: remove me \nof activity
+  client -> BFF: remove user \nof activity
   activate BFF
   BFF -> User: Check authentication
   activate User
