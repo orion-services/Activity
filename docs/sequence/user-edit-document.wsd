@@ -1,0 +1,14 @@
+@startuml
+  autonumber
+  title "User send document edit use-case"
+
+  actor "plugged in socket" as client
+  participant "BFF \n [socket]" as BFF
+  box "Protected stack" #LightCyan
+    queue "editor queue" as EditQueue
+  end box
+
+  client -> BFF: send documention edited
+  BFF -> BFF: prepare message
+  BFF -> EditQueue: send message 
+@enduml

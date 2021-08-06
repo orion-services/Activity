@@ -1,0 +1,50 @@
+@startuml
+  autonumber
+  title "Remove user from activity use-case"
+
+
+  actor "Activity \nparticipant" as client
+  participant BFF
+  box "Protected stack" #LightCyan
+  participant User
+  participant Activity
+  end box
+  database DB
+  note right of client #LightGreen
+    Doesn't remove the 
+    history of the user in
+    Activity history
+  end note
+
+  client -> BFF: remove user \nof activity
+  activate BFF
+  BFF -> User: Check authentication
+  activate User
+  alt #LightSkyBlue Authorized
+    BFF <-- User: Authorized
+    deactivate User
+    BFF -> Activity: remove user from activity
+    activate Activity
+    Activity -> Activity: Process
+    alt #LightSlateGray User removed with success
+      Activity -> DB: Remove user from activity
+      BFF <-- Activity: Response Ok
+      client <-- BFF: Response Ok
+    else User cannot perform action
+      BFF <-- Activity: Error [rules problem]
+      client <-- BFF: Error [rules problem]
+    else Activity does not exists
+      BFF <-- Activity: Error [activity not found]
+      client <-- BFF: Error [activity not found]
+    activate User
+    end
+ else Expired Token
+    BFF <-- User: Not authorized \n[token expired]
+    deactivate User
+    note right of BFF
+      Refresh token diagram
+      in  **User** service docs
+    end note
+    client <-- BFF: Not authorized \n[token expired]   
+  end
+@enduml

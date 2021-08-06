@@ -1,0 +1,13 @@
+@startuml
+  autonumber
+  title "BFF update user activity use-case"
+
+  actor "plugged in socket clients" as client
+  participant "BFF \n [socket]" as BFF
+  box "Protected stack" #LightCyan
+    queue "activity update queue" as EditorUpdateQueue
+  end box
+  BFF <-- EditorUpdateQueue: consume message
+  BFF -> BFF: format body to \nupdate activity
+  client <- BFF: <<Broadcast>> \nactivity update
+@enduml
