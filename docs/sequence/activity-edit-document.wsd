@@ -1,0 +1,45 @@
+@startuml
+  autonumber
+  title "Activity consume and process document edit use-case"
+
+  box "Protected stack" #LightCyan
+  queue "editor queue" as EditQueue
+  queue "activity update queue" as ActivityUpdateQueue
+  queue "editor update queue" as EditorUpdateQueue
+  participant Activity
+  end box
+  database DB
+    note right of Activity
+    **Activity service** can send 
+    user performing wrong tasks 
+    like try edit document 
+    without permission 
+    (by round or due activity issues)
+    or the document updated.
+  end note
+  EditQueue --> Activity: consume message
+  Activity -> DB: get activity information
+  alt #LightSalmon Activity found
+    Activity <-- DB: Activity data
+    Activity -> Activity: valid user action
+    alt #LightYellow Document edited
+      Activity -> DB: Update document
+      Activity -> DB: Update activity
+      Activity -> DB: Update activity history
+      Activity -> Activity: prepare message with \n update and informing \nthe new round \nof activity
+      EditorUpdateQueue <- Activity: send message \n[document updated]
+      ActivityUpdateQueue <- Activity: send message \n[updating acitivity]
+    else User dont have permission on activity
+      Activity -> Activity: prepare message with\n type user perform \n not authorized action
+      ActivityUpdateQueue <- Activity: send message \n[updating acitivity]
+    else user can't perform due the round
+      Activity -> Activity: prepare message with\n type user can't edit \ndue activity round
+      ActivityUpdateQueue <- Activity: send message \n[updating acitivity]
+    end
+  else Activity NOT found
+    Activity -> Activity: prepare message \nactivity not found error
+    ActivityUpdateQueue <- Activity: send message \n[updating acitivity]
+  end
+  
+
+@enduml
