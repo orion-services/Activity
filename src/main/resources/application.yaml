@@ -1,0 +1,14 @@
+"%dev":
+  greeting:
+    message: HI
+
+  quarkus:
+    datasource:
+      db-kind: mysql
+      username: root
+      password: 123
+      jdbc:
+        url: jdbc:mysql://localhost:3307/activity_db
+    hibernate-orm:
+      database:
+        generation: drop-and-create
