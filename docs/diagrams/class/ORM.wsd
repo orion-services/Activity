@@ -54,7 +54,7 @@
   Activity "1" o-- "*"User
   Activity "1" *-- "1" Document
 
-  ActivityHistory o-- Activity
+  ActivityHistory "*" o-- "1" Activity
   ActivityHistory "*" o-- "*" User
 
   DocumentHistory "*" o-- "1" Document
