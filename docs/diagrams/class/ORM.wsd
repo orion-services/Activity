@@ -3,10 +3,11 @@
   ' ------ CLASS DECLARATION ------
   class Activity {
     +Uuid uuid
-    +DateTime lastUpdateDateTime
-    +DateTime createdDateTime
     +Document document
     +User[] userList
+    +Boolean isActive
+    +DateTime lastUpdateDateTime
+    +DateTime createdDateTime
   }
 
   class Document {
