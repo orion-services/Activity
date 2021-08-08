@@ -45,7 +45,6 @@
     CONNECTED
     AVAILABLE
     DISCONNECTED
-    DISABLED
   }
   ' ------ END CLASS DECLARATION ------
   ' -----------------------------------
