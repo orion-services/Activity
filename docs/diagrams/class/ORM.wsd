@@ -1,0 +1,65 @@
+@startuml ORM
+  title "ORM diagram"
+  ' ------ CLASS DECLARATION ------
+  class Activity {
+    +Uuid uuid
+    +Document document
+    +User[] userList
+    +Boolean isActive
+    +DateTime lastUpdateDateTime
+    +DateTime createdDateTime
+  }
+
+  class Document {
+    +Long id
+    +String content
+    +DateTime lastUpdateDateTime
+    +DateTime createdDateTime
+  }
+
+  class DocumentHistory {
+    +Long id
+    +String content
+    +ActivityHistory activity
+    +User userExecutor
+    +DateTime lastUpdateDateTime
+    +DateTime createdDateTime
+  }
+
+  class ActivityHistory {
+    +Long id
+    +Activity activity
+    +User[] userListSnapshot
+    +DateTime lastUpdateDateTime
+    +DateTime createdDateTime
+  }
+
+  class User {
+    +Uuid uuid
+    +UserStatus userStatus
+    +DateTime lastUpdateDateTime
+    +DateTime createdDateTime
+  }
+
+  enum UserStatus {
+    CONNECTED
+    AVAILABLE
+    DISCONNECTED
+  }
+  ' ------ END CLASS DECLARATION ------
+  ' -----------------------------------
+  ' ------ RELATION DECLARATIONS ------
+  User -- UserStatus
+
+  Activity "1" o-- "*"User
+  Activity "1" *-- "1" Document
+
+  ActivityHistory "*" o-- "1" Activity
+  ActivityHistory "*" o-- "*" User
+
+  DocumentHistory "*" o-- "1" Document
+  DocumentHistory "*" o-- "1" User
+  DocumentHistory "*" o-- "1" ActivityHistory
+
+  ' ------ END RELATION DECLARATIONS ------
+@enduml
