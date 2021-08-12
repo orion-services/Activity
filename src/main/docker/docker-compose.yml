@@ -13,5 +13,22 @@ services:
       - 3307:3306
     volumes:
       - mysql8-storage:/var/lib/mysql
+
+  rabbitMq:
+    image: rabbitmq:3.9.2-management-alpine
+    hostname: rabbit
+    restart: unless-stopped
+    ports:
+      - "7010:15672"
+      - "7000:5672"
+    volumes:
+      - rabbitmq-storage:/var/lib/rabbitmq
+    environment:
+      default_user: 'admin'
+      DEFAULT_PASS: 'admin'
+    command:
+      -
 volumes:
   mysql8-storage:
+  rabbitmq-storage:
+
