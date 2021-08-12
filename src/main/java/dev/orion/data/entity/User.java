@@ -16,6 +16,9 @@ public class User extends PanacheEntityBase {
     @Column(columnDefinition = "BINARY(16)")
     public UUID uuid;
 
+    @Column(nullable = false)
+    public String externalId;
+
     @Column(name = "user_status", nullable = false)
     public UserStatus status;
 
