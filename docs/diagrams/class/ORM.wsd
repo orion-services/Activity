@@ -5,6 +5,7 @@
     +Uuid uuid
     +Document document
     +User[] userList
+    +User userRound
     +Boolean isActive
     +DateTime lastUpdateDateTime
     +DateTime createdDateTime
@@ -20,6 +21,7 @@
   class DocumentHistory {
     +Long id
     +String content
+    +Document document
     +ActivityHistory activity
     +User userExecutor
     +DateTime lastUpdateDateTime
@@ -29,7 +31,16 @@
   class ActivityHistory {
     +Long id
     +Activity activity
-    +User[] userListSnapshot
+    +UserHistory[] userListSnapshot
+    +DateTime lastUpdateDateTime
+    +DateTime createdDateTime
+  }
+
+  class UserHistory {
+    +Long id
+    +Activity ActivityHistory
+    +User User
+    +UserStatus userStatus
     +DateTime lastUpdateDateTime
     +DateTime createdDateTime
   }
@@ -55,11 +66,15 @@
   Activity "1" *-- "1" Document
 
   ActivityHistory "*" o-- "1" Activity
-  ActivityHistory "*" o-- "*" User
+  ActivityHistory "1" o-- "*" UserHistory
 
   DocumentHistory "*" o-- "1" Document
   DocumentHistory "*" o-- "1" User
   DocumentHistory "*" o-- "1" ActivityHistory
+  DocumentHistory "*" O-- "1" DocumentHistory
+
+  UserHistory "*" o-- "1" User
+  UserHistory -- UserStatus
 
   ' ------ END RELATION DECLARATIONS ------
 @enduml
