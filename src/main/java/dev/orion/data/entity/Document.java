@@ -8,9 +8,6 @@ import java.time.LocalDateTime;
 @Entity
 public class Document extends PanacheEntity {
 
-    @ManyToOne
-    public Document document;
-
     @Column(nullable = false)
     public String content;
 
