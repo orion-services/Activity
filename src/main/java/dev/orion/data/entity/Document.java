@@ -11,6 +11,9 @@ public class Document extends PanacheEntity {
     @Column(nullable = false)
     public String content;
 
+    @OneToOne(cascade = CascadeType.ALL, mappedBy = "document")
+    public Activity activity;
+
     @Column(name = "created_at")
     public LocalDateTime createdAt;
 

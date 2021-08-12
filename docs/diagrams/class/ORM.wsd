@@ -14,6 +14,7 @@
   class Document {
     +Long id
     +String content
+    +Activity activity
     +DateTime lastUpdateDateTime
     +DateTime createdDateTime
   }
