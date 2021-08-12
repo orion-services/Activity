@@ -3,6 +3,7 @@ package dev.orion.data.entity;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 
 import javax.persistence.Entity;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 
 /**
@@ -12,9 +13,9 @@ import javax.persistence.OneToOne;
 public class DocumentHistory extends PanacheEntity {
     String content;
 
-    @OneToOne
+    @ManyToOne
     ActivityHistory activityHistory;
 
-    @OneToOne
+    @ManyToOne
     UserHistory userHistory;
 }
