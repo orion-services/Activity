@@ -23,6 +23,9 @@ public class Activity extends PanacheEntityBase {
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     public List<User> userList = new ArrayList<>();
 
+    @ManyToOne
+    public User userRound;
+
     @Column(nullable = false)
     Boolean isActive = true;
 
