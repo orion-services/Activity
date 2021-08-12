@@ -18,8 +18,7 @@ public class ActivityHistory extends PanacheEntity {
     @OneToMany(cascade = CascadeType.PERSIST)
     public Set<UserHistory> userHistoryList = new HashSet<>();
 
-    @SuppressWarnings("unused")
-    @OneToOne
+    @ManyToOne
             @JoinColumn(name = "activity_id")
     public Activity activity;
 
