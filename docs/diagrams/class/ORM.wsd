@@ -21,6 +21,7 @@
   class DocumentHistory {
     +Long id
     +String content
+    +Document document
     +ActivityHistory activity
     +User userExecutor
     +DateTime lastUpdateDateTime
@@ -70,6 +71,7 @@
   DocumentHistory "*" o-- "1" Document
   DocumentHistory "*" o-- "1" User
   DocumentHistory "*" o-- "1" ActivityHistory
+  DocumentHistory "*" O-- "1" DocumentHistory
 
   UserHistory "*" o-- "1" User
   UserHistory -- UserStatus
