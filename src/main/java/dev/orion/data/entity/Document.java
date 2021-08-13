@@ -11,7 +11,7 @@ public class Document extends PanacheEntity {
     @Column(nullable = false)
     public String content;
 
-    @OneToOne(cascade = CascadeType.ALL, mappedBy = "document")
+    @OneToOne(cascade = CascadeType.ALL, mappedBy = "document", optional = false)
     public Activity activity;
 
     @Column(name = "created_at")
@@ -19,9 +19,6 @@ public class Document extends PanacheEntity {
 
     @Column(name = "updated_at")
     public LocalDateTime updatedAt;
-
-    @Version
-    public int version;
 
     @PrePersist
     void createdAtUpdate() {
