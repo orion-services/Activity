@@ -1,5 +1,6 @@
 package dev.orion.data.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import dev.orion.util.enums.UserStatus;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import org.hibernate.annotations.GenericGenerator;
@@ -16,6 +17,7 @@ public class User extends PanacheEntityBase {
     @GeneratedValue(strategy = GenerationType.AUTO)
     @GenericGenerator(name = "user_uuid", strategy = "uuid")
     @Column(columnDefinition = "BINARY(16)")
+    @JsonIgnore
     public UUID uuid;
 
     @Column(nullable = false)
