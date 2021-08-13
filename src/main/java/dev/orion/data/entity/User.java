@@ -6,10 +6,12 @@ import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 @Entity
 public class User extends PanacheEntityBase {
+
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @GenericGenerator(name = "user_uuid", strategy = "uuid")
@@ -22,14 +24,9 @@ public class User extends PanacheEntityBase {
     @Column(name = "user_status", nullable = false)
     public UserStatus status;
 
-    @Column(name = "created_at")
     LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
     LocalDateTime updatedAt;
-
-    @Version
-    public int version;
 
     @PrePersist
     void createdAtUpdate() {
@@ -39,5 +36,17 @@ public class User extends PanacheEntityBase {
     @PreUpdate
     void updatedAtUpdate() {
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public User() {
+    }
+
+    public User(String externalId) {
+        this.externalId = externalId;
+        this.status = UserStatus.AVAILABLE;
+    }
+
+    public static Optional<User> findUserByExternalId(String externalId) {
+        return User.find("externalId", externalId).firstResultOptional();
     }
 }
