@@ -1,6 +1,6 @@
 package dev.orion.api.endpoint.v1;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
+import dev.orion.api.endpoint.v1.dto.AddUserToActivityRequestDtoV1;
 import dev.orion.api.endpoint.v1.dto.CreateActivityRequestDtoV1;
 import dev.orion.api.endpoint.v1.dto.CreateActivityResponseV1;
 import dev.orion.data.entity.Activity;
@@ -8,7 +8,6 @@ import dev.orion.services.interfaces.ActivityService;
 import org.jboss.resteasy.annotations.jaxrs.PathParam;
 
 import javax.inject.Inject;
-import javax.transaction.Transactional;
 import javax.validation.Valid;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -16,7 +15,6 @@ import javax.ws.rs.core.Response;
 import java.util.UUID;
 
 @Path("/v1/activity")
-@Transactional
 public class ActivityEndpointV1 {
 
     @Inject
@@ -45,4 +43,16 @@ public class ActivityEndpointV1 {
                 .entity(responseBody)
                 .build();
     }
+
+    @POST
+    @Path("/{activityUuid}/addUser")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response addUserToActivity(AddUserToActivityRequestDtoV1 addUserToActivityRequestDtoV1, @PathParam String activityUuid) {
+        activityService.addUserInActivity(UUID.fromString(activityUuid), addUserToActivityRequestDtoV1.userId);
+        return Response
+                .status(Response.Status.NO_CONTENT)
+                .build();
+    }
+
 }
