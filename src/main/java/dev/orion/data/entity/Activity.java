@@ -29,6 +29,9 @@ public class Activity extends PanacheEntityBase {
     @JsonInclude
     public User userRound;
 
+    @ManyToOne(optional = false)
+    public User createdBy;
+
     @Column(nullable = false)
     public Boolean isActive = true;
 
