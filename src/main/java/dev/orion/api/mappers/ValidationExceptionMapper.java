@@ -23,7 +23,7 @@ public class ValidationExceptionMapper implements ExceptionMapper<ConstraintViol
             constraintViolations.forEach(constraint -> defaultErrorResponseDtoV1.addError(constraint.getMessageTemplate()));
             var errors = defaultErrorResponseDtoV1.getErrors();
 
-            var message = MessageFormat.format("Invalid body request with the following errors: {}", errors);
+            var message = MessageFormat.format("Invalid body request with the following errors: {0}", errors);
             LOGGER.warning(message);
 
             return Response.status(Response.Status.BAD_REQUEST)
