@@ -34,9 +34,9 @@ public class ActivityEndpointV1 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response createActivity(@Valid CreateActivityRequestDtoV1 createActivityRequestDtoV1) {
-        var activity = activityService.createActivity(createActivityRequestDtoV1.getUserId());
+        var activityUuid = activityService.createActivity(createActivityRequestDtoV1.getUserId());
         CreateActivityResponseV1 responseBody = new CreateActivityResponseV1();
-        responseBody.setUuid(activity);
+        responseBody.setUuid(activityUuid);
 
         return Response
                 .status(Response.Status.CREATED)
