@@ -3,22 +3,17 @@ package dev.orion;
 import dev.orion.api.endpoint.v1.dto.CreateActivityRequestDtoV1;
 import dev.orion.client.UserClient;
 import dev.orion.client.dto.UserClientDto;
-import dev.orion.data.entity.Activity;
-import dev.orion.data.entity.Document;
 import dev.orion.data.entity.User;
 import dev.orion.services.interfaces.ActivityService;
 import dev.orion.util.enums.UserStatus;
 import io.quarkus.panache.mock.PanacheMock;
-import io.quarkus.test.Mock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
 import net.bytebuddy.utility.RandomString;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
-import org.jose4j.jwk.Use;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 
 import javax.inject.Inject;
@@ -27,10 +22,10 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.text.MessageFormat;
 import java.util.Optional;
-import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 
 @QuarkusTest
 class ActivityResourceTest {

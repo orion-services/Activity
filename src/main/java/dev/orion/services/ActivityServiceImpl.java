@@ -6,8 +6,8 @@ import dev.orion.data.entity.User;
 import dev.orion.services.dto.UserCompleteDataDto;
 import dev.orion.services.interfaces.ActivityService;
 import dev.orion.services.interfaces.UserService;
-import dev.orion.util.exceptions.UserInvalidOperationException;
 import dev.orion.util.enums.UserStatus;
+import dev.orion.util.exceptions.UserInvalidOperationException;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
