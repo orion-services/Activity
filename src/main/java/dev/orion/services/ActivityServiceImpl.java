@@ -5,6 +5,7 @@ import dev.orion.data.entity.Document;
 import dev.orion.data.entity.User;
 import dev.orion.services.dto.UserCompleteDataDto;
 import dev.orion.services.interfaces.ActivityService;
+import dev.orion.services.interfaces.UserService;
 import dev.orion.util.exceptions.UserInvalidOperationException;
 import dev.orion.util.enums.UserStatus;
 
@@ -19,7 +20,7 @@ import java.util.UUID;
 @Transactional
 public class ActivityServiceImpl implements ActivityService {
     @Inject
-    UserServiceImpl userService;
+    UserService userService;
 
     @Override
     public UUID createActivity(String userExternalId) {
@@ -44,6 +45,7 @@ public class ActivityServiceImpl implements ActivityService {
         UserCompleteDataDto completeUserData = userService.getCompleteUserData(userExternalId);
         Optional<Activity> activityOpt = Activity.findByIdOptional(activityUuid);
         validateUserToJoinActivity(completeUserData);
+
         if (activityOpt.isEmpty()) {
             throw new UserInvalidOperationException("Activity not found");
         }
@@ -70,7 +72,8 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
     private void validateUserToJoinActivity(UserCompleteDataDto user) {
-        if ( !UserStatus.AVAILABLE.equals(user.status) || !user.isActive) {
+
+        if ( user.status != UserStatus.AVAILABLE || Boolean.FALSE.equals(user.isActive)) {
             String exceptionMessage = MessageFormat.format("User {0} is not available to join activity", user.externalId);
             throw new UserInvalidOperationException(exceptionMessage);
         }
