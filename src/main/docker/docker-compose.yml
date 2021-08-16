@@ -25,9 +25,7 @@ services:
       - rabbitmq-storage:/var/lib/rabbitmq
     environment:
       default_user: 'admin'
-      DEFAULT_PASS: 'admin'
-    command:
-      -
+      DEFAULT_PASS: 'admin' 
 volumes:
   mysql8-storage:
   rabbitmq-storage:
