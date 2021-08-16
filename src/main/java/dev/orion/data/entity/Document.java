@@ -8,20 +8,17 @@ import java.time.LocalDateTime;
 @Entity
 public class Document extends PanacheEntity {
 
-    @ManyToOne
-    public Document document;
-
     @Column(nullable = false)
     public String content;
+
+    @OneToOne(cascade = CascadeType.ALL, mappedBy = "document", optional = false)
+    public Activity activity;
 
     @Column(name = "created_at")
     public LocalDateTime createdAt;
 
     @Column(name = "updated_at")
     public LocalDateTime updatedAt;
-
-    @Version
-    public int version;
 
     @PrePersist
     void createdAtUpdate() {

@@ -6,6 +6,7 @@
     +Document document
     +User[] userList
     +User userRound
+    +User createdBy
     +Boolean isActive
     +DateTime lastUpdateDateTime
     +DateTime createdDateTime
@@ -14,6 +15,7 @@
   class Document {
     +Long id
     +String content
+    +Activity activity
     +DateTime lastUpdateDateTime
     +DateTime createdDateTime
   }
@@ -48,6 +50,7 @@
   class User {
     +Uuid uuid
     +UserStatus userStatus
+    +String externalId
     +DateTime lastUpdateDateTime
     +DateTime createdDateTime
   }

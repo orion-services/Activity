@@ -1,15 +1,17 @@
 package dev.orion.data.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 @Entity
-@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Activity extends PanacheEntityBase {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -18,23 +20,25 @@ public class Activity extends PanacheEntityBase {
     public UUID uuid;
 
     @OneToOne(cascade = CascadeType.PERSIST)
+    @JsonIgnore
     public Document document;
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     public List<User> userList = new ArrayList<>();
 
     @ManyToOne
+    @JsonInclude
     public User userRound;
 
+    @ManyToOne(optional = false)
+    public User createdBy;
+
     @Column(nullable = false)
-    Boolean isActive = true;
+    public Boolean isActive = true;
 
     LocalDateTime createdAt;
 
     LocalDateTime updatedAt;
-
-    @Version
-    public int version;
 
     @PrePersist
     void createdAtUpdate() {

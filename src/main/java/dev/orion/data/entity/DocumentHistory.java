@@ -13,6 +13,9 @@ public class DocumentHistory extends PanacheEntity {
     String content;
 
     @ManyToOne
+    Document document;
+
+    @ManyToOne
     ActivityHistory activityHistory;
 
     @ManyToOne
