@@ -54,8 +54,8 @@ public class ActivityEndpointV1 {
     @Path("/{activityUuid}/addUser")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response addUserToActivity(AddUserToActivityRequestDtoV1 addUserToActivityRequestDtoV1, @PathParam String activityUuid) {
-        var activity = activityService.addUserInActivity(UUID.fromString(activityUuid), addUserToActivityRequestDtoV1.userId);
+    public Response addUserToActivity(@Valid AddUserToActivityRequestDtoV1 addUserToActivityRequestDtoV1, @PathParam String activityUuid) {
+        var activity = activityService.addUserInActivity(UUID.fromString(activityUuid), addUserToActivityRequestDtoV1.userExternalId);
         var responseBody = new AddUserToActivityResponseDtoV1(activity);
 
         return Response
@@ -64,10 +64,10 @@ public class ActivityEndpointV1 {
                 .build();
     }
 
-    @POST
-    @Path("/{activityUuid}/disconnectUser/{userUuid}")
-    public Response disconnectUserToActivity(@PathParam String activityUuid, @PathParam String userUuid) {
-
+    @PATCH
+    @Path("/{activityUuid}/disconnectUser/{userExternalId}")
+    public Response disconnectUserToActivity(@PathParam String activityUuid, @PathParam String userExternalId) {
+        activityService.disconnectUserFromActivity(UUID.fromString(activityUuid), userExternalId);
         return Response
                 .ok()
                 .build();
