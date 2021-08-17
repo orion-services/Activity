@@ -22,7 +22,7 @@ public class Activity extends PanacheEntityBase {
     public Document document;
 
     @OneToMany(cascade = CascadeType.ALL)
-    public Set<User> userList = new HashSet<>();
+    public List<User> userList = new ArrayList<>();
 
     @ManyToOne
     @JsonInclude

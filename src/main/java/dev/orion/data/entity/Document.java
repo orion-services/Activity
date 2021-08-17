@@ -4,6 +4,8 @@ import io.quarkus.hibernate.orm.panache.PanacheEntity;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.Optional;
+import java.util.UUID;
 
 @Entity
 public class Document extends PanacheEntity {
@@ -12,6 +14,7 @@ public class Document extends PanacheEntity {
     public String content;
 
     @OneToOne(cascade = CascadeType.ALL, mappedBy = "document", optional = false)
+    @JoinColumn(name = "activity_uuid")
     public Activity activity;
 
     @Column(name = "created_at")
@@ -28,5 +31,15 @@ public class Document extends PanacheEntity {
     @PreUpdate
     void updatedAtUpdate() {
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public static Optional<Document> getDocumentByActivity(UUID activityUuid) {
+        Optional<Activity> activity = Activity.findByIdOptional(activityUuid);
+        if (activity.isPresent()) {
+            return Optional.of(activity.get().document);
+        }
+
+        return Optional.empty();
+
     }
 }

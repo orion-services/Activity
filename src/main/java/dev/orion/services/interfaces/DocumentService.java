@@ -1,6 +1,8 @@
 package dev.orion.services.interfaces;
 
+import java.util.UUID;
+
 public interface DocumentService {
-    String editContent(String content);
+    Boolean editContent(String content, UUID activityUuid, String externalUserId);
 
 }

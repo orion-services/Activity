@@ -2,25 +2,18 @@ package dev.orion.data.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import dev.orion.util.enums.UserStatus;
+import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.Optional;
-import java.util.UUID;
 
 @Entity
-public class User extends PanacheEntityBase {
+public class User extends PanacheEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @GenericGenerator(name = "user_uuid", strategy = "uuid")
-    @Column(columnDefinition = "BINARY(16)")
-    @JsonIgnore
-    public UUID uuid;
-
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     public String externalId;
 
     @Column(name = "user_status", nullable = false)

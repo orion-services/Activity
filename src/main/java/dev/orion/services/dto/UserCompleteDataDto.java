@@ -4,21 +4,20 @@ import dev.orion.client.dto.UserClientDto;
 import dev.orion.data.entity.User;
 import dev.orion.util.enums.UserStatus;
 
-import java.util.UUID;
 
 public class UserCompleteDataDto extends UserClientDto {
-    public UUID uuid;
+    public Long id;
     public UserStatus status;
-    public User user;
+    public User userEntity;
 
-    public UserCompleteDataDto(User user, UserClientDto userClientDto) {
+    public UserCompleteDataDto(User userEntity, UserClientDto userClientDto) {
         super(userClientDto.externalId, userClientDto.name, userClientDto.isActive);
-        this.uuid = user.uuid;
-        this.status = user.status;
-        this.user = user;
+        this.id = userEntity.id;
+        this.status = userEntity.status;
+        this.userEntity = userEntity;
     }
 
-    public User getUser() {
-        return user;
+    public User getUserEntity() {
+        return userEntity;
     }
 }

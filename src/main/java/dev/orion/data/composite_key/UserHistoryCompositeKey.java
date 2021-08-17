@@ -8,7 +8,7 @@ import java.util.UUID;
 public class UserHistoryCompositeKey implements Serializable {
 
     public Long activityId;
-    public UUID userUuid;
+    public Long userUuid;
 
     @Override
     public boolean equals(Object o) {
