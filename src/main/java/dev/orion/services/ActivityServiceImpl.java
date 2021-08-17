@@ -51,6 +51,10 @@ public class ActivityServiceImpl implements ActivityService {
         }
         var activity = activityOpt.get();
         activity.userList.add(completeUserData.user);
+
+        if (activity.userRound == null) {
+            activity.userRound = completeUserData.user;
+        }
         completeUserData.user.status = UserStatus.CONNECTED;
 
         return activity;
@@ -71,7 +75,7 @@ public class ActivityServiceImpl implements ActivityService {
         throw new RuntimeException("Method not implemented yet");
     }
 
-    private void validateUserToJoinActivity(UserCompleteDataDto user) {
+    private void validateUserToJoinActivity(UserCompleteDataDto user) throws UserInvalidOperationException {
 
         if ( user.status != UserStatus.AVAILABLE || Boolean.FALSE.equals(user.isActive)) {
             String exceptionMessage = MessageFormat.format("User {0} is not available to join activity", user.externalId);

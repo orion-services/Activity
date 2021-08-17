@@ -7,9 +7,7 @@ import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Entity
 public class Activity extends PanacheEntityBase {
@@ -23,8 +21,8 @@ public class Activity extends PanacheEntityBase {
     @JsonIgnore
     public Document document;
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    public List<User> userList = new ArrayList<>();
+    @OneToMany(cascade = CascadeType.ALL)
+    public Set<User> userList = new HashSet<>();
 
     @ManyToOne
     @JsonInclude
@@ -48,5 +46,9 @@ public class Activity extends PanacheEntityBase {
     @PreUpdate
     void updatedAtUpdate() {
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
     }
 }

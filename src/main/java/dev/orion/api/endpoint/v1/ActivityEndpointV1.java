@@ -1,6 +1,7 @@
 package dev.orion.api.endpoint.v1;
 
 import dev.orion.api.endpoint.v1.dto.AddUserToActivityRequestDtoV1;
+import dev.orion.api.endpoint.v1.dto.AddUserToActivityResponseDtoV1;
 import dev.orion.api.endpoint.v1.dto.CreateActivityRequestDtoV1;
 import dev.orion.api.endpoint.v1.dto.CreateActivityResponseV1;
 import dev.orion.data.entity.Activity;
@@ -49,10 +50,23 @@ public class ActivityEndpointV1 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response addUserToActivity(AddUserToActivityRequestDtoV1 addUserToActivityRequestDtoV1, @PathParam String activityUuid) {
-        activityService.addUserInActivity(UUID.fromString(activityUuid), addUserToActivityRequestDtoV1.userId);
+        var activity = activityService.addUserInActivity(UUID.fromString(activityUuid), addUserToActivityRequestDtoV1.userId);
+        var responseBody = new AddUserToActivityResponseDtoV1(activity);
+
         return Response
-                .status(Response.Status.NO_CONTENT)
+                .status(Response.Status.OK)
+                .entity(responseBody)
                 .build();
     }
+
+    @POST
+    @Path("/{activityUuid}/disconnectUser/{userUuid}")
+    public Response disconnectUserToActivity(@PathParam String activityUuid, @PathParam String userUuid) {
+
+        return Response
+                .ok()
+                .build();
+    }
+
 
 }
