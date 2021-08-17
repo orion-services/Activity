@@ -66,6 +66,23 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
     @Override
+    public void disconnectUserFromActivity(UUID activityUuid, String userExternalId) {
+        Optional<Activity> activity = Activity
+                .findByIdOptional(activityUuid);
+        if (activity.isPresent()) {
+            Optional<User> disconnectedUser = activity
+                    .get()
+                    .userList
+                    .stream()
+                    .filter(user -> user.externalId.equals(userExternalId))
+                    .findFirst();
+
+            disconnectedUser.ifPresent(user -> user.status = UserStatus.DISCONNECTED);
+        }
+
+    }
+
+    @Override
     public Activity endActivity(UUID activityUuid) {
         throw new RuntimeException("Method not implemented yet");
     }
