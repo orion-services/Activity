@@ -7,6 +7,9 @@ import dev.orion.api.endpoint.v1.dto.CreateActivityResponseV1;
 import dev.orion.data.entity.Activity;
 import dev.orion.services.interfaces.ActivityService;
 import dev.orion.util.exceptions.UserInvalidOperationException;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponseSchema;
+import org.jboss.resteasy.annotations.ResponseObject;
 import org.jboss.resteasy.annotations.jaxrs.PathParam;
 
 import javax.inject.Inject;
@@ -26,6 +29,7 @@ public class ActivityEndpointV1 {
     @GET
     @Path("/{activityUuid}")
     @Produces(MediaType.APPLICATION_JSON)
+    @APIResponseSchema(Activity.class)
     public Response findActivity(@PathParam String activityUuid) {
         Activity activity = (Activity) Activity
                 .findByIdOptional(UUID.fromString(activityUuid))
@@ -39,6 +43,7 @@ public class ActivityEndpointV1 {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @APIResponseSchema(CreateActivityResponseV1.class)
     public Response createActivity(@Valid CreateActivityRequestDtoV1 createActivityRequestDtoV1) {
         var activityUuid = activityService.createActivity(createActivityRequestDtoV1.getUserId());
         CreateActivityResponseV1 responseBody = new CreateActivityResponseV1();
@@ -54,6 +59,7 @@ public class ActivityEndpointV1 {
     @Path("/{activityUuid}/addUser")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @APIResponseSchema(AddUserToActivityResponseDtoV1.class)
     public Response addUserToActivity(@Valid AddUserToActivityRequestDtoV1 addUserToActivityRequestDtoV1, @PathParam String activityUuid) {
         var activity = activityService.addUserInActivity(UUID.fromString(activityUuid), addUserToActivityRequestDtoV1.userExternalId);
         var responseBody = new AddUserToActivityResponseDtoV1(activity);
