@@ -141,20 +141,7 @@ public class ActivityServiceImpl implements ActivityService {
                this.endActivity(activity.uuid);
                throw new UserInvalidOperationException(MessageFormat.format("Activity {0} is deactivated due there is no online participants", activityUuid));
            }
-           User userRound = activity.userRound;
-           List<User> userList = activity.userList;
-           User nextUserRound = userRound;
-
-           int counter = 0;
-           do {
-               var indexOfUserRound = userList.indexOf(nextUserRound);
-               if (indexOfUserRound == (userList.size() - 1)) {
-                   nextUserRound = userList.get(0);
-               } else {
-                   nextUserRound = userList.get(++indexOfUserRound);
-               }
-               counter++;
-           } while (nextUserRound.status != UserStatus.CONNECTED && counter < userList.size());
+          User nextUserRound = getNextUserRound(activity);
 
            logger.info(MessageFormat.format("Activity: {0} set the user {1} to next round", activity.uuid, nextUserRound.externalId));
            activity.userRound = nextUserRound;
@@ -171,5 +158,24 @@ public class ActivityServiceImpl implements ActivityService {
 
     private boolean activityHasOnlineParticipants(Activity activity) {
         return activity.userList.stream().anyMatch(user -> user.status == UserStatus.CONNECTED);
+    }
+
+    private User getNextUserRound(Activity activity) {
+        User userRound = activity.userRound;
+        List<User> userList = activity.userList;
+        User nextUserRound = userRound;
+
+        int counter = 0;
+        do {
+            var indexOfUserRound = userList.indexOf(nextUserRound);
+            if (indexOfUserRound == (userList.size() - 1)) {
+                nextUserRound = userList.get(0);
+            } else {
+                nextUserRound = userList.get(++indexOfUserRound);
+            }
+            counter++;
+        } while (nextUserRound.status != UserStatus.CONNECTED && counter < userList.size());
+
+        return nextUserRound;
     }
 }
