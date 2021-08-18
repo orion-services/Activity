@@ -1,6 +1,7 @@
 package dev.orion.data.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import dev.orion.util.enums.UserStatus;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
@@ -11,6 +12,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Entity
+@JsonIgnoreProperties(value = {"id"})
 public class User extends PanacheEntity {
 
     @Column(nullable = false, unique = true)
