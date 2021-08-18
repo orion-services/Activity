@@ -164,7 +164,7 @@ public class ActivityServiceImpl implements ActivityService {
 
     private void validateUserToJoinActivity(UserCompleteDataDto user) throws UserInvalidOperationException {
         if ( user.status != UserStatus.AVAILABLE || Boolean.FALSE.equals(user.isActive)) {
-            String exceptionMessage = MessageFormat.format("User {0} is not available to join activity", user.externalId);
+            String exceptionMessage = MessageFormat.format("User {0} is not available to join activity", user.uuid);
             throw new UserInvalidOperationException(exceptionMessage);
         }
     }

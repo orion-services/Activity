@@ -11,7 +11,7 @@ public class UserCompleteDataDto extends UserClientDto {
     public User userEntity;
 
     public UserCompleteDataDto(User userEntity, UserClientDto userClientDto) {
-        super(userClientDto.externalId, userClientDto.name, userClientDto.isActive);
+        super(userClientDto.uuid, userClientDto.name, userClientDto.isActive);
         this.id = userEntity.id;
         this.status = userEntity.status;
         this.userEntity = userEntity;
