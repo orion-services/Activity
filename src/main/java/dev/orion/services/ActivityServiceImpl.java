@@ -2,10 +2,13 @@ package dev.orion.services;
 
 import dev.orion.data.entity.Activity;
 import dev.orion.data.entity.Document;
+import dev.orion.data.entity.ErrorMessage;
 import dev.orion.data.entity.User;
+import dev.orion.services.dto.UserWithErrorDto;
 import dev.orion.services.dto.UserCompleteDataDto;
 import dev.orion.services.interfaces.ActivityService;
 import dev.orion.services.interfaces.UserService;
+import dev.orion.util.enums.UserError;
 import dev.orion.util.enums.UserStatus;
 import dev.orion.util.exceptions.UserInvalidOperationException;
 import io.quarkus.arc.log.LoggerName;
@@ -137,6 +140,7 @@ public class ActivityServiceImpl implements ActivityService {
        Optional<Activity> activityOpt = Activity.findByIdOptional(activityUuid);
        if (activityOpt.isPresent()) {
            Activity activity = activityOpt.get();
+
            if (Boolean.FALSE.equals(activityHasOnlineParticipants(activity))) {
                this.endActivity(activity.uuid);
                throw new UserInvalidOperationException(MessageFormat.format("Activity {0} is deactivated due there is no online participants", activityUuid));
@@ -148,11 +152,33 @@ public class ActivityServiceImpl implements ActivityService {
        }
     }
 
+    @Override
+    public UserWithErrorDto inviteUsersToActivity(UUID activityUuid, Set<String> userList) {
+        Activity activity = (Activity) Activity
+                .findByIdOptional(activityUuid)
+                .orElseThrow(
+                        () -> new UserInvalidOperationException(
+                                MessageFormat.format("Activity {0} is deactivated due there is no online participants", activityUuid)));
+        var usersCompleteDataDto = userService.getAllCompleteUserData(userList);
+        UserWithErrorDto userWithErrorDto = new UserWithErrorDto();
+        ErrorMessage errorMessage = prepareMessages(UserError.NOT_FOUND);
+        usersCompleteDataDto.usersNotFound.forEach(userNotFound -> userWithErrorDto.addUserWithProblem(userNotFound, errorMessage));
+
+        return null;
+    }
+
 
     private void validateUserToJoinActivity(UserCompleteDataDto user) throws UserInvalidOperationException {
         if ( user.status != UserStatus.AVAILABLE || Boolean.FALSE.equals(user.isActive)) {
             String exceptionMessage = MessageFormat.format("User {0} is not available to join activity", user.uuid);
             throw new UserInvalidOperationException(exceptionMessage);
+        }
+    }
+
+    private void validateUsersToJoinActivity(UserCompleteDataDto user) throws UserInvalidOperationException {
+        if ( user.status != UserStatus.AVAILABLE || Boolean.FALSE.equals(user.isActive)) {
+            String exceptionMessage = MessageFormat.format("User {0} is not available to join activity", user.uuid);
+
         }
     }
 
@@ -177,5 +203,41 @@ public class ActivityServiceImpl implements ActivityService {
         } while (nextUserRound.status != UserStatus.CONNECTED && counter < userList.size());
 
         return nextUserRound;
+    }
+
+    private ErrorMessage prepareMessages(UserError userError) {
+        ErrorMessage errorMessage = null;
+        switch (userError) {
+            case IS_NOT_ACTIVE:
+                errorMessage = (ErrorMessage) ErrorMessage.find("UserError", UserError.NOT_FOUND);
+                if(errorMessage == null) {
+                    errorMessage.errorType = UserError.NOT_FOUND;
+                    errorMessage.message = "User {0} must be active to enter in activity";
+                    errorMessage.persist();
+                }
+                return errorMessage;
+
+            case  IS_NOT_AVAILABLE:
+                errorMessage = (ErrorMessage) ErrorMessage.find("UserError", UserError.IS_NOT_AVAILABLE);
+                if(errorMessage == null) {
+                    errorMessage.errorType = UserError.IS_NOT_AVAILABLE;
+                    errorMessage.message = "User {0} not available to get in";
+                    errorMessage.persist();
+                }
+                return errorMessage;
+
+            case NOT_FOUND:
+                errorMessage = (ErrorMessage) ErrorMessage.find("UserError", UserError.NOT_FOUND);
+                if(errorMessage == null) {
+                    errorMessage.errorType = UserError.IS_NOT_AVAILABLE;
+                    errorMessage.message = "User {0} is not available to get in activity";
+                    errorMessage.persist();
+                }
+                return errorMessage;
+
+
+        }
+
+        return errorMessage;
     }
 }

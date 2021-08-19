@@ -39,11 +39,12 @@ class ActivityResourceTest {
 
     final private String userExternalId = RandomString.make();
     final private String userName = RandomString.make();
+    final private String userEmail = RandomString.make();
     final private String activityEndpoint = "/v1/activity";
 
     @BeforeEach
     public void setup() {
-        UserClientDto userClientDto = new UserClientDto(userExternalId, userName, true);
+        UserClientDto userClientDto = new UserClientDto(userExternalId, userName, true, userEmail);
         Mockito
                 .when(userClient
                         .getUserByExternalId(userExternalId))
@@ -112,7 +113,7 @@ class ActivityResourceTest {
     void testActivityCreationUserDeactivate() {
         var requestDto = new CreateActivityRequestDtoV1();
         requestDto.setUserId(userExternalId);
-        UserClientDto userClientDto = new UserClientDto(userExternalId, userName, false);
+        UserClientDto userClientDto = new UserClientDto(userExternalId, userName, false, userEmail);
         Mockito
                 .when(userClient
                         .getUserByExternalId(userExternalId))
