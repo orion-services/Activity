@@ -84,7 +84,7 @@ class ActivityResourceTest {
     @Test
     @DisplayName("It should throw a bad request when user is already in an activity")
     @Transactional
-    void testActivityCreationUserError(){
+    void testActivityCreationUserError() {
         var requestDto = new CreateActivityRequestDtoV1();
         requestDto.setUserId(userExternalId);
         var user = new User();
@@ -109,7 +109,7 @@ class ActivityResourceTest {
 
     @Test
     @DisplayName("It should throw a bad request when user is deactivated")
-    void testActivityCreationUserDeactivate(){
+    void testActivityCreationUserDeactivate() {
         var requestDto = new CreateActivityRequestDtoV1();
         requestDto.setUserId(userExternalId);
         UserClientDto userClientDto = new UserClientDto(userExternalId, userName, false);

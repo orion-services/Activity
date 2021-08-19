@@ -35,8 +35,8 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserCompleteDataDto getCompleteUserData(String userExternalId) {
         Optional<User> optUserEntity = User.findUserByExternalId(userExternalId);
-//     @TODO use this line to not remove mock   UserClientDto userClientDto = userClient.getUserByExternalId(userExternalId);
-        UserClientDto userClientDto = mockUserCreation(userExternalId);
+
+        UserClientDto userClientDto = userClient.getUserByExternalId(userExternalId);
         User userEntity = optUserEntity.orElse(null);
 
         if(optUserEntity.isEmpty()) {
@@ -46,14 +46,5 @@ public class UserServiceImpl implements UserService {
         }
 
         return new UserCompleteDataDto(userEntity, userClientDto);
-    }
-
-    private UserClientDto mockUserCreation(String externalUserId) {
-        var userDto = new UserClientDto();
-        userDto.externalId = externalUserId;
-        userDto.name = "Toffu com Xuxu";
-        userDto.isActive = true;
-
-        return userDto;
     }
 }

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class UserClientDto {
-    public String externalId;
+    public String uuid;
     public String name;
     public Boolean isActive;
 
@@ -12,7 +12,7 @@ public class UserClientDto {
     }
 
     public UserClientDto(String externalId, String name, Boolean isActive) {
-        this.externalId = externalId;
+        this.uuid = externalId;
         this.name = name;
         this.isActive = isActive;
     }

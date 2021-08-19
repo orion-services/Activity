@@ -17,7 +17,7 @@ public class UserHistory extends PanacheEntityBase {
 
     @ManyToOne
             @MapsId("userUuid")
-            @JoinColumn(name = "user_id")
+            @JoinColumn(name = "id")
     public User user;
 
     @ManyToOne(cascade = CascadeType.PERSIST)
