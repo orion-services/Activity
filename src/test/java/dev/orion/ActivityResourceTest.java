@@ -54,7 +54,7 @@ class ActivityResourceTest {
     @DisplayName("It should create an activity when user is OK")
     void testActivityCreationOK() {
         var requestDto = new CreateActivityRequestDtoV1();
-        requestDto.setUserId(userExternalId);
+        requestDto.setUserExternalId(userExternalId);
 
         given()
                 .contentType("application/json")
@@ -86,7 +86,7 @@ class ActivityResourceTest {
     @Transactional
     void testActivityCreationUserError() {
         var requestDto = new CreateActivityRequestDtoV1();
-        requestDto.setUserId(userExternalId);
+        requestDto.setUserExternalId(userExternalId);
         var user = new User();
         user.status = UserStatus.CONNECTED;
         user.externalId = userExternalId;
@@ -111,7 +111,7 @@ class ActivityResourceTest {
     @DisplayName("It should throw a bad request when user is deactivated")
     void testActivityCreationUserDeactivate() {
         var requestDto = new CreateActivityRequestDtoV1();
-        requestDto.setUserId(userExternalId);
+        requestDto.setUserExternalId(userExternalId);
         UserClientDto userClientDto = new UserClientDto(userExternalId, userName, false);
         Mockito
                 .when(userClient
