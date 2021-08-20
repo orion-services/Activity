@@ -4,13 +4,13 @@ import javax.validation.constraints.NotBlank;
 
 public class CreateActivityRequestDtoV1 {
     @NotBlank(message = "User may not be blank")
-    private String userId;
+    private String userExternalId;
 
-    public String getUserId() {
-        return userId;
+    public String getUserExternalId() {
+        return userExternalId;
     }
 
-    public void setUserId(String userId) {
-        this.userId = userId;
+    public void setUserExternalId(String userExternalId) {
+        this.userExternalId = userExternalId;
     }
 }

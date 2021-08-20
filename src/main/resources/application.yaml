@@ -8,10 +8,25 @@
         url: jdbc:mysql://localhost:3307/activity_db
     hibernate-orm:
       database:
-        generation: drop-and-create
+        generation: update
+    live-reload:
+      instrumentation: true
   api:
     user-service:
-      "client/mp-rest/url": "http://localhost:8090"
+      "client/mp-rest/url": "http://localhost:3000"
+  rabbit:
+    username: ""
+    password: ""
+    virtualHost: ""
+    host: ""
+    port: 8883
+    queue:
+      consumer:
+        document: "document-edit"
+      producer:
+        exchange: ""
+        activity: "activity-update"
+        document: "document-update"
 "%test":
   quarkus:
     datasource:

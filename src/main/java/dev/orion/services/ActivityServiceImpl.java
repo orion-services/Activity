@@ -1,5 +1,7 @@
 package dev.orion.services;
 
+import dev.orion.broker.dto.ActivityUpdateMessageDto;
+import dev.orion.broker.producer.ActivityUpdateProducer;
 import dev.orion.data.entity.Activity;
 import dev.orion.data.entity.Document;
 import dev.orion.data.entity.User;
@@ -14,6 +16,7 @@ import org.jboss.logging.Logger;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.transaction.Transactional;
+import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.*;
 
@@ -23,13 +26,17 @@ public class ActivityServiceImpl implements ActivityService {
     @Inject
     UserService userService;
 
+    @Inject
+    ActivityUpdateProducer activityUpdateProducer;
+
     @LoggerName("ActivityService")
     Logger logger;
 
     @Override
     public UUID createActivity(String userExternalId) {
         UserCompleteDataDto completeUserData = userService.getCompleteUserData(userExternalId);
-       validateUserToJoinActivity(completeUserData);
+
+       validateUserToJoinInNewActivity(completeUserData);
 
         Activity newActivity = new Activity();
         newActivity.createdBy = completeUserData.userEntity;
@@ -48,19 +55,35 @@ public class ActivityServiceImpl implements ActivityService {
     public Activity addUserInActivity(UUID activityUuid, String userExternalId) {
         UserCompleteDataDto completeUserData = userService.getCompleteUserData(userExternalId);
         Optional<Activity> activityOpt = Activity.findByIdOptional(activityUuid);
-        validateUserToJoinActivity(completeUserData);
 
         if (activityOpt.isEmpty()) {
             throw new UserInvalidOperationException("Activity not found");
-
         }
+
         var activity = activityOpt.get();
-        activity.userList.add(completeUserData.userEntity);
+        if (activity.userList.contains(completeUserData.userEntity)) {
+            if (completeUserData.isActive == Boolean.FALSE) {
+                throw new UserInvalidOperationException(MessageFormat.format("User {0} must be active to join in activity", userExternalId));
+            } else if (activity.isActive == Boolean.FALSE) {
+                throw new UserInvalidOperationException(MessageFormat.format("Activity {0} must be active to add an user", activity.uuid));
+            }
+        } else {
+            if (completeUserData.userEntity.activity != null && completeUserData.userEntity.status == UserStatus.DISCONNECTED) {
+                completeUserData.userEntity.activity.userList.remove(completeUserData.userEntity);
+                completeUserData.userEntity.status = UserStatus.AVAILABLE;
+            }
+            validateUserToJoinInNewActivity(completeUserData);
+            activity.userList.add(completeUserData.userEntity);
+        }
+
 
         if (activity.userRound == null) {
             activity.userRound = completeUserData.userEntity;
         }
         completeUserData.userEntity.status = UserStatus.CONNECTED;
+        completeUserData.userEntity.activity = activity;
+
+        logger.info(MessageFormat.format("User ({0}) added to activity: ({1})", completeUserData.uuid, activity.uuid));
 
         return activity;
     }
@@ -103,6 +126,8 @@ public class ActivityServiceImpl implements ActivityService {
         if (activityOptional.isPresent()) {
             var activity = activityOptional.get();
             activity.isActive = false;
+//            Make all users available to get in another activity
+            activity.userList.forEach(user -> user.status = UserStatus.AVAILABLE);
 
             return  activity;
         }
@@ -129,11 +154,28 @@ public class ActivityServiceImpl implements ActivityService {
         }
 
         logger.info(MessageFormat.format("User {0} CANNOT edit activity {1}", userExternalId, activityUuid));
+
+        ActivityUpdateMessageDto activityUpdateMessageDto = new ActivityUpdateMessageDto(activity);
+        var errorType  = activityUpdateMessageDto.getErrorType();
+        var userError = activityUpdateMessageDto.getUserError();
+
+        errorType.code = 1;
+        errorType.message = MessageFormat.format("User {0} CANNOT edit activity", userExternalId);
+        userError.externalUserId = userExternalId;
+        userError.type = errorType;
+        activityUpdateMessageDto.addError(userError);
+
+
+        try {
+            activityUpdateProducer.sendMessage(activityUpdateMessageDto);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return false;
     }
 
     @Override
-    public void nextRound(UUID activityUuid) {
+    public void nextRound(UUID activityUuid) throws UserInvalidOperationException {
        Optional<Activity> activityOpt = Activity.findByIdOptional(activityUuid);
        if (activityOpt.isPresent()) {
            Activity activity = activityOpt.get();
@@ -144,12 +186,19 @@ public class ActivityServiceImpl implements ActivityService {
           User nextUserRound = getNextUserRound(activity);
 
            logger.info(MessageFormat.format("Activity: {0} set the user {1} to next round", activity.uuid, nextUserRound.externalId));
+
            activity.userRound = nextUserRound;
+           ActivityUpdateMessageDto activityUpdateMessageDto = new ActivityUpdateMessageDto(activity);
+           try {
+               activityUpdateProducer.sendMessage(activityUpdateMessageDto);
+           } catch (IOException e) {
+               e.printStackTrace();
+           }
        }
     }
 
 
-    private void validateUserToJoinActivity(UserCompleteDataDto user) throws UserInvalidOperationException {
+    private void validateUserToJoinInNewActivity(UserCompleteDataDto user) throws UserInvalidOperationException {
         if ( user.status != UserStatus.AVAILABLE || Boolean.FALSE.equals(user.isActive)) {
             String exceptionMessage = MessageFormat.format("User {0} is not available to join activity", user.uuid);
             throw new UserInvalidOperationException(exceptionMessage);
@@ -162,7 +211,7 @@ public class ActivityServiceImpl implements ActivityService {
 
     private User getNextUserRound(Activity activity) {
         User userRound = activity.userRound;
-        List<User> userList = activity.userList;
+        List<User> userList = new ArrayList<>(activity.userList);
         User nextUserRound = userRound;
 
         int counter = 0;

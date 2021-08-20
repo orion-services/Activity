@@ -1,11 +1,11 @@
 package dev.orion.data.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import dev.orion.util.enums.UserStatus;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
-import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
-import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -20,6 +20,10 @@ public class User extends PanacheEntity {
 
     @Column(name = "user_status", nullable = false)
     public UserStatus status;
+
+    @ManyToOne(cascade = CascadeType.ALL)
+    @JsonBackReference
+    public Activity activity;
 
     LocalDateTime createdAt;
 

@@ -17,6 +17,9 @@ public class Document extends PanacheEntity {
     @JoinColumn(name = "activity_uuid")
     public Activity activity;
 
+    @ManyToOne
+    public User editedBy;
+
     @Column(name = "created_at")
     public LocalDateTime createdAt;
 
