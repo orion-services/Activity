@@ -83,6 +83,8 @@ public class ActivityServiceImpl implements ActivityService {
         completeUserData.userEntity.status = UserStatus.CONNECTED;
         completeUserData.userEntity.activity = activity;
 
+        logger.info(MessageFormat.format("User ({0}) added to activity: ({1})", completeUserData.uuid, activity.uuid));
+
         return activity;
     }
 
