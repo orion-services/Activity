@@ -89,10 +89,6 @@
       <artifactId>quarkus-redis-client</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.camel.quarkus</groupId>
-      <artifactId>camel-quarkus-rabbitmq</artifactId>
-    </dependency>
-    <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-smallrye-jwt-build</artifactId>
     </dependency>
@@ -113,6 +109,11 @@
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-smallrye-fault-tolerance</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.rabbitmq</groupId>
+      <artifactId>amqp-client</artifactId>
+      <version>5.13.0</version>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>

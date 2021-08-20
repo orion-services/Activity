@@ -1,7 +1,9 @@
 package dev.orion.data.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import org.hibernate.annotations.GenericGenerator;
 
@@ -21,8 +23,9 @@ public class Activity extends PanacheEntityBase {
     @JsonIgnore
     public Document document;
 
-    @OneToMany(cascade = CascadeType.ALL)
-    public List<User> userList = new ArrayList<>();
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "activity")
+    @JsonManagedReference
+    public Set<User> userList = new HashSet<>();
 
     @ManyToOne
     @JsonInclude
