@@ -20,4 +20,4 @@ jobs:
         distribution: 'adopt'
         cache: maven
     - name: Run tests with Quarkus
-      run: git update-index --chmod=+x ./mvn quarkus:test
+      run: git update-index --chmod=+x ./mvnw quarkus:test
