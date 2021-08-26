@@ -20,4 +20,4 @@ jobs:
         distribution: 'adopt'
         cache: maven
     - name: Run tests with Quarkus
-      run: mvn package quarkus:test
+      run: mvn io.quarkus.platform:quarkus-maven-plugin:2.1.0.Final:test
