@@ -20,4 +20,4 @@ jobs:
         distribution: 'adopt'
         cache: maven
     - name: Run tests with Quarkus
-      run: sudo ./mvnw quarkus:test
+      run: sudo /mvnw quarkus:test
