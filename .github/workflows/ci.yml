@@ -5,7 +5,7 @@ name: CI
 
 on:
   pull_request:
-    branches: [ ci-gh-projects ]
+    branches: [ dev ]
 
 jobs:
   test:
@@ -20,4 +20,4 @@ jobs:
         distribution: 'adopt'
         cache: maven
     - name: Run tests with Quarkus
-      run: ./mvn quarkus:test
+      run: ./mvnw quarkus:test
