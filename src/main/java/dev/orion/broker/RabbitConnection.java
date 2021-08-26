@@ -4,12 +4,14 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 
+import com.rabbitmq.client.impl.nio.NioParams;
 import org.eclipse.microprofile.config.ConfigProvider;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 
 
@@ -22,12 +24,20 @@ public abstract class RabbitConnection {
 
 
 
-    protected RabbitConnection(String queueName) throws IOException, TimeoutException, URISyntaxException, NoSuchAlgorithmException, KeyManagementException {
-
+    protected RabbitConnection(String queueName) throws IOException, TimeoutException {
+        var profile = ConfigProvider.getConfig().getValue("quarkus.profile", String.class);
         this.queueName = queueName;
+        if (!profile.equals("test")) {
+            setup();
+        }
+    }
+
+    private void setup() throws IOException, TimeoutException {
         if (connection == null) {
-            factory.setUri(ConfigProvider.getConfig().getValue("rabbit.host",String.class));
+            setLocalHost();
             connection = factory.newConnection();
+            factory.useNio();
+            factory.setNioParams(new NioParams().setNbIoThreads(4));
         }
 
         this.channel = connection.createChannel();

@@ -4,10 +4,12 @@ import dev.orion.api.endpoint.v1.dto.CreateActivityRequestDtoV1;
 import dev.orion.client.UserClient;
 import dev.orion.client.dto.UserClientDto;
 import dev.orion.data.entity.User;
+import dev.orion.profiles.DisabledLifecycleEventsProfile;
 import dev.orion.services.interfaces.ActivityService;
 import dev.orion.util.enums.UserStatus;
 import io.quarkus.panache.mock.PanacheMock;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.TestProfile;
 import io.quarkus.test.junit.mockito.InjectMock;
 import net.bytebuddy.utility.RandomString;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
@@ -20,14 +22,20 @@ import javax.inject.Inject;
 import javax.transaction.Transactional;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.text.MessageFormat;
 import java.util.Optional;
+import java.util.concurrent.TimeoutException;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 
 @QuarkusTest
+@TestProfile(value = DisabledLifecycleEventsProfile.class)
 class ActivityResourceTest {
 
     @InjectMock
