@@ -19,5 +19,7 @@ jobs:
         java-version: '11'
         distribution: 'adopt'
         cache: maven
+    - name: Install Quarkus
+      run: curl -Ls https://sh.jbang.dev/ | bash -s - app install --fresh --force quarkus@quarkusio
     - name: Run tests with Quarkus
-      run: sudo /mvnw quarkus:test
+      run: quarkus:test
