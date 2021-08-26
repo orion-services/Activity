@@ -22,6 +22,6 @@ jobs:
     - name: Install Quarkus
       run: curl -Ls https://sh.jbang.dev/ | bash -s - app install --fresh --force quarkus@quarkusio
     - name: Update Bash
-      run: source /bin/bash
+      run: source /usr/bin/bash
     - name: Run tests with Quarkus
       run: quarkus:test
