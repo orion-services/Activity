@@ -5,7 +5,7 @@ import dev.orion.broker.producer.ActivityUpdateProducer;
 import dev.orion.data.entity.Activity;
 import dev.orion.data.entity.Document;
 import dev.orion.data.entity.User;
-import dev.orion.services.dto.UserCompleteDataDto;
+import dev.orion.services.dto.UserEnhancedWithExternalDataDto;
 import dev.orion.services.interfaces.ActivityService;
 import dev.orion.services.interfaces.UserService;
 import dev.orion.util.enums.UserStatus;
@@ -34,7 +34,7 @@ public class ActivityServiceImpl implements ActivityService {
 
     @Override
     public UUID createActivity(String userExternalId) {
-        UserCompleteDataDto completeUserData = userService.getCompleteUserData(userExternalId);
+        UserEnhancedWithExternalDataDto completeUserData = userService.getCompleteUserData(userExternalId);
 
        validateUserToJoinInNewActivity(completeUserData);
 
@@ -53,7 +53,7 @@ public class ActivityServiceImpl implements ActivityService {
 
     @Override
     public Activity addUserInActivity(UUID activityUuid, String userExternalId) {
-        UserCompleteDataDto completeUserData = userService.getCompleteUserData(userExternalId);
+        UserEnhancedWithExternalDataDto user = userService.getCompleteUserData(userExternalId);
         Optional<Activity> activityOpt = Activity.findByIdOptional(activityUuid);
 
         if (activityOpt.isEmpty()) {
@@ -61,29 +61,29 @@ public class ActivityServiceImpl implements ActivityService {
         }
 
         var activity = activityOpt.get();
-        if (activity.userList.contains(completeUserData.userEntity)) {
-            if (completeUserData.isActive == Boolean.FALSE) {
+        if (activity.userList.contains(user.userEntity)) {
+            if (user.isActive == Boolean.FALSE) {
                 throw new UserInvalidOperationException(MessageFormat.format("User {0} must be active to join in activity", userExternalId));
             } else if (activity.isActive == Boolean.FALSE) {
                 throw new UserInvalidOperationException(MessageFormat.format("Activity {0} must be active to add an user", activity.uuid));
             }
         } else {
-            if (completeUserData.userEntity.activity != null && completeUserData.userEntity.status == UserStatus.DISCONNECTED) {
-                completeUserData.userEntity.activity.userList.remove(completeUserData.userEntity);
-                completeUserData.userEntity.status = UserStatus.AVAILABLE;
+            if (user.userEntity.activity != null && user.userEntity.status == UserStatus.DISCONNECTED) {
+                user.userEntity.activity.userList.remove(user.userEntity);
+                user.userEntity.status = UserStatus.AVAILABLE;
             }
-            validateUserToJoinInNewActivity(completeUserData);
-            activity.userList.add(completeUserData.userEntity);
+            validateUserToJoinInNewActivity(user);
+            activity.userList.add(user.userEntity);
         }
 
 
         if (activity.userRound == null) {
-            activity.userRound = completeUserData.userEntity;
+            activity.userRound = user.userEntity;
         }
-        completeUserData.userEntity.status = UserStatus.CONNECTED;
-        completeUserData.userEntity.activity = activity;
+        user.userEntity.status = UserStatus.CONNECTED;
+        user.userEntity.activity = activity;
 
-        logger.info(MessageFormat.format("User ({0}) added to activity: ({1})", completeUserData.uuid, activity.uuid));
+        logger.info(MessageFormat.format("User ({0}) added to activity: ({1})", user.uuid, activity.uuid));
 
         return activity;
     }
@@ -138,7 +138,7 @@ public class ActivityServiceImpl implements ActivityService {
     @Override
     public Boolean canUserEditDocument(UUID activityUuid, String userExternalId) {
         Optional<Activity> activityOptional = Activity.findByIdOptional(activityUuid);
-        UserCompleteDataDto user = userService.getCompleteUserData(userExternalId);
+        UserEnhancedWithExternalDataDto user = userService.getCompleteUserData(userExternalId);
 
         if (activityOptional.isEmpty() || user == null) {
             logger.warn(MessageFormat.format("Activity {0} not found", activityUuid));
@@ -198,7 +198,7 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
 
-    private void validateUserToJoinInNewActivity(UserCompleteDataDto user) throws UserInvalidOperationException {
+    private void validateUserToJoinInNewActivity(UserEnhancedWithExternalDataDto user) throws UserInvalidOperationException {
         if ( user.status != UserStatus.AVAILABLE || Boolean.FALSE.equals(user.isActive)) {
             String exceptionMessage = MessageFormat.format("User {0} is not available to join activity", user.uuid);
             throw new UserInvalidOperationException(exceptionMessage);
@@ -211,20 +211,19 @@ public class ActivityServiceImpl implements ActivityService {
 
     private User getNextUserRound(Activity activity) {
         User userRound = activity.userRound;
-        List<User> userList = new ArrayList<>(activity.userList);
-        User nextUserRound = userRound;
+        List<User> userQueue = new ArrayList<>(activity.userList);
 
-        int counter = 0;
-        do {
-            var indexOfUserRound = userList.indexOf(nextUserRound);
-            if (indexOfUserRound == (userList.size() - 1)) {
-                nextUserRound = userList.get(0);
-            } else {
-                nextUserRound = userList.get(++indexOfUserRound);
-            }
-            counter++;
-        } while (nextUserRound.status != UserStatus.CONNECTED && counter < userList.size());
+        int userIndexOnQueue = userQueue.indexOf(userRound);
 
-        return nextUserRound;
+        if (userIndexOnQueue == activity.userList.size()) {
+            return userQueue.get(0);
+        }
+
+        return activity
+                .userList
+                    .stream()
+                    .skip(userIndexOnQueue)
+                    .findFirst()
+                    .get();
     }
 }

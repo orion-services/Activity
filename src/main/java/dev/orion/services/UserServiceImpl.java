@@ -3,7 +3,7 @@ package dev.orion.services;
 import dev.orion.client.UserClient;
 import dev.orion.client.dto.UserClientDto;
 import dev.orion.data.entity.User;
-import dev.orion.services.dto.UserCompleteDataDto;
+import dev.orion.services.dto.UserEnhancedWithExternalDataDto;
 import dev.orion.services.interfaces.UserService;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
@@ -33,7 +33,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserCompleteDataDto getCompleteUserData(String userExternalId) {
+    public UserEnhancedWithExternalDataDto getCompleteUserData(String userExternalId) {
         Optional<User> optUserEntity = User.findUserByExternalId(userExternalId);
 
         UserClientDto userClientDto = userClient.getUserByExternalId(userExternalId);
@@ -45,6 +45,6 @@ public class UserServiceImpl implements UserService {
             userEntity = user;
         }
 
-        return new UserCompleteDataDto(userEntity, userClientDto);
+        return new UserEnhancedWithExternalDataDto(userEntity, userClientDto);
     }
 }

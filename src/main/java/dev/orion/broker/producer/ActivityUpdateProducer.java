@@ -19,11 +19,6 @@ public class ActivityUpdateProducer extends RabbitConnection {
     static final String QUEUE_NAME = ConfigProvider.getConfig().getValue("rabbit.queue.producer.activity", String.class);
 
     public ActivityUpdateProducer() throws IOException, TimeoutException, URISyntaxException, NoSuchAlgorithmException, KeyManagementException {
-        this(QUEUE_NAME);
-    }
-
-
-    public ActivityUpdateProducer(String QUEUE_NAME) throws IOException, TimeoutException, URISyntaxException, NoSuchAlgorithmException, KeyManagementException {
         super(QUEUE_NAME);
     }
 

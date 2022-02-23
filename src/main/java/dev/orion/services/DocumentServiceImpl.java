@@ -26,7 +26,7 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     public Optional<Document> editContent(String content, UUID activityUuid, String externalUserId) {
-        if (Boolean.TRUE.equals(activityService.canUserEditDocument(activityUuid, externalUserId))) {
+        if (activityService.canUserEditDocument(activityUuid, externalUserId)) {
             Optional<Document> documentOpt = Document.getDocumentByActivity(activityUuid);
             if (documentOpt.isPresent()) {
                 var document = documentOpt.get();

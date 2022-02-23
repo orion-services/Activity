@@ -24,8 +24,9 @@ public class Activity extends PanacheEntityBase {
     public Document document;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "activity")
+    @OrderColumn
     @JsonManagedReference
-    public Set<User> userList = new HashSet<>();
+    public Set<User> userList = new LinkedHashSet<>();
 
     @ManyToOne
     @JsonInclude
