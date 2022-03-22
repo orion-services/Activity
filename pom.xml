@@ -142,6 +142,11 @@
       <artifactId>quarkus-jdbc-h2</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>net.datafaker</groupId>
+      <artifactId>datafaker</artifactId>
+      <version>1.2.0</version>
+    </dependency>
   </dependencies>
   <build>
     <plugins>
