@@ -23,9 +23,10 @@ public class Activity extends PanacheEntityBase {
     @JsonIgnore
     public Document document;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "activity")
+    @OneToMany(mappedBy = "activity", cascade = CascadeType.ALL)
+    @OrderColumn
     @JsonManagedReference
-    public Set<User> userList = new HashSet<>();
+    public Set<User> userList = new LinkedHashSet<>();
 
     @ManyToOne
     @JsonInclude
@@ -40,6 +41,10 @@ public class Activity extends PanacheEntityBase {
     LocalDateTime createdAt;
 
     LocalDateTime updatedAt;
+
+    public Set<User> getUserList() {
+        return userList;
+    }
 
     @PrePersist
     void createdAtUpdate() {

@@ -5,11 +5,13 @@ import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 
 import org.eclipse.microprofile.config.ConfigProvider;
+import org.jboss.logging.Logger;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
 
@@ -18,26 +20,34 @@ public abstract class RabbitConnection {
     protected static Connection connection;
     protected Channel channel;
     protected String queueName;
-
-
+    private static final Logger LOG = Logger.getLogger(RabbitConnection.class);
 
 
     protected RabbitConnection(String queueName) throws IOException, TimeoutException, URISyntaxException, NoSuchAlgorithmException, KeyManagementException {
-
         this.queueName = queueName;
+        final Optional<String> optHostString = ConfigProvider.getConfig().getOptionalValue("rabbit.host",String.class);
+        if (optHostString.isEmpty()) {
+            LOG.warn("Hosting of rabbitMq empty, not connecting to the broker");
+            return;
+        }
+
+        setupConnectionAndChannel(optHostString.get());
+    }
+
+    public void close() throws IOException, TimeoutException {
+        this.channel.close();
+        connection.close();
+    }
+
+    private void setupConnectionAndChannel(String host) throws URISyntaxException, NoSuchAlgorithmException, KeyManagementException, IOException, TimeoutException {
         if (connection == null) {
-            factory.setUri(ConfigProvider.getConfig().getValue("rabbit.host",String.class));
+            factory.setUri(host);
             connection = factory.newConnection();
         }
 
         this.channel = connection.createChannel();
 
         channel.queueDeclare(queueName,false,false,false,null);
-    }
-
-    public void close() throws IOException, TimeoutException {
-        this.channel.close();
-        connection.close();
     }
 
     private void setLocalHost() {
