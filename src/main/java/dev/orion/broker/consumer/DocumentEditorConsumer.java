@@ -33,7 +33,7 @@ public class DocumentEditorConsumer extends RabbitConnection {
     @LoggerName("DocumentEditorConsumer")
     Logger logger;
 
-    static final String QUEUE_NAME = ConfigProvider.getConfig().getValue("rabbit.queue.consumer.document", String.class);
+    static final String QUEUE_NAME = ConfigProvider.getConfig().getOptionalValue("rabbit.queue.consumer.document", String.class).get();
     static final Boolean AUTO_ACK = true;
     private Boolean hasStarted = false;
 

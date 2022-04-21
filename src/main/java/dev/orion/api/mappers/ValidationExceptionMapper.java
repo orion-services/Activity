@@ -1,6 +1,6 @@
 package dev.orion.api.mappers;
 
-import dev.orion.api.endpoint.v1.dto.DefaultErrorResponseDtoV1;
+import dev.orion.api.endpoint.dto.DefaultErrorResponseDtoV1;
 
 import javax.validation.ConstraintViolationException;
 import javax.ws.rs.core.Response;

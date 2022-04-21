@@ -1,0 +1,57 @@
+package dev.orion.data.entity;
+
+import dev.orion.fixture.UserFixture;
+import dev.orion.util.enums.UserStatus;
+import io.quarkus.test.junit.QuarkusTest;
+import org.hamcrest.Matchers;
+import org.junit.jupiter.api.Test;
+
+import javax.transaction.Transactional;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+@QuarkusTest
+@Transactional
+public class ActivityTest {
+
+
+    @Test
+    public void shouldMaintainUserInsertionOrder() {
+        Activity activity = new Activity();
+        activity.isActive = true;
+        List<User> users = populateDbWithUsers(12);
+        activity.createdBy = users.get(0);
+
+//        Prevent share the same instance of user list
+        activity.userList.addAll(new ArrayList<>(users));
+        activity.persist();
+
+
+        Activity testingThis = Activity.findById(activity.uuid);
+        AtomicInteger counter = new AtomicInteger();
+        assertThat(testingThis.userList, contains(users.toArray()));
+    }
+
+
+    private List<User> populateDbWithUsers(Integer quantity){
+        Integer counter = quantity;
+        List<User> userList = new ArrayList<>();
+        do {
+            User user = UserFixture.generateUser();
+//            clean value to be inserted by Panache
+            user.id = null;
+            user.status = UserStatus.CONNECTED;
+            user.persist();
+            userList.add(user);
+        } while (--counter > 0);
+
+        return userList;
+    }
+}
