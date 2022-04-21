@@ -1,0 +1,32 @@
+workflows:
+  - name: "Circle of Writers"
+    steps:
+      - name: "Circle"
+        parameters:
+          turns: 2
+  - name: "Review in Pairs"
+    steps:
+      pre:
+        - name: "Divide in groups"
+          parameters:
+            membersPerGroup: 2
+        - name: "Duration"
+          parameters:
+            turns: 8
+        - name: "Rejoin"
+          parameters:
+            onTurn: 6
+            rejoin: 0
+      during:
+        - name: "Circle"
+        parameters:
+          nextParticipantRule: FROM_BEGIN_TO_END
+
+      post:
+        - name: "Feedback"
+        parameters:
+          sendResult: true
+          emails:
+            - "teste.1@gmail.com"
+            - "teste.1@gmail.com"
+            - "teste.1@gmail.com"
