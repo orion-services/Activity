@@ -19,5 +19,5 @@ public class Step extends PanacheEntity {
     private String name;
 
     @ElementCollection
-    private Map<String, Object> parameters;
+    private Map<String, String> parameters;
 }
