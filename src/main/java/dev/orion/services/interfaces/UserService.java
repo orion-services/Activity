@@ -1,6 +1,6 @@
 package dev.orion.services.interfaces;
 
-import dev.orion.data.entity.User;
+import dev.orion.entity.User;
 import dev.orion.services.dto.UserEnhancedWithExternalDataDto;
 
 public interface UserService {

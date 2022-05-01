@@ -1,7 +1,7 @@
 package dev.orion.services.dto;
 
 import dev.orion.client.dto.UserClientDto;
-import dev.orion.data.entity.User;
+import dev.orion.entity.User;
 import dev.orion.util.enums.UserStatus;
 
 

@@ -1,7 +1,7 @@
 package dev.orion.fixture;
 
 import dev.orion.client.dto.UserClientDto;
-import dev.orion.data.entity.User;
+import dev.orion.entity.User;
 import dev.orion.services.dto.UserEnhancedWithExternalDataDto;
 import net.datafaker.Faker;
 

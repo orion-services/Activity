@@ -1,6 +1,6 @@
 package dev.orion.api.endpoint.dto;
 
-import dev.orion.data.entity.Activity;
+import dev.orion.entity.Activity;
 
 import java.time.LocalDateTime;
 import java.util.Set;

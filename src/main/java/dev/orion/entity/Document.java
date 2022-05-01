@@ -1,4 +1,4 @@
-package dev.orion.data.entity;
+package dev.orion.entity;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 
@@ -37,7 +37,7 @@ public class Document extends PanacheEntity {
     }
 
     public static Optional<Document> getDocumentByActivity(UUID activityUuid) {
-        Optional<Activity> activity = Activity.findByIdOptional(activityUuid);
+        Optional<Activity> activity = findByIdOptional(activityUuid);
         if (activity.isPresent()) {
             return Optional.of(activity.get().document);
         }

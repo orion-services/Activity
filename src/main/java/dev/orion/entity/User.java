@@ -1,17 +1,21 @@
-package dev.orion.data.entity;
+package dev.orion.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import dev.orion.util.enums.UserStatus;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Entity
+@Setter
+@Getter
+@NoArgsConstructor
 @JsonIgnoreProperties(value = {"id"})
 public class User extends PanacheEntity {
 
@@ -29,6 +33,10 @@ public class User extends PanacheEntity {
 
     LocalDateTime updatedAt;
 
+    @ManyToOne(cascade = CascadeType.ALL)
+    @JsonBackReference
+    private Group group;
+
     @PrePersist
     void createdAtUpdate() {
         this.createdAt = this.updatedAt = LocalDateTime.now();
@@ -37,9 +45,6 @@ public class User extends PanacheEntity {
     @PreUpdate
     void updatedAtUpdate() {
         this.updatedAt = LocalDateTime.now();
-    }
-
-    public User() {
     }
 
     public User(String externalId) {

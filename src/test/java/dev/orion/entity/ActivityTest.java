@@ -1,14 +1,12 @@
-package dev.orion.data.entity;
+package dev.orion.entity;
 
 import dev.orion.fixture.UserFixture;
 import dev.orion.util.enums.UserStatus;
 import io.quarkus.test.junit.QuarkusTest;
-import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 
 import javax.transaction.Transactional;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 

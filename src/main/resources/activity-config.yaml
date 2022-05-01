@@ -19,8 +19,8 @@ workflows:
             rejoin: 0
       during:
         - name: "Circle"
-        parameters:
-          nextParticipantRule: FROM_BEGIN_TO_END
+          parameters:
+            nextParticipantRule: FROM_BEGIN_TO_END
 
       post:
         - name: "Feedback"

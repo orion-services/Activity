@@ -2,9 +2,9 @@ package dev.orion.services;
 
 import dev.orion.broker.dto.ActivityUpdateMessageDto;
 import dev.orion.broker.producer.ActivityUpdateProducer;
-import dev.orion.data.entity.Activity;
-import dev.orion.data.entity.Document;
-import dev.orion.data.entity.User;
+import dev.orion.entity.Activity;
+import dev.orion.entity.Document;
+import dev.orion.entity.User;
 import dev.orion.services.dto.UserEnhancedWithExternalDataDto;
 import dev.orion.services.interfaces.ActivityService;
 import dev.orion.services.interfaces.UserService;

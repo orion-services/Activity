@@ -1,10 +1,11 @@
-package dev.orion.data.entity;
+package dev.orion.entity;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
@@ -12,11 +13,14 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 @Entity
+@Getter
+@Setter
 public class Activity extends PanacheEntityBase {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @GenericGenerator(name = "activity_uuid", strategy = "uuid")
     @Column(columnDefinition = "BINARY(16)")
+    @Setter(AccessLevel.NONE)
     public UUID uuid;
 
     @OneToOne(cascade = CascadeType.PERSIST)
@@ -28,10 +32,6 @@ public class Activity extends PanacheEntityBase {
     @JsonManagedReference
     public Set<User> userList = new LinkedHashSet<>();
 
-    @ManyToOne
-    @JsonInclude
-    public User userRound;
-
     @ManyToOne(optional = false)
     public User createdBy;
 
@@ -42,10 +42,6 @@ public class Activity extends PanacheEntityBase {
 
     LocalDateTime updatedAt;
 
-    public Set<User> getUserList() {
-        return userList;
-    }
-
     @PrePersist
     void createdAtUpdate() {
         this.createdAt = this.updatedAt = LocalDateTime.now();
@@ -54,9 +50,5 @@ public class Activity extends PanacheEntityBase {
     @PreUpdate
     void updatedAtUpdate() {
         this.updatedAt = LocalDateTime.now();
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
     }
 }

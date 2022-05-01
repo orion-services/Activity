@@ -1,6 +1,6 @@
 package dev.orion.services.interfaces;
 
-import dev.orion.data.entity.Document;
+import dev.orion.entity.Document;
 
 import java.util.Optional;
 import java.util.UUID;

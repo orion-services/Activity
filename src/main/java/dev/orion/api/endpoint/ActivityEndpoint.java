@@ -4,7 +4,7 @@ import dev.orion.api.endpoint.dto.AddUserToActivityRequestDtoV1;
 import dev.orion.api.endpoint.dto.AddUserToActivityResponseDtoV1;
 import dev.orion.api.endpoint.dto.CreateActivityRequestDtoV1;
 import dev.orion.api.endpoint.dto.CreateActivityResponseV1;
-import dev.orion.data.entity.Activity;
+import dev.orion.entity.Activity;
 import dev.orion.services.interfaces.ActivityService;
 import dev.orion.util.exceptions.UserInvalidOperationException;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponseSchema;
