@@ -8,8 +8,8 @@ import dev.orion.entity.User;
 import dev.orion.services.dto.UserEnhancedWithExternalDataDto;
 import dev.orion.services.interfaces.ActivityService;
 import dev.orion.services.interfaces.UserService;
-import dev.orion.util.enums.UserStatus;
-import dev.orion.util.exceptions.UserInvalidOperationException;
+import dev.orion.commom.enums.UserStatus;
+import dev.orion.commom.exceptions.UserInvalidOperationException;
 import io.quarkus.arc.log.LoggerName;
 import org.jboss.logging.Logger;
 

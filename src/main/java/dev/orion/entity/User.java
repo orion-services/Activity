@@ -2,7 +2,7 @@ package dev.orion.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import dev.orion.util.enums.UserStatus;
+import dev.orion.commom.enums.UserStatus;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

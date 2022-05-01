@@ -4,7 +4,7 @@ import dev.orion.entity.Document;
 import dev.orion.entity.User;
 import dev.orion.services.interfaces.ActivityService;
 import dev.orion.services.interfaces.DocumentService;
-import dev.orion.util.exceptions.UserInvalidOperationException;
+import dev.orion.commom.exceptions.UserInvalidOperationException;
 import io.quarkus.arc.log.LoggerName;
 import org.jboss.logging.Logger;
 

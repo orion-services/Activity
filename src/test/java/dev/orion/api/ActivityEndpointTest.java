@@ -6,7 +6,7 @@ import dev.orion.api.endpoint.dto.CreateActivityRequestDtoV1;
 import dev.orion.client.UserClient;
 import dev.orion.client.dto.UserClientDto;
 import dev.orion.entity.User;
-import dev.orion.util.enums.UserStatus;
+import dev.orion.commom.enums.UserStatus;
 import io.quarkus.panache.mock.PanacheMock;
 import io.quarkus.test.common.http.TestHTTPEndpoint;
 import io.quarkus.test.junit.QuarkusTest;

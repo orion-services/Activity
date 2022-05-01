@@ -1,7 +1,7 @@
 package dev.orion.entity;
 
 import dev.orion.fixture.UserFixture;
-import dev.orion.util.enums.UserStatus;
+import dev.orion.commom.enums.UserStatus;
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Test;
 

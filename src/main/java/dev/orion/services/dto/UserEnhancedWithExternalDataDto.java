@@ -2,7 +2,7 @@ package dev.orion.services.dto;
 
 import dev.orion.client.dto.UserClientDto;
 import dev.orion.entity.User;
-import dev.orion.util.enums.UserStatus;
+import dev.orion.commom.enums.UserStatus;
 
 
 public class UserEnhancedWithExternalDataDto extends UserClientDto {

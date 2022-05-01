@@ -6,7 +6,7 @@ import dev.orion.api.endpoint.dto.CreateActivityRequestDtoV1;
 import dev.orion.api.endpoint.dto.CreateActivityResponseV1;
 import dev.orion.entity.Activity;
 import dev.orion.services.interfaces.ActivityService;
-import dev.orion.util.exceptions.UserInvalidOperationException;
+import dev.orion.commom.exceptions.UserInvalidOperationException;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponseSchema;
 import org.jboss.resteasy.annotations.jaxrs.PathParam;
 
