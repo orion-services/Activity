@@ -27,6 +27,14 @@ public class Activity extends PanacheEntityBase {
     @JsonIgnore
     public Document document;
 
+    @OneToMany(mappedBy = "activityOwner")
+    @JsonManagedReference
+    public List<Group> groups = new ArrayList<>();
+
+//    REMOVE
+    @OneToOne
+    public User userRound;
+
     @OneToMany(mappedBy = "activity", cascade = CascadeType.ALL)
     @OrderColumn
     @JsonManagedReference

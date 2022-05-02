@@ -1,15 +1,15 @@
 package dev.orion.entity;
 
+import dev.orion.commom.enums.ActivityStages;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import javax.persistence.Entity;
-import javax.persistence.OneToMany;
-import java.util.ArrayList;
-import java.util.List;
+import javax.persistence.*;
+import java.util.HashMap;
+import java.util.Map;
 
 @Entity
 @Getter
@@ -17,12 +17,16 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Workflow extends PanacheEntity {
-    @OneToMany
-    List<Step> pre = new ArrayList<>();
+    @Column(nullable = false)
+    private String name;
 
-    @OneToMany
-    List<Step> during = new ArrayList<>();
+    private String description;
 
-    @OneToMany
-    List<Step> post = new ArrayList<>();
+    @MapKeyEnumerated(EnumType.STRING)
+    @OneToMany(mappedBy = "hostWorkflow", cascade = CascadeType.ALL)
+    private Map<ActivityStages, StepStage> stepStages = new HashMap<>();
+
+    public void addStepStage(StepStage stepStage) {
+        stepStages.put(stepStage.getStage(), stepStage);
+    }
 }

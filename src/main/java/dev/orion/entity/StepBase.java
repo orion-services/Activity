@@ -15,8 +15,9 @@ import javax.persistence.*;
 @NoArgsConstructor
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(discriminatorType = DiscriminatorType.STRING, name = "STEP_TYPE")
-public abstract class Step extends PanacheEntity {
+public abstract class StepBase extends PanacheEntity {
     private String name;
+    private String description;
 
     public abstract void action(Activity activity);
 }

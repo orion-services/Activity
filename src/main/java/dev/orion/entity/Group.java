@@ -1,5 +1,6 @@
 package dev.orion.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import lombok.Getter;
@@ -19,9 +20,8 @@ public class Group extends PanacheEntity {
     @JsonManagedReference
     private Set<User> participants = new LinkedHashSet<>();
 
-    @OneToMany
-    @Column(nullable = false)
-    @JsonManagedReference
+    @ManyToOne(cascade = CascadeType.ALL)
+    @JsonBackReference
     private Activity activityOwner;
 
     @OneToOne
