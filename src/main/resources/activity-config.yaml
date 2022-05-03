@@ -1,9 +1,10 @@
 workflows:
   - name: "Circle of Writers"
     steps:
-      - name: "Circle"
-        parameters:
-          turns: 2
+      during:
+        - name: "Circle"
+          parameters:
+            turns: 2
   - name: "Review in Pairs"
     steps:
       pre:
@@ -20,9 +21,8 @@ workflows:
       during:
         - name: "Circle"
           parameters:
-            nextParticipantRule: FROM_BEGIN_TO_END
-
-      post:
+            flowDirection: FROM_BEGIN_TO_END
+      after:
         - name: "Feedback"
         parameters:
           sendResult: true
