@@ -1,12 +1,11 @@
 package dev.orion.entity;
 
 import dev.orion.commom.enums.ActivityStages;
-import dev.orion.entity.step_type.CircularStep;
-import dev.orion.util.workflow_yaml.CircularStepFlowDirectionTypes;
+import dev.orion.commom.enums.CircularStepFlowDirectionTypes;
+import dev.orion.entity.step_type.Circular;
 import io.quarkus.test.junit.QuarkusTest;
 import net.datafaker.Faker;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import javax.transaction.Transactional;
@@ -14,42 +13,41 @@ import javax.transaction.Transactional;
 @QuarkusTest
 @Transactional
 public class WorkflowTest {
-    private Workflow testingThis;
     private final String WORKFLOW_NAME = Faker.instance().funnyName().name();
+    private Workflow testingThis;
 
     @Test
     public void shouldCreateWorkflowWithAllSteps() {
         final Integer EXPECTED_STEP_STAGES_QTD = 3;
         final Integer EXPECTED_STEPS_QTD = 1;
-        StepStage stepStage = generateStepStage(ActivityStages.PRE);
-        generateWorkflow(stepStage);
-        
+        Stage stage = generateStepStage(ActivityStages.PRE);
+        generateWorkflow(stage);
+
         testingThis.addStepStage(generateStepStage(ActivityStages.DURING));
         testingThis.addStepStage(generateStepStage(ActivityStages.AFTER));
 
-        Assertions.assertEquals(testingThis.getStepStages().size(), EXPECTED_STEP_STAGES_QTD);
-        Assertions.assertEquals(testingThis.getStepStages().get(ActivityStages.PRE).getSteps().size(), EXPECTED_STEPS_QTD);
-        Assertions.assertEquals(testingThis.getStepStages().get(ActivityStages.DURING).getSteps().size(), EXPECTED_STEPS_QTD);
-        Assertions.assertEquals(testingThis.getStepStages().get(ActivityStages.AFTER).getSteps().size(), EXPECTED_STEPS_QTD);
+        Assertions.assertEquals(testingThis.getStages().size(), EXPECTED_STEP_STAGES_QTD);
+        Assertions.assertEquals(testingThis.getStages().stream().filter(stage1 -> stage1.getStage() == ActivityStages.PRE).findFirst().orElseThrow().getSteps().size(), EXPECTED_STEPS_QTD);
+        Assertions.assertEquals(testingThis.getStages().stream().filter(stage1 -> stage1.getStage() == ActivityStages.DURING).findFirst().orElseThrow().getSteps().size(), EXPECTED_STEPS_QTD);
+        Assertions.assertEquals(testingThis.getStages().stream().filter(stage1 -> stage1.getStage() == ActivityStages.AFTER).findFirst().orElseThrow().getSteps().size(), EXPECTED_STEPS_QTD);
     }
 
-    private void generateWorkflow(StepStage stepStage) {
+    private void generateWorkflow(Stage stage) {
         testingThis = new Workflow();
-        testingThis.addStepStage(stepStage);
+        testingThis.addStepStage(stage);
         testingThis.setName(WORKFLOW_NAME);
         testingThis.persist();
     }
 
-    private StepStage generateStepStage(ActivityStages activityStages) {
-        StepStage stepStage = new StepStage();
-        stepStage.setStage(activityStages);
+    private Stage generateStepStage(ActivityStages activityStages) {
+        Stage stage = new Stage();
+        stage.setStage(activityStages);
 
-        CircularStep circularStep = new CircularStep();
-        circularStep.setFlowDirection(CircularStepFlowDirectionTypes.FROM_BEGIN_TO_END);
-        circularStep.setName("CIRCLE STEP");
+        Circular circular = new Circular();
+        circular.setFlowDirection(CircularStepFlowDirectionTypes.FROM_BEGIN_TO_END);
 
-        stepStage.addStep(circularStep);
+        stage.addStep(circular);
 
-        return  stepStage;
+        return stage;
     }
 }

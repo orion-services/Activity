@@ -1,4 +1,4 @@
-package dev.orion.util.workflow_yaml;
+package dev.orion.commom.enums;
 
 public enum CircularStepFlowDirectionTypes {
     FROM_BEGIN_TO_END;

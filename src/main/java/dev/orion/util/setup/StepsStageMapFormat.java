@@ -1,4 +1,4 @@
-package dev.orion.util.workflow_yaml;
+package dev.orion.util.setup;
 
 import java.util.List;
 

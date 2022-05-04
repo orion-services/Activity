@@ -2,6 +2,7 @@ package dev.orion.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import dev.orion.commom.enums.ActivityStages;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -40,8 +41,13 @@ public class Activity extends PanacheEntityBase {
     @JsonManagedReference
     public Set<User> userList = new LinkedHashSet<>();
 
+    @ManyToOne(cascade = CascadeType.ALL)
+    public Workflow workflow;
+
     @ManyToOne(optional = false)
     public User createdBy;
+
+    public ActivityStages activityStage = ActivityStages.PRE;
 
     @Column(nullable = false)
     public Boolean isActive = true;

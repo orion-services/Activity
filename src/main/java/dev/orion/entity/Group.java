@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -19,6 +20,10 @@ public class Group extends PanacheEntity {
     @OrderColumn
     @JsonManagedReference
     private Set<User> participants = new LinkedHashSet<>();
+
+    @OrderColumn
+    @OneToMany
+    private Set<User> alreadyPlayedParticipants = new LinkedHashSet<>();
 
     @ManyToOne(cascade = CascadeType.ALL)
     @JsonBackReference

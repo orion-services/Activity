@@ -1,4 +1,4 @@
-package dev.orion.util.workflow_yaml;
+package dev.orion.util.setup;
 
 import lombok.Getter;
 import lombok.Setter;
