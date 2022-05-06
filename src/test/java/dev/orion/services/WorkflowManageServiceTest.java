@@ -87,6 +87,8 @@ public class WorkflowManageServiceTest {
         activity.workflow = workflow;
 
         Assertions.assertThrows(IncompleteWorkflowException.class, () -> workflowManageService.apply(activity, user));
+        BDDMockito.then(reverseSnowBallStepExecutor).should(times(0)).execute(any(), any());
+        BDDMockito.then(circleStepExecutor).should(times(0)).execute(any(), any());
     }
 
     private Workflow generateWorkflow() {
