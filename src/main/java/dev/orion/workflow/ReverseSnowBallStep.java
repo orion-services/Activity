@@ -3,11 +3,12 @@ package dev.orion.workflow;
 import dev.orion.entity.Activity;
 import dev.orion.entity.User;
 import dev.orion.entity.step_type.CircleOfWriters;
+import dev.orion.entity.step_type.ReverseSnowball;
 
 import javax.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
-public class CircleStep implements StepExecutor {
+public class ReverseSnowBallStep implements StepExecutor {
     @Override
     public void execute(Activity activity, User user) {
         throw new RuntimeException("Should implement it");
@@ -15,6 +16,6 @@ public class CircleStep implements StepExecutor {
 
     @Override
     public String getStepRepresentation() {
-        return new CircleOfWriters().getStepType();
+        return new ReverseSnowball().getStepType();
     }
 }

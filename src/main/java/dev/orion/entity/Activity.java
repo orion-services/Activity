@@ -30,7 +30,7 @@ public class Activity extends PanacheEntityBase {
 
     @OneToMany(mappedBy = "activityOwner")
     @JsonManagedReference
-    public List<Group> groups = new ArrayList<>();
+    public List<ActivityGroup> activityGroups = new ArrayList<>();
 
 //    REMOVE
     @OneToOne
@@ -41,13 +41,13 @@ public class Activity extends PanacheEntityBase {
     @JsonManagedReference
     public Set<User> userList = new LinkedHashSet<>();
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne(cascade = CascadeType.ALL, optional = false)
     public Workflow workflow;
 
     @ManyToOne(optional = false)
     public User createdBy;
 
-    public ActivityStages activityStage = ActivityStages.PRE;
+    public ActivityStages actualStage = ActivityStages.PRE;
 
     @Column(nullable = false)
     public Boolean isActive = true;

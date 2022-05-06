@@ -18,7 +18,7 @@ public class Stage extends PanacheEntity {
     @Enumerated(EnumType.STRING)
     private ActivityStages stage;
 
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @ManyToMany(cascade = CascadeType.ALL)
     private List<Step> steps = new ArrayList<>();
 
     public void addStep(Step step) {

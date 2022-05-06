@@ -2,7 +2,7 @@ package dev.orion.entity;
 
 import dev.orion.commom.enums.ActivityStages;
 import dev.orion.commom.enums.CircularStepFlowDirectionTypes;
-import dev.orion.entity.step_type.Circular;
+import dev.orion.entity.step_type.CircleOfWriters;
 import io.quarkus.test.junit.QuarkusTest;
 import net.datafaker.Faker;
 import org.junit.jupiter.api.Assertions;
@@ -43,10 +43,10 @@ public class WorkflowTest {
         Stage stage = new Stage();
         stage.setStage(activityStages);
 
-        Circular circular = new Circular();
-        circular.setFlowDirection(CircularStepFlowDirectionTypes.FROM_BEGIN_TO_END);
+        CircleOfWriters circleOfWriters = new CircleOfWriters();
+        circleOfWriters.setFlowDirection(CircularStepFlowDirectionTypes.FROM_BEGIN_TO_END);
 
-        stage.addStep(circular);
+        stage.addStep(circleOfWriters);
 
         return stage;
     }
