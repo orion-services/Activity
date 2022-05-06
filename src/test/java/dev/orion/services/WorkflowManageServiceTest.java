@@ -7,8 +7,8 @@ import dev.orion.entity.*;
 import dev.orion.entity.step_type.CircleOfWriters;
 import dev.orion.entity.step_type.ReverseSnowball;
 import dev.orion.fixture.UserFixture;
-import dev.orion.workflow.CircleStep;
-import dev.orion.workflow.ReverseSnowBallStep;
+import dev.orion.workflow.CircleStepExecutor;
+import dev.orion.workflow.ReverseSnowBallStepExecutor;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
 import lombok.val;
@@ -29,44 +29,45 @@ public class WorkflowManageServiceTest {
     WorkflowManageServiceImpl workflowManageService;
 
     @InjectMock
-    CircleStep circleStep;
+    CircleStepExecutor circleStepExecutor;
 
     @InjectMock
-    ReverseSnowBallStep reverseSnowBallStep;
+    ReverseSnowBallStepExecutor reverseSnowBallStepExecutor;
 
 
     @BeforeEach
     public void setup() {
         MockitoAnnotations.openMocks(this);
-        doNothing().when(circleStep).execute(any(), any());
-        when(circleStep.getStepRepresentation()).thenCallRealMethod();
-        when(reverseSnowBallStep.getStepRepresentation()).thenCallRealMethod();
+        doNothing().when(circleStepExecutor).execute(any(), any());
+        when(circleStepExecutor.getStepRepresentation()).thenCallRealMethod();
+        when(reverseSnowBallStepExecutor.getStepRepresentation()).thenCallRealMethod();
     }
 
     @Test
     @DisplayName("Should call the right step by activity the phase")
     public void testShouldCallTheRightStepByActivityPhase() {
-        generateWorkflow();
-
         User user = UserFixture.generateUser();
         user.id = null;
         user.persistAndFlush();
         Activity activity = new Activity();
         activity.createdBy = user;
-        activity.workflow = Workflow.findById(1L);
+
+        //  Test incoming from database
+        activity.workflow = generateWorkflow();
 
         activity.persistAndFlush();
 
+        //  Test incoming from database
         Activity persistedActivity = Activity.findById(activity.uuid);
 
         workflowManageService.apply(persistedActivity, user);
-        BDDMockito.then(circleStep).should().execute(any(), any());
-        BDDMockito.then(reverseSnowBallStep).should(times(0)).execute(any(), any());
+        BDDMockito.then(circleStepExecutor).should().execute(any(), any());
+        BDDMockito.then(reverseSnowBallStepExecutor).should(times(0)).execute(any(), any());
 
         persistedActivity.actualStage = ActivityStages.DURING;
         workflowManageService.apply(persistedActivity, user);
-        BDDMockito.then(circleStep).should(times(1)).execute(any(), any());
-        BDDMockito.then(reverseSnowBallStep).should().execute(any(), any());
+        BDDMockito.then(circleStepExecutor).should(times(1)).execute(any(), any());
+        BDDMockito.then(reverseSnowBallStepExecutor).should().execute(any(), any());
     }
 
     @Test

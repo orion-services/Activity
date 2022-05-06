@@ -2,8 +2,7 @@ package dev.orion.entity;
 
 import dev.orion.commom.enums.ActivityStages;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -13,9 +12,12 @@ import java.util.Objects;
 @Entity
 @Getter
 @Setter
+@RequiredArgsConstructor
+@NoArgsConstructor
 public class Stage extends PanacheEntity {
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
+    @NonNull
     private ActivityStages stage;
 
     @ManyToMany(cascade = CascadeType.ALL)

@@ -4,10 +4,9 @@ import dev.orion.commom.exceptions.IncompleteWorkflowException;
 import dev.orion.entity.Activity;
 import dev.orion.entity.Stage;
 import dev.orion.entity.User;
-import dev.orion.entity.step_type.ReverseSnowball;
 import dev.orion.services.interfaces.WorkflowManageService;
-import dev.orion.workflow.CircleStep;
-import dev.orion.workflow.ReverseSnowBallStep;
+import dev.orion.workflow.CircleStepExecutor;
+import dev.orion.workflow.ReverseSnowBallStepExecutor;
 import dev.orion.workflow.StepExecutor;
 import io.quarkus.arc.log.LoggerName;
 import lombok.val;
@@ -25,17 +24,17 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
     private final Map<String, StepExecutor> stepExecutorsMap = new HashMap<>();
 
     @Inject
-    CircleStep circleStep;
+    CircleStepExecutor circleStepExecutor;
 
     @Inject
-    ReverseSnowBallStep reverseSnowBallStep;
+    ReverseSnowBallStepExecutor reverseSnowBallStepExecutor;
 
     @LoggerName("WorkflowManageServiceImpl")
     Logger logger;
 
     private void setupExecutorsMap() {
-        stepExecutorsMap.put(circleStep.getStepRepresentation(), circleStep);
-        stepExecutorsMap.put(reverseSnowBallStep.getStepRepresentation(), reverseSnowBallStep);
+        stepExecutorsMap.put(circleStepExecutor.getStepRepresentation(), circleStepExecutor);
+        stepExecutorsMap.put(reverseSnowBallStepExecutor.getStepRepresentation(), reverseSnowBallStepExecutor);
     }
 
     @Override

@@ -1,5 +1,6 @@
 package dev.orion.entity;
 
+import dev.orion.commom.enums.ActivityStages;
 import dev.orion.commom.enums.UserStatus;
 import dev.orion.fixture.UserFixture;
 import dev.orion.commom.enums.CircularStepFlowDirectionTypes;
@@ -8,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import javax.transaction.Transactional;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -23,6 +25,7 @@ public class ActivityTest {
         CircularStepFlowDirectionTypes.valueOf("FROM_BEGIN_TO_END");
         Activity activity = new Activity();
         activity.isActive = true;
+        activity.workflow = new Workflow("A name", "dd", new HashSet<Stage>());
         List<User> users = populateDbWithUsers(12);
         activity.createdBy = users.get(0);
 
