@@ -14,6 +14,7 @@ import io.quarkus.test.junit.mockito.InjectMock;
 import net.bytebuddy.utility.RandomString;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -30,6 +31,7 @@ import static org.mockito.Mockito.when;
 
 @QuarkusTest
 @TestHTTPEndpoint(ActivityEndpoint.class)
+@Disabled
 public class ActivityEndpointTest {
     @InjectMock
     @RestClient
