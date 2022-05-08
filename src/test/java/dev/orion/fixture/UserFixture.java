@@ -1,7 +1,8 @@
 package dev.orion.fixture;
 
 import dev.orion.client.dto.UserClientDto;
-import dev.orion.data.entity.User;
+import dev.orion.commom.enums.UserStatus;
+import dev.orion.entity.User;
 import dev.orion.services.dto.UserEnhancedWithExternalDataDto;
 import net.datafaker.Faker;
 
@@ -12,6 +13,7 @@ final public class UserFixture {
         User user = new User();
         user.id = Faker.instance().number().randomNumber();
         user.externalId = UUID.randomUUID().toString();
+        user.status = UserStatus.AVAILABLE;
 
         return user;
     }

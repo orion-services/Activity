@@ -29,8 +29,8 @@
       deactivate User
       Activity -> Activity: Creation processing
       Activity -> DB: save activity
-      BFF <-- Activity: send activity group
-      client <-- BFF: send activity group
+      BFF <-- Activity: send activity activityGroup
+      client <-- BFF: send activity activityGroup
       activate User
     else user **NOT** found
       Activity <-- User: Client not found

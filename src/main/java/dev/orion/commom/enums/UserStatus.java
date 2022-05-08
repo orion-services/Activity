@@ -1,4 +1,4 @@
-package dev.orion.util.enums;
+package dev.orion.commom.enums;
 
 public enum UserStatus {
     CONNECTED, AVAILABLE, DISCONNECTED
