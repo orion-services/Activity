@@ -1,4 +1,4 @@
-package dev.orion.util.exceptions;
+package dev.orion.commom.exceptions;
 
 
 public class UserInvalidOperationException extends RuntimeException {

@@ -2,15 +2,16 @@ package dev.orion.services;
 
 import dev.orion.broker.dto.ActivityUpdateMessageDto;
 import dev.orion.broker.producer.ActivityUpdateProducer;
-import dev.orion.data.entity.Activity;
-import dev.orion.data.entity.Document;
-import dev.orion.data.entity.User;
+import dev.orion.commom.enums.UserStatus;
+import dev.orion.commom.exceptions.UserInvalidOperationException;
+import dev.orion.entity.Activity;
+import dev.orion.entity.Document;
+import dev.orion.entity.User;
 import dev.orion.services.dto.UserEnhancedWithExternalDataDto;
 import dev.orion.services.interfaces.ActivityService;
 import dev.orion.services.interfaces.UserService;
-import dev.orion.util.enums.UserStatus;
-import dev.orion.util.exceptions.UserInvalidOperationException;
 import io.quarkus.arc.log.LoggerName;
+import lombok.val;
 import org.jboss.logging.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -18,7 +19,10 @@ import javax.inject.Inject;
 import javax.transaction.Transactional;
 import java.io.IOException;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @ApplicationScoped
 @Transactional
@@ -33,10 +37,10 @@ public class ActivityServiceImpl implements ActivityService {
     Logger logger;
 
     @Override
-    public UUID createActivity(String userExternalId) {
-        UserEnhancedWithExternalDataDto completeUserData = userService.getCompleteUserData(userExternalId);
+    public UUID createActivity(final String userExternalId) {
+        val completeUserData = userService.getCompleteUserData(userExternalId);
 
-       validateUserToJoinInNewActivity(completeUserData);
+        validateUserToJoinInNewActivity(completeUserData);
 
         Activity newActivity = new Activity();
         newActivity.createdBy = completeUserData.userEntity;
@@ -112,7 +116,7 @@ public class ActivityServiceImpl implements ActivityService {
                 if (activity.userRound.equals(user) && this.activityHasOnlineParticipants(activity)) {
                     this.nextRound(activityUuid);
                 } else {
-                   this.endActivity(activityUuid);
+                    this.endActivity(activityUuid);
                     logger.info(MessageFormat.format("Activity {0} is deactivated due there is no online participants", activityUuid));
                 }
             });
@@ -129,10 +133,10 @@ public class ActivityServiceImpl implements ActivityService {
 //            Make all users available to get in another activity
             activity.userList.forEach(user -> user.status = UserStatus.AVAILABLE);
 
-            return  activity;
+            return activity;
         }
 
-        return  null;
+        return null;
     }
 
     @Override
@@ -150,13 +154,13 @@ public class ActivityServiceImpl implements ActivityService {
                 && activity.userRound.equals(user.userEntity)
                 && user.status.equals(UserStatus.CONNECTED)
                 && Boolean.TRUE.equals(activity.isActive)) {
-            return  true;
+            return true;
         }
 
         logger.info(MessageFormat.format("User {0} CANNOT edit activity {1}", userExternalId, activityUuid));
 
         ActivityUpdateMessageDto activityUpdateMessageDto = new ActivityUpdateMessageDto(activity);
-        var errorType  = activityUpdateMessageDto.getErrorType();
+        var errorType = activityUpdateMessageDto.getErrorType();
         var userError = activityUpdateMessageDto.getUserError();
 
         errorType.code = 1;
@@ -176,30 +180,30 @@ public class ActivityServiceImpl implements ActivityService {
 
     @Override
     public void nextRound(UUID activityUuid) throws UserInvalidOperationException {
-       Optional<Activity> activityOpt = Activity.findByIdOptional(activityUuid);
-       if (activityOpt.isPresent()) {
-           Activity activity = activityOpt.get();
-           if (Boolean.FALSE.equals(activityHasOnlineParticipants(activity))) {
-               this.endActivity(activity.uuid);
-               throw new UserInvalidOperationException(MessageFormat.format("Activity {0} is deactivated due there is no online participants", activityUuid));
-           }
-          User nextUserRound = getNextUserRound(activity);
+        Optional<Activity> activityOpt = Activity.findByIdOptional(activityUuid);
+        if (activityOpt.isPresent()) {
+            Activity activity = activityOpt.get();
+            if (Boolean.FALSE.equals(activityHasOnlineParticipants(activity))) {
+                this.endActivity(activity.uuid);
+                throw new UserInvalidOperationException(MessageFormat.format("Activity {0} is deactivated due there is no online participants", activityUuid));
+            }
+            User nextUserRound = getNextUserRound(activity);
 
-           logger.info(MessageFormat.format("Activity: {0} set the user {1} to next round", activity.uuid, nextUserRound.externalId));
+            logger.info(MessageFormat.format("Activity: {0} set the user {1} to next round", activity.uuid, nextUserRound.externalId));
 
-           activity.userRound = nextUserRound;
-           ActivityUpdateMessageDto activityUpdateMessageDto = new ActivityUpdateMessageDto(activity);
-           try {
-               activityUpdateProducer.sendMessage(activityUpdateMessageDto);
-           } catch (IOException e) {
-               e.printStackTrace();
-           }
-       }
+            activity.userRound = nextUserRound;
+            ActivityUpdateMessageDto activityUpdateMessageDto = new ActivityUpdateMessageDto(activity);
+            try {
+                activityUpdateProducer.sendMessage(activityUpdateMessageDto);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 
     private void validateUserToJoinInNewActivity(UserEnhancedWithExternalDataDto user) throws UserInvalidOperationException {
-        if ( user.status != UserStatus.AVAILABLE || Boolean.FALSE.equals(user.isActive)) {
+        if (user.status != UserStatus.AVAILABLE || Boolean.FALSE.equals(user.isActive)) {
             String exceptionMessage = MessageFormat.format("User {0} is not available to join activity", user.uuid);
             throw new UserInvalidOperationException(exceptionMessage);
         }
@@ -221,9 +225,9 @@ public class ActivityServiceImpl implements ActivityService {
 
         return activity
                 .userList
-                    .stream()
-                    .skip(userIndexOnQueue)
-                    .findFirst()
-                    .get();
+                .stream()
+                .skip(userIndexOnQueue)
+                .findFirst()
+                .get();
     }
 }

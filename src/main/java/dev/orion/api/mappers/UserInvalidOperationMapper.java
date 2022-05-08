@@ -1,7 +1,7 @@
 package dev.orion.api.mappers;
 
 import dev.orion.api.endpoint.dto.DefaultErrorResponseDtoV1;
-import dev.orion.util.exceptions.UserInvalidOperationException;
+import dev.orion.commom.exceptions.UserInvalidOperationException;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;

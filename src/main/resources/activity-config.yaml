@@ -1,0 +1,25 @@
+workflows:
+  - name: "Circle of Writers"
+    activityStages:
+      during:
+        - type: "Circle"
+          turns: 2
+------------
+  - name: "Review in Pairs"
+    activityStages:
+      pre:
+        - type: "Divide-in-groups"
+          membersPerGroup: 2
+        - type: "Rejoin"
+          waitEveryPlayerPlay: true
+      during:
+        - type: "Circle"
+          description: "dasdassda"
+          flowDirection: FROM_BEGIN_TO_END
+      after:
+        - type: "Feedback"
+          sendResult: true
+          emails:
+            - "teste.1@gmail.com"
+            - "teste.1@gmail.com"
+            - "teste.1@gmail.com"
