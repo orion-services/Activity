@@ -21,6 +21,7 @@ public class Stage extends PanacheEntity {
     private ActivityStages stage;
 
     @ManyToMany(cascade = CascadeType.ALL)
+    @OrderColumn
     private List<Step> steps = new ArrayList<>();
 
     public void addStep(Step step) {

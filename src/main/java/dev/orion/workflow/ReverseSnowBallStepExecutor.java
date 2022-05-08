@@ -14,6 +14,11 @@ public class ReverseSnowBallStepExecutor implements StepExecutor {
     }
 
     @Override
+    public void validate(Activity activity, User user) {
+        throw new RuntimeException("Should implement it");
+    }
+
+    @Override
     public String getStepRepresentation() {
         return new ReverseSnowball().getStepType();
     }

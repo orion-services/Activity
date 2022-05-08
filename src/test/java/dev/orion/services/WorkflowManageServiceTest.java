@@ -3,22 +3,30 @@ package dev.orion.services;
 import dev.orion.commom.enums.ActivityStages;
 import dev.orion.commom.enums.CircularStepFlowDirectionTypes;
 import dev.orion.commom.exceptions.IncompleteWorkflowException;
-import dev.orion.entity.*;
+import dev.orion.commom.exceptions.NotValidActionException;
+import dev.orion.entity.Activity;
+import dev.orion.entity.Stage;
+import dev.orion.entity.User;
+import dev.orion.entity.Workflow;
 import dev.orion.entity.step_type.CircleOfWriters;
 import dev.orion.entity.step_type.ReverseSnowball;
 import dev.orion.fixture.UserFixture;
+import dev.orion.util.AggregateException;
 import dev.orion.workflow.CircleStepExecutor;
 import dev.orion.workflow.ReverseSnowBallStepExecutor;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
 import lombok.val;
 import net.datafaker.Faker;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.mockito.BDDMockito;
 import org.mockito.MockitoAnnotations;
 
 import javax.inject.Inject;
-import javax.transaction.*;
+import javax.transaction.Transactional;
 
 import static org.mockito.Mockito.*;
 
@@ -26,7 +34,7 @@ import static org.mockito.Mockito.*;
 @Transactional
 public class WorkflowManageServiceTest {
     @Inject
-    WorkflowManageServiceImpl workflowManageService;
+    WorkflowManageServiceImpl testThis;
 
     @InjectMock
     CircleStepExecutor circleStepExecutor;
@@ -38,17 +46,42 @@ public class WorkflowManageServiceTest {
     @BeforeEach
     public void setup() {
         MockitoAnnotations.openMocks(this);
-        doNothing().when(circleStepExecutor).execute(any(), any());
         when(circleStepExecutor.getStepRepresentation()).thenCallRealMethod();
         when(reverseSnowBallStepExecutor.getStepRepresentation()).thenCallRealMethod();
     }
 
     @Test
-    @DisplayName("Should call the right step by activity the phase")
+    @DisplayName("Should call the right step by activity phase")
     public void testShouldCallTheRightStepByActivityPhase() {
         User user = UserFixture.generateUser();
         user.id = null;
         user.persistAndFlush();
+
+        Activity activity = new Activity();
+        activity.createdBy = user;
+        activity.workflow = generateWorkflow();
+        activity.persistAndFlush();
+
+        //  Test incoming from database
+        Activity persistedActivity = Activity.findById(activity.uuid);
+
+        testThis.apply(persistedActivity, user);
+        BDDMockito.then(circleStepExecutor).should().execute(any(), any());
+        BDDMockito.then(reverseSnowBallStepExecutor).should(times(0)).execute(any(), any());
+
+        persistedActivity.actualStage = ActivityStages.DURING;
+        testThis.apply(persistedActivity, user);
+        BDDMockito.then(circleStepExecutor).should(times(1)).execute(any(), any());
+        BDDMockito.then(reverseSnowBallStepExecutor).should().execute(any(), any());
+    }
+
+    @Test
+    @DisplayName("Should call the validation of each step")
+    public void testShouldCallValidationForEachStep() {
+        User user = UserFixture.generateUser();
+        user.id = null;
+        user.persistAndFlush();
+
         Activity activity = new Activity();
         activity.createdBy = user;
 
@@ -57,21 +90,42 @@ public class WorkflowManageServiceTest {
 
         activity.persistAndFlush();
 
-        //  Test incoming from database
         Activity persistedActivity = Activity.findById(activity.uuid);
 
-        workflowManageService.apply(persistedActivity, user);
-        BDDMockito.then(circleStepExecutor).should().execute(any(), any());
-        BDDMockito.then(reverseSnowBallStepExecutor).should(times(0)).execute(any(), any());
-
+        testThis.apply(persistedActivity, user);
         persistedActivity.actualStage = ActivityStages.DURING;
-        workflowManageService.apply(persistedActivity, user);
-        BDDMockito.then(circleStepExecutor).should(times(1)).execute(any(), any());
-        BDDMockito.then(reverseSnowBallStepExecutor).should().execute(any(), any());
+        testThis.apply(persistedActivity, user);
+        BDDMockito.then(circleStepExecutor).should(atLeastOnce()).validate(any(), any());
+        BDDMockito.then(reverseSnowBallStepExecutor).should(atLeastOnce()).validate(any(), any());
     }
 
     @Test
-    @DisplayName("Should throw error when workflow has no steps")
+    @DisplayName("Should throw error when a stage do not validate")
+    public void testStageThrowValidation() {
+        BDDMockito
+                .willThrow(new NotValidActionException("reverseSnowBallStepExecutor", "error"))
+                .given(reverseSnowBallStepExecutor)
+                .validate(any(), any());
+
+        User user = UserFixture.generateUser();
+
+        Activity activity = new Activity();
+        activity.createdBy = user;
+        activity.workflow = generateWorkflow();
+        activity.workflow.getStages().forEach(stage -> {
+            if (stage.getStage().equals(ActivityStages.PRE)) {
+                stage.addStep(new ReverseSnowball());
+            }
+        });
+
+        Assertions.assertThrows(AggregateException.class, () -> testThis.apply(activity, user));
+
+        BDDMockito.then(circleStepExecutor).should(never()).execute(any(), any());
+        BDDMockito.then(reverseSnowBallStepExecutor).should(never()).execute(any(), any());
+    }
+
+    @Test
+    @DisplayName("Should throw error when workflow has no stages")
     public void testShouldThrowErrorWhenWorkflowHasNoStep() {
         Workflow workflow = new Workflow();
         Stage emptyStage = new Stage();
@@ -86,9 +140,9 @@ public class WorkflowManageServiceTest {
         activity.createdBy = user;
         activity.workflow = workflow;
 
-        Assertions.assertThrows(IncompleteWorkflowException.class, () -> workflowManageService.apply(activity, user));
-        BDDMockito.then(reverseSnowBallStepExecutor).should(times(0)).execute(any(), any());
-        BDDMockito.then(circleStepExecutor).should(times(0)).execute(any(), any());
+        Assertions.assertThrows(IncompleteWorkflowException.class, () -> testThis.apply(activity, user));
+        BDDMockito.then(reverseSnowBallStepExecutor).should(never()).execute(any(), any());
+        BDDMockito.then(circleStepExecutor).should(never()).execute(any(), any());
     }
 
     private Workflow generateWorkflow() {
