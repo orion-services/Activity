@@ -55,12 +55,12 @@ public class WorkflowManageServiceTest {
     public void testShouldCallTheRightStepByActivityPhase() {
         User user = UserFixture.generateUser();
         user.id = null;
-        user.persistAndFlush();
+        user.persist();
 
         Activity activity = new Activity();
         activity.createdBy = user;
         activity.workflow = generateWorkflow();
-        activity.persistAndFlush();
+        activity.persist();
 
         //  Test incoming from database
         Activity persistedActivity = Activity.findById(activity.uuid);
@@ -80,7 +80,7 @@ public class WorkflowManageServiceTest {
     public void testShouldCallValidationForEachStep() {
         User user = UserFixture.generateUser();
         user.id = null;
-        user.persistAndFlush();
+        user.persist();
 
         Activity activity = new Activity();
         activity.createdBy = user;
@@ -88,7 +88,7 @@ public class WorkflowManageServiceTest {
         //  Test incoming from database
         activity.workflow = generateWorkflow();
 
-        activity.persistAndFlush();
+        activity.persist();
 
         Activity persistedActivity = Activity.findById(activity.uuid);
 
@@ -106,6 +106,10 @@ public class WorkflowManageServiceTest {
                 .willThrow(new NotValidActionException("reverseSnowBallStepExecutor", "error"))
                 .given(reverseSnowBallStepExecutor)
                 .validate(any(), any());
+        BDDMockito
+                .willThrow(new NotValidActionException("reverseSnowBallStepExecutor", "error"))
+                .given(circleStepExecutor)
+                .validate(any(), any());
 
         User user = UserFixture.generateUser();
 
@@ -118,10 +122,13 @@ public class WorkflowManageServiceTest {
             }
         });
 
-        Assertions.assertThrows(AggregateException.class, () -> testThis.apply(activity, user));
+        val aggregateException = Assertions.assertThrows(AggregateException.class, () -> testThis.apply(activity, user));
 
+        Assertions.assertEquals(2, aggregateException.getExceptions().size());
         BDDMockito.then(circleStepExecutor).should(never()).execute(any(), any());
         BDDMockito.then(reverseSnowBallStepExecutor).should(never()).execute(any(), any());
+        BDDMockito.then(circleStepExecutor).should().validate(any(), any());
+        BDDMockito.then(reverseSnowBallStepExecutor).should().validate(any(), any());
     }
 
     @Test
@@ -151,7 +158,7 @@ public class WorkflowManageServiceTest {
         workflow.setDescription(Faker.instance().science().element());
         workflow.addStepStage(generateStage(ActivityStages.PRE));
         workflow.addStepStage(generateStage(ActivityStages.DURING));
-        workflow.persistAndFlush();
+        workflow.persist();
 
         return workflow;
     }
