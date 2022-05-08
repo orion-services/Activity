@@ -8,6 +8,7 @@ import lombok.Setter;
 
 import javax.persistence.*;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -24,10 +25,12 @@ public class ActivityGroup extends PanacheEntity {
     @OneToMany
     private Set<User> alreadyPlayedParticipants = new LinkedHashSet<>();
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne(cascade = CascadeType.ALL, optional = false)
     @JsonBackReference
     private Activity activityOwner;
 
-    @OneToOne
-    private User participantRound;
+    @OneToMany
+    private List<User> participantRound;
+
+    private Integer capacity;
 }
