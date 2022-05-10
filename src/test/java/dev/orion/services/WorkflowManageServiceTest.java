@@ -33,6 +33,7 @@ import static org.mockito.Mockito.*;
 @QuarkusTest
 @Transactional
 public class WorkflowManageServiceTest {
+    
     @Inject
     WorkflowManageServiceImpl testThis;
 
@@ -41,7 +42,6 @@ public class WorkflowManageServiceTest {
 
     @InjectMock
     ReverseSnowBallStepExecutor reverseSnowBallStepExecutor;
-
 
     @BeforeEach
     public void setup() {

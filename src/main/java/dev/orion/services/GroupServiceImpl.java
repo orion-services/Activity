@@ -6,6 +6,8 @@ import dev.orion.entity.User;
 import dev.orion.services.interfaces.GroupService;
 import org.jboss.resteasy.spi.NotImplementedYetException;
 
+import java.util.List;
+
 public class GroupServiceImpl implements GroupService {
     @Override
     public ActivityGroup createGroup(Activity activity) {
@@ -13,7 +15,7 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public ActivityGroup createGroup(Activity activity, ActivityGroup activityGroup) {
+    public ActivityGroup createGroup(Activity activity, List<User> activityGroup) {
         throw new NotImplementedYetException();
     }
 
@@ -33,7 +35,7 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public void changeGroupCapacity(Activity activity) {
-
+    public void changeGroupCapacity(Activity activity, ActivityGroup activityGroup) {
+        throw new NotImplementedYetException();
     }
 }

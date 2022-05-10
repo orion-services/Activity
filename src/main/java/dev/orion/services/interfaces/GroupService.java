@@ -4,11 +4,13 @@ import dev.orion.entity.Activity;
 import dev.orion.entity.ActivityGroup;
 import dev.orion.entity.User;
 
+import java.util.List;
+
 public interface GroupService {
-    public ActivityGroup createGroup(Activity activity);
-    public ActivityGroup createGroup(Activity activity, ActivityGroup activityGroup);
-    public void addUserToGroup(Activity activity, User user);
-    public void removeUserFromGroup(Activity activity, User user);
-    public void transferUserToGroup(Activity activity, User user, ActivityGroup destinationGroup);
-    public void changeGroupCapacity(Activity activity);
+    ActivityGroup createGroup(Activity activity);
+    ActivityGroup createGroup(Activity activity, List<User> activityGroup);
+    void addUserToGroup(Activity activity, User user);
+    void removeUserFromGroup(Activity activity, User user);
+    void transferUserToGroup(Activity activity, User user, ActivityGroup destinationGroup);
+    void changeGroupCapacity(Activity activity, ActivityGroup activityGroup);
 }
