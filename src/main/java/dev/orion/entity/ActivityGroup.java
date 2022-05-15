@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -30,7 +31,18 @@ public class ActivityGroup extends PanacheEntity {
     private Activity activityOwner;
 
     @OneToMany
-    private List<User> participantRound;
+    private List<User> participantsRound;
+
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "activityGroup")
+    List<Document> documents = new ArrayList<>();
+
+    public void addDocument(Document document) {
+        documents.add(document);
+    }
+
+    public void addParticipantsRound(User participant) {
+        participantsRound.add(participant);
+    }
 
     private Integer capacity;
 }

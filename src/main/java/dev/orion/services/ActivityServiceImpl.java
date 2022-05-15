@@ -5,9 +5,8 @@ import dev.orion.broker.producer.ActivityUpdateProducer;
 import dev.orion.commom.enums.UserStatus;
 import dev.orion.commom.exceptions.UserInvalidOperationException;
 import dev.orion.entity.Activity;
-import dev.orion.entity.Document;
 import dev.orion.entity.User;
-import dev.orion.services.dto.UserEnhancedWithExternalDataDto;
+import dev.orion.services.dto.UserEnhancedWithExternalDataResponse;
 import dev.orion.services.interfaces.ActivityService;
 import dev.orion.services.interfaces.UserService;
 import io.quarkus.arc.log.LoggerName;
@@ -46,10 +45,6 @@ public class ActivityServiceImpl implements ActivityService {
         newActivity.createdBy = completeUserData.userEntity;
         newActivity.isActive = true;
 
-        Document newDocument = new Document();
-        newDocument.content = "";
-        newActivity.document = newDocument;
-
         newActivity.persist();
         logger.info(MessageFormat.format("Activity created with UUID: {0} by user {1}", newActivity.uuid, userExternalId));
         return newActivity.uuid;
@@ -57,7 +52,7 @@ public class ActivityServiceImpl implements ActivityService {
 
     @Override
     public Activity addUserInActivity(UUID activityUuid, String userExternalId) {
-        UserEnhancedWithExternalDataDto user = userService.getCompleteUserData(userExternalId);
+        UserEnhancedWithExternalDataResponse user = userService.getCompleteUserData(userExternalId);
         Optional<Activity> activityOpt = Activity.findByIdOptional(activityUuid);
 
         if (activityOpt.isEmpty()) {
@@ -142,7 +137,7 @@ public class ActivityServiceImpl implements ActivityService {
     @Override
     public Boolean canUserEditDocument(UUID activityUuid, String userExternalId) {
         Optional<Activity> activityOptional = Activity.findByIdOptional(activityUuid);
-        UserEnhancedWithExternalDataDto user = userService.getCompleteUserData(userExternalId);
+        UserEnhancedWithExternalDataResponse user = userService.getCompleteUserData(userExternalId);
 
         if (activityOptional.isEmpty() || user == null) {
             logger.warn(MessageFormat.format("Activity {0} not found", activityUuid));
@@ -202,7 +197,7 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
 
-    private void validateUserToJoinInNewActivity(UserEnhancedWithExternalDataDto user) throws UserInvalidOperationException {
+    private void validateUserToJoinInNewActivity(UserEnhancedWithExternalDataResponse user) throws UserInvalidOperationException {
         if (user.status != UserStatus.AVAILABLE || Boolean.FALSE.equals(user.isActive)) {
             String exceptionMessage = MessageFormat.format("User {0} is not available to join activity", user.uuid);
             throw new UserInvalidOperationException(exceptionMessage);

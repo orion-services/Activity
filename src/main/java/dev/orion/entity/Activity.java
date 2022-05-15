@@ -24,10 +24,6 @@ public class Activity extends PanacheEntityBase {
     @Setter(AccessLevel.NONE)
     public UUID uuid;
 
-    @OneToOne(cascade = CascadeType.PERSIST)
-    @JsonIgnore
-    public Document document;
-
     @OneToMany(mappedBy = "activityOwner")
     @JsonManagedReference
     public List<ActivityGroup> activityGroups = new ArrayList<>();

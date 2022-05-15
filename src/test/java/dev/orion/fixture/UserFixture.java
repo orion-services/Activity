@@ -1,9 +1,9 @@
 package dev.orion.fixture;
 
-import dev.orion.client.dto.UserClientDto;
+import dev.orion.client.dto.UserClientResponse;
 import dev.orion.commom.enums.UserStatus;
 import dev.orion.entity.User;
-import dev.orion.services.dto.UserEnhancedWithExternalDataDto;
+import dev.orion.services.dto.UserEnhancedWithExternalDataResponse;
 import net.datafaker.Faker;
 
 import java.util.UUID;
@@ -18,18 +18,18 @@ final public class UserFixture {
         return user;
     }
 
-    static public UserClientDto generateClientDto() {
-        UserClientDto userClientDto = new UserClientDto();
-        userClientDto.isActive = true;
-        userClientDto.name = Faker.instance().funnyName().name();
+    static public UserClientResponse generateClientDto() {
+        UserClientResponse userClientResponse = new UserClientResponse();
+        userClientResponse.isActive = true;
+        userClientResponse.name = Faker.instance().funnyName().name();
 
-        return  userClientDto;
+        return userClientResponse;
     }
 
-    static public UserEnhancedWithExternalDataDto generateUserEnhancedWithExternalDataDto() {
+    static public UserEnhancedWithExternalDataResponse generateUserEnhancedWithExternalDataDto() {
         var user = generateUser();
         var userClientDto = generateClientDto();
 
-        return new UserEnhancedWithExternalDataDto(user, userClientDto);
+        return new UserEnhancedWithExternalDataResponse(user, userClientDto);
     }
 }
