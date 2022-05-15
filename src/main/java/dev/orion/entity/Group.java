@@ -1,9 +1,12 @@
 package dev.orion.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
@@ -15,9 +18,12 @@ import java.util.Set;
 @Entity
 @Getter
 @Setter
-public class ActivityGroup extends PanacheEntity {
+@NoArgsConstructor
+@AllArgsConstructor
+@JsonIgnoreProperties(value = {"id"})
+public class Group extends PanacheEntity {
 
-    @OneToMany(mappedBy = "activityGroup", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "group", cascade = CascadeType.ALL)
     @OrderColumn
     @JsonManagedReference
     private Set<User> participants = new LinkedHashSet<>();
@@ -33,7 +39,7 @@ public class ActivityGroup extends PanacheEntity {
     @OneToMany
     private List<User> participantsRound;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "activityGroup")
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "group")
     List<Document> documents = new ArrayList<>();
 
     public void addDocument(Document document) {
@@ -43,6 +49,7 @@ public class ActivityGroup extends PanacheEntity {
     public void addParticipantsRound(User participant) {
         participantsRound.add(participant);
     }
+    public void addParticipant(User participant) {participants.add(participant);}
 
     private Integer capacity;
 }

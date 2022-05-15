@@ -24,6 +24,6 @@ public class Document extends PanacheEntity {
 
 
     @ManyToOne
-    private ActivityGroup activityGroup;
+    private Group group;
 
 }

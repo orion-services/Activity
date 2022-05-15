@@ -35,7 +35,7 @@ public class User extends PanacheEntity {
 
     @ManyToOne(cascade = CascadeType.REFRESH)
     @JsonBackReference
-    private ActivityGroup activityGroup;
+    private Group group;
 
     @PrePersist
     void createdAtUpdate() {

@@ -11,7 +11,6 @@ import java.util.UUID;
 final public class UserFixture {
     static public User generateUser() {
         User user = new User();
-        user.id = Faker.instance().number().randomNumber();
         user.externalId = UUID.randomUUID().toString();
         user.status = UserStatus.AVAILABLE;
 

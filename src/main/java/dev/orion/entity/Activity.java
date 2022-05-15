@@ -1,6 +1,5 @@
 package dev.orion.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import dev.orion.commom.enums.ActivityStages;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
@@ -24,9 +23,9 @@ public class Activity extends PanacheEntityBase {
     @Setter(AccessLevel.NONE)
     public UUID uuid;
 
-    @OneToMany(mappedBy = "activityOwner")
+    @OneToMany(mappedBy = "activityOwner", cascade = CascadeType.ALL)
     @JsonManagedReference
-    public List<ActivityGroup> activityGroups = new ArrayList<>();
+    public List<Group> groups = new ArrayList<>();
 
 //    REMOVE
     @OneToOne
