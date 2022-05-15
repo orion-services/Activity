@@ -12,7 +12,7 @@ import javax.ws.rs.core.MediaType;
 
 @Path("/v1/")
 @ApplicationScoped
-@RegisterRestClient(configKey = "api.user-service.client")
+@RegisterRestClient(configKey = "api.document-service.client")
 public interface DocumentClient {
 
     @POST
