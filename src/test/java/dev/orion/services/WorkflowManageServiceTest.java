@@ -54,7 +54,6 @@ public class WorkflowManageServiceTest {
     @DisplayName("Should call the right step by activity phase")
     public void testShouldCallTheRightStepByActivityPhase() {
         User user = UserFixture.generateUser();
-        user.id = null;
         user.persist();
 
         Activity activity = new Activity();
@@ -79,7 +78,6 @@ public class WorkflowManageServiceTest {
     @DisplayName("Should call the validation of each step")
     public void testShouldCallValidationForEachStep() {
         User user = UserFixture.generateUser();
-        user.id = null;
         user.persist();
 
         Activity activity = new Activity();
