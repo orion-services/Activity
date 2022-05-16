@@ -126,6 +126,19 @@ public class GroupServiceTest {
         throw new NotImplementedYetException();
     }
 
+    @Test
+    @DisplayName("Should delete group from activity if there's no more users in group")
+    @Disabled
+    public void testTransferLastUserFromGroup() {
+        throw new NotImplementedYetException();
+    }
+
+    @Test
+    @DisplayName("Should not let transfer from group if destination group is full")
+    public void testTransferUserToFullGroup() {
+        throw new NotImplementedYetException();
+    }
+
     //    Capacity scenarios
     @Test
     @DisplayName("Should create a group with capacity same number of activity participants")
@@ -156,6 +169,7 @@ public class GroupServiceTest {
     }
 
     //    Document scenarios
+//    @TODO Create document implementation first
     @Test
     @DisplayName("Should add document and users whenever is possible")
     @Disabled
