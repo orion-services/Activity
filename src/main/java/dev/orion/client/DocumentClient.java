@@ -1,5 +1,6 @@
 package dev.orion.client;
 
+import dev.orion.client.dto.CreateDocumentRequest;
 import dev.orion.client.dto.CreateDocumentResponse;
 import org.eclipse.microprofile.faulttolerance.Timeout;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
@@ -18,5 +19,5 @@ public interface DocumentClient {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Timeout(1000)
-    CreateDocumentResponse createDocument();
+    CreateDocumentResponse createDocument(CreateDocumentRequest createDocumentRequest);
 }

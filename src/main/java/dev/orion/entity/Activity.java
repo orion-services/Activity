@@ -25,7 +25,7 @@ public class Activity extends PanacheEntityBase {
 
     @OneToMany(mappedBy = "activityOwner", cascade = CascadeType.ALL)
     @JsonManagedReference
-    public List<Group> groups = new ArrayList<>();
+    public List<GroupActivity> groupActivities = new ArrayList<>();
 
 //    REMOVE
     @OneToOne
@@ -59,5 +59,10 @@ public class Activity extends PanacheEntityBase {
     @PreUpdate
     void updatedAtUpdate() {
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public void addParticipant(User user) {
+        user.setActivity(this);
+        userList.add(user);
     }
 }

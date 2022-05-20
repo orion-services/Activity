@@ -4,16 +4,11 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Entity
 @Getter
@@ -21,9 +16,15 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonIgnoreProperties(value = {"id"})
-public class Group extends PanacheEntity {
+public class GroupActivity extends PanacheEntity {
 
-    @OneToMany(mappedBy = "group", cascade = CascadeType.ALL)
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GenericGenerator(name = "group_uuid", strategy = "uuid")
+    @Column(columnDefinition = "BINARY(16)")
+    @Setter(AccessLevel.NONE)
+    private UUID uuid;
+
+    @OneToMany(mappedBy = "groupActivity", cascade = CascadeType.ALL)
     @OrderColumn
     @JsonManagedReference
     private Set<User> participants = new LinkedHashSet<>();
@@ -39,17 +40,21 @@ public class Group extends PanacheEntity {
     @OneToMany
     private List<User> participantsRound;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "group")
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "groupActivity")
     List<Document> documents = new ArrayList<>();
 
     public void addDocument(Document document) {
+        document.setGroupActivity(this);
         documents.add(document);
     }
 
     public void addParticipantsRound(User participant) {
         participantsRound.add(participant);
     }
-    public void addParticipant(User participant) {participants.add(participant);}
+    public void addParticipant(User participant) {
+        participant.setGroupActivity(this);
+        participants.add(participant);
+    }
 
     private Integer capacity;
 }
