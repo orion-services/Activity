@@ -1,14 +1,18 @@
 package dev.orion.services.interfaces;
 
 import dev.orion.entity.Activity;
-import dev.orion.entity.ActivityGroup;
+import dev.orion.entity.Document;
+import dev.orion.entity.GroupActivity;
 import dev.orion.entity.User;
 
+import java.util.List;
+import java.util.Set;
+
 public interface GroupService {
-    public ActivityGroup createGroup(Activity activity);
-    public ActivityGroup createGroup(Activity activity, ActivityGroup activityGroup);
-    public void addUserToGroup(Activity activity, User user);
-    public void removeUserFromGroup(Activity activity, User user);
-    public void transferUserToGroup(Activity activity, User user, ActivityGroup destinationGroup);
-    public void changeGroupCapacity(Activity activity);
+    GroupActivity createGroup(Activity activity);
+    GroupActivity createGroup(Activity activity, Set<User> users);
+    void addUserToGroup(GroupActivity groupActivity, User user, Document document);
+    void removeUserFromGroup(Activity activity, User user);
+    void transferUserToGroup(Activity activity, User user, GroupActivity destinationGroupActivity);
+    void changeGroupCapacity(Activity activity, GroupActivity groupActivity, Integer newCapacity);
 }

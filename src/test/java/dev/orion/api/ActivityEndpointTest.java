@@ -4,7 +4,7 @@ package dev.orion.api;
 import dev.orion.api.endpoint.ActivityEndpoint;
 import dev.orion.api.endpoint.dto.CreateActivityRequestDtoV1;
 import dev.orion.client.UserClient;
-import dev.orion.client.dto.UserClientDto;
+import dev.orion.client.dto.UserClientResponse;
 import dev.orion.entity.User;
 import dev.orion.commom.enums.UserStatus;
 import io.quarkus.panache.mock.PanacheMock;
@@ -42,9 +42,9 @@ public class ActivityEndpointTest {
 
     @BeforeEach
     public void setup() {
-        UserClientDto userClientDto = new UserClientDto(userExternalId, userName, true);
+        UserClientResponse userClientResponse = new UserClientResponse(userExternalId, userName, true);
         when(userClient.getUserByExternalId(userExternalId))
-                .thenReturn(userClientDto);
+                .thenReturn(userClientResponse);
     }
 
     @Test
@@ -107,10 +107,10 @@ public class ActivityEndpointTest {
     void testActivityCreationUserDeactivate() {
         var requestDto = new CreateActivityRequestDtoV1();
         requestDto.setUserExternalId(userExternalId);
-        UserClientDto userClientDto = new UserClientDto(userExternalId, userName, false);
+        UserClientResponse userClientResponse = new UserClientResponse(userExternalId, userName, false);
         when(userClient
                 .getUserByExternalId(userExternalId))
-                .thenReturn(userClientDto);
+                .thenReturn(userClientResponse);
 
         given()
                 .contentType(MediaType.APPLICATION_JSON)

@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 @QuarkusTest
 @Disabled
-class DocumentResourceTest {
+class DocumentOldResourceTest {
 
     @Test
     @DisplayName("it should let user edit document and send to document queue")

@@ -55,10 +55,6 @@ public class DocumentEditorConsumer extends RabbitConnection {
             var newDocument = newDocumentOption.get();
             var updatedDocumentDto = new DocumentUpdateDto();
 
-            updatedDocumentDto.documentContent = newDocument.content;
-            updatedDocumentDto.activityUuid = newDocument.activity.uuid;
-            updatedDocumentDto.externalUserId = newDocument.editedBy.externalId;
-
             documentUpdateProducer.sendMessage(updatedDocumentDto);
 
             logger.info(MessageFormat.format("Document id({0}) sent to broker", newDocument.id));
