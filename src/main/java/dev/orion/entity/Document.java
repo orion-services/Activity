@@ -1,48 +1,56 @@
 package dev.orion.entity;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
+import lombok.Getter;
+import lombok.Setter;
 
 import javax.persistence.*;
-import java.time.LocalDateTime;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Entity
+@Getter
+@Setter
 public class Document extends PanacheEntity {
+    @Column(nullable = false, unique = true)
+    private String externalId;
 
-    @Column(nullable = false)
-    public String content;
+    @OrderColumn
+    @ManyToMany
+    @JoinTable(
+            name = "DOCUMENT_EDITORS",
+            joinColumns = @JoinColumn(name = "document_id"),
+            inverseJoinColumns = @JoinColumn(name = "participant_id")
+    )
+    private Set<User> participantsThatEdited = new LinkedHashSet<>();
 
-    @OneToOne(cascade = CascadeType.ALL, mappedBy = "document", optional = false)
-    @JoinColumn(name = "activity_uuid")
-    public Activity activity;
+    @OrderColumn
+    @ManyToMany
+    @JoinTable(
+            name = "ASSIGNED_PARTICIPANTS",
+            joinColumns = @JoinColumn(name = "document_id"),
+            inverseJoinColumns = @JoinColumn(name = "participant_id")
+    )
+    private Set<User> participantsAssigned = new LinkedHashSet<>();
 
     @ManyToOne
-    public User editedBy;
+    @JoinColumn(name = "groupActivity_id")
+    private GroupActivity groupActivity;
 
-    @Column(name = "created_at")
-    public LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    public LocalDateTime updatedAt;
-
-    @PrePersist
-    void createdAtUpdate() {
-        this.createdAt = this.updatedAt = LocalDateTime.now();
+    public void addParticipant(User user) {
+        participantsAssigned.add(user);
+    }
+    public void removeParticipant(User user) {
+        participantsAssigned.remove(user);
     }
 
-    @PreUpdate
-    void updatedAtUpdate() {
-        this.updatedAt = LocalDateTime.now();
+    public void assignMultipleParticipants(Set<User> users) {
+        participantsAssigned.addAll(users);
+    }
+    public void addParticipantThatEdited(User user) {
+        participantsThatEdited.add(user);
+    }
+    public static List<Document> findAllByGroupActivity(UUID uuid) {
+        return find("groupActivity_id", uuid).list();
     }
 
-    public static Optional<Document> getDocumentByActivity(UUID activityUuid) {
-        Optional<Activity> activity = findByIdOptional(activityUuid);
-        if (activity.isPresent()) {
-            return Optional.of(activity.get().document);
-        }
-
-        return Optional.empty();
-
-    }
 }

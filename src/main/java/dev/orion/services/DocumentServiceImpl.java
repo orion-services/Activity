@@ -1,46 +1,35 @@
 package dev.orion.services;
 
+import dev.orion.client.DocumentClient;
+import dev.orion.client.dto.CreateDocumentRequest;
 import dev.orion.entity.Document;
 import dev.orion.entity.User;
-import dev.orion.services.interfaces.ActivityService;
 import dev.orion.services.interfaces.DocumentService;
-import dev.orion.commom.exceptions.UserInvalidOperationException;
-import io.quarkus.arc.log.LoggerName;
-import org.jboss.logging.Logger;
+import lombok.val;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.transaction.Transactional;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @ApplicationScoped
-@Transactional
 public class DocumentServiceImpl implements DocumentService {
-    @Inject
-    ActivityService activityService;
-
-    @LoggerName("DocumentService")
-    Logger logger;
+    @RestClient
+    DocumentClient documentClient;
 
     @Override
     public Optional<Document> editContent(String content, UUID activityUuid, String externalUserId) {
-        if (activityService.canUserEditDocument(activityUuid, externalUserId)) {
-            Optional<Document> documentOpt = Document.getDocumentByActivity(activityUuid);
-            if (documentOpt.isPresent()) {
-                var document = documentOpt.get();
-                var user = User.findUserByExternalId(externalUserId).get();
-                document.content = content;
-                document.editedBy = user;
-                try {
-                    activityService.nextRound(activityUuid);
-                } catch (UserInvalidOperationException userInvalidOperationException) {
-                    logger.warn(userInvalidOperationException);
-                }
-                return Optional.of(document);
-            }
-        }
-
         return Optional.empty();
+    }
+
+    @Override
+    public Document createDocument(UUID uuid, String initialContent, Set<User> editors) {
+        val document = new Document();
+        val documentResponse = documentClient.createDocument(new CreateDocumentRequest(uuid, initialContent));
+
+        document.setExternalId(documentResponse.getId());
+        document.assignMultipleParticipants(editors);
+        document.persist();
+
+        return document;
     }
 }

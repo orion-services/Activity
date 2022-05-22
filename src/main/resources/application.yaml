@@ -14,6 +14,8 @@
   api:
     user-service:
       "client/mp-rest/url": "http://localhost:3000"
+    document-service:
+      "client/mp-rest/url": "http://localhost:4000"
   rabbit:
     username: ""
     password: ""

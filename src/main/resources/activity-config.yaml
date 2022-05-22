@@ -4,7 +4,7 @@ workflows:
       during:
         - type: "Circle"
           turns: 2
-------------
+
   - name: "Review in Pairs"
     activityStages:
       pre:

@@ -1,6 +1,5 @@
 package dev.orion.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import dev.orion.commom.enums.ActivityStages;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
@@ -24,13 +23,9 @@ public class Activity extends PanacheEntityBase {
     @Setter(AccessLevel.NONE)
     public UUID uuid;
 
-    @OneToOne(cascade = CascadeType.PERSIST)
-    @JsonIgnore
-    public Document document;
-
-    @OneToMany(mappedBy = "activityOwner")
+    @OneToMany(mappedBy = "activityOwner", cascade = CascadeType.ALL)
     @JsonManagedReference
-    public List<ActivityGroup> activityGroups = new ArrayList<>();
+    public List<GroupActivity> groupActivities = new ArrayList<>();
 
 //    REMOVE
     @OneToOne
@@ -64,5 +59,10 @@ public class Activity extends PanacheEntityBase {
     @PreUpdate
     void updatedAtUpdate() {
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public void addParticipant(User user) {
+        user.setActivity(this);
+        userList.add(user);
     }
 }

@@ -1,6 +1,6 @@
 package dev.orion.client;
 
-import dev.orion.client.dto.UserClientDto;
+import dev.orion.client.dto.UserClientResponse;
 import org.eclipse.microprofile.faulttolerance.Timeout;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
@@ -20,5 +20,5 @@ public interface UserClient {
     @Path("/{externalId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Timeout(1000)
-    UserClientDto getUserByExternalId(@PathParam("externalId") String externalId);
+    UserClientResponse getUserByExternalId(@PathParam("externalId") String externalId);
 }

@@ -33,6 +33,7 @@ import static org.mockito.Mockito.*;
 @QuarkusTest
 @Transactional
 public class WorkflowManageServiceTest {
+    
     @Inject
     WorkflowManageServiceImpl testThis;
 
@@ -41,7 +42,6 @@ public class WorkflowManageServiceTest {
 
     @InjectMock
     ReverseSnowBallStepExecutor reverseSnowBallStepExecutor;
-
 
     @BeforeEach
     public void setup() {
@@ -54,7 +54,6 @@ public class WorkflowManageServiceTest {
     @DisplayName("Should call the right step by activity phase")
     public void testShouldCallTheRightStepByActivityPhase() {
         User user = UserFixture.generateUser();
-        user.id = null;
         user.persist();
 
         Activity activity = new Activity();
@@ -79,7 +78,6 @@ public class WorkflowManageServiceTest {
     @DisplayName("Should call the validation of each step")
     public void testShouldCallValidationForEachStep() {
         User user = UserFixture.generateUser();
-        user.id = null;
         user.persist();
 
         Activity activity = new Activity();
@@ -112,6 +110,7 @@ public class WorkflowManageServiceTest {
                 .validate(any(), any());
 
         User user = UserFixture.generateUser();
+        user.persist();
 
         Activity activity = new Activity();
         activity.createdBy = user;
@@ -121,6 +120,8 @@ public class WorkflowManageServiceTest {
                 stage.addStep(new ReverseSnowball());
             }
         });
+
+        activity.persist();
 
         val aggregateException = Assertions.assertThrows(AggregateException.class, () -> testThis.apply(activity, user));
 
