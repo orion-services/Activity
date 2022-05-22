@@ -3,7 +3,6 @@ package dev.orion.entity;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import lombok.Getter;
 import lombok.Setter;
-import org.jose4j.jwk.Use;
 
 import javax.persistence.*;
 import java.util.*;
@@ -37,7 +36,7 @@ public class Document extends PanacheEntity {
     @JoinColumn(name = "groupActivity_id")
     private GroupActivity groupActivity;
 
-    public void assignParticipant(User user) {
+    public void addParticipant(User user) {
         participantsAssigned.add(user);
     }
     public void removeParticipant(User user) {

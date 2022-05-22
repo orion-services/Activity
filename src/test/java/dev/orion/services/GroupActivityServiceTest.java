@@ -3,7 +3,6 @@ package dev.orion.services;
 import dev.orion.client.DocumentClient;
 import dev.orion.client.dto.CreateDocumentResponse;
 import dev.orion.commom.enums.ActivityStages;
-import dev.orion.commom.exceptions.NotValidActionException;
 import dev.orion.commom.exceptions.UserInvalidOperationException;
 import dev.orion.entity.Activity;
 import dev.orion.entity.Document;
@@ -29,7 +28,6 @@ import org.mockito.Spy;
 import javax.inject.Inject;
 import javax.transaction.Transactional;
 import java.text.MessageFormat;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -87,7 +85,7 @@ public class GroupActivityServiceTest {
         Assertions.assertTrue(document.getParticipantsAssigned().contains(user));
         Assertions.assertTrue(group.getDocuments().contains(document));
 
-        BDDMockito.then(document).should().assignParticipant(user);
+        BDDMockito.then(document).should().addParticipant(user);
         BDDMockito.then(spyGroup).should().addParticipant(user);
         BDDMockito.then(spyGroup).should().addDocument(document);
     }
@@ -113,7 +111,7 @@ public class GroupActivityServiceTest {
 
         groupService.addUserToGroup(spyGroup, user, document);
 
-        BDDMockito.then(document).should().assignParticipant(user);
+        BDDMockito.then(document).should().addParticipant(user);
         BDDMockito.then(spyGroup).should().addParticipant(user);
         BDDMockito.then(spyGroup).should(never()).addDocument(document);
     }
@@ -166,7 +164,7 @@ public class GroupActivityServiceTest {
 
         String expectedErrorMessage = MessageFormat.format("There are {0} users that can''t be placed on group {1} because its above the capacity", 1, group.getUuid());
         Assertions.assertEquals(expectedErrorMessage, message);
-        BDDMockito.then(document).should(atMostOnce()).assignParticipant(any());
+        BDDMockito.then(document).should(atMostOnce()).addParticipant(any());
     }
 
     @Test
@@ -378,7 +376,7 @@ public class GroupActivityServiceTest {
 //    Document scenarios
 //    @TODO Create document implementation first
     @Test
-    @DisplayName("Should add document when create a group")
+    @DisplayName("Should add document when create a group with list")
     @Disabled
     public void testAddDocumentAndUsers() {
 

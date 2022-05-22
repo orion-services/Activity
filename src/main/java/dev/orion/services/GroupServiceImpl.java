@@ -1,6 +1,5 @@
 package dev.orion.services;
 
-import dev.orion.commom.exceptions.NotValidActionException;
 import dev.orion.commom.exceptions.UserInvalidOperationException;
 import dev.orion.entity.Activity;
 import dev.orion.entity.Document;
@@ -9,8 +8,6 @@ import dev.orion.entity.User;
 import dev.orion.services.interfaces.DocumentService;
 import dev.orion.services.interfaces.GroupService;
 import io.quarkus.arc.log.LoggerName;
-import io.quarkus.panache.common.Parameters;
-import io.quarkus.qute.Parameter;
 import lombok.val;
 import org.jboss.logging.Logger;
 import org.jboss.resteasy.spi.NotImplementedYetException;
@@ -18,7 +15,6 @@ import org.jboss.resteasy.spi.NotImplementedYetException;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.text.MessageFormat;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -33,6 +29,7 @@ public class GroupServiceImpl implements GroupService {
     @Inject
     DocumentService documentService;
 
+//    @TODO add document to group
     @Override
     public GroupActivity createGroup(Activity activity) {
         val group = new GroupActivity();
@@ -75,7 +72,7 @@ public class GroupServiceImpl implements GroupService {
 
         users.forEach(user -> {
             user.setGroupActivity(groupActivity);
-            document.assignParticipant(user);
+            document.addParticipant(user);
         });
 
         return groupActivity;
