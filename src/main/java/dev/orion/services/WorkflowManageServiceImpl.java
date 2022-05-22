@@ -63,13 +63,13 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
         Queue<Runnable> executionQueue = new LinkedList<>();
         List<RuntimeException> exceptionList = new ArrayList<>();
 
-        steps.stream().filter(step -> stepExecutorsMap.get(step.getType()) != null).forEach(step -> {
+        steps.stream().filter(step -> Objects.nonNull(stepExecutorsMap.get(step.getType()))).forEach(step -> {
             val stepExecutor = stepExecutorsMap.get(step.getType());
             try {
                 stepExecutor.validate(activity, performer);
                 executionQueue.add(() -> stepExecutor.execute(activity, performer));
             } catch (NotValidActionException notValidActionException) {
-                logger.warn("Step: '" + notValidActionException.getStepName() + "', failed when trying to apply to activity: " + activity.uuid);
+                logger.warn("Step: '" + notValidActionException.getStepName() + "' validation throw when trying to apply to activity: " + activity.uuid);
                 exceptionList.add(notValidActionException);
             }
         });
@@ -83,11 +83,11 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
     }
 
     private Optional<Stage> extractActualStage(Activity activity) {
-        val actualStages = activity.workflow.getStages().stream().filter(stage -> stage.getStage().equals(activity.actualStage)).findFirst();
+        val actualStage = activity.workflow.getStages().stream().filter(stage -> stage.getStage().equals(activity.actualStage)).findFirst();
 
-        if (actualStages.isEmpty()) {
+        if (actualStage.isEmpty()) {
             logger.info(MessageFormat.format("There is no {0} stage on activity {1}", activity.actualStage, activity.uuid));
         }
-        return actualStages;
+        return actualStage;
     }
 }

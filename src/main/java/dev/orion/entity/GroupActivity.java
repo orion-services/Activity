@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
+import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
 
@@ -16,8 +17,9 @@ import java.util.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonIgnoreProperties(value = {"id"})
-public class GroupActivity extends PanacheEntity {
+public class GroupActivity extends PanacheEntityBase {
 
+    @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @GenericGenerator(name = "group_uuid", strategy = "uuid")
     @Column(columnDefinition = "BINARY(16)")
@@ -54,6 +56,11 @@ public class GroupActivity extends PanacheEntity {
     public void addParticipant(User participant) {
         participant.setGroupActivity(this);
         participants.add(participant);
+    }
+
+    public void removeParticipant(User participant) {
+        participant.setGroupActivity(null);
+        participants.remove(participant);
     }
 
     private Integer capacity;

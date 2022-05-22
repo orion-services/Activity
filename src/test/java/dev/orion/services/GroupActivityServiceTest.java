@@ -3,9 +3,11 @@ package dev.orion.services;
 import dev.orion.client.DocumentClient;
 import dev.orion.client.dto.CreateDocumentResponse;
 import dev.orion.commom.enums.ActivityStages;
+import dev.orion.commom.exceptions.NotValidActionException;
 import dev.orion.commom.exceptions.UserInvalidOperationException;
 import dev.orion.entity.Activity;
 import dev.orion.entity.Document;
+import dev.orion.entity.GroupActivity;
 import dev.orion.entity.User;
 import dev.orion.entity.step_type.CircleOfWriters;
 import dev.orion.fixture.UserFixture;
@@ -20,11 +22,14 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.resteasy.spi.NotImplementedYetException;
 import org.junit.jupiter.api.*;
 import org.mockito.BDDMockito;
+import org.mockito.MockedStatic;
 import org.mockito.MockitoAnnotations;
+import org.mockito.Spy;
 
 import javax.inject.Inject;
 import javax.transaction.Transactional;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -44,6 +49,9 @@ public class GroupActivityServiceTest {
 
     @Inject
     DocumentService documentService;
+
+    @Spy
+    MockedStatic<GroupActivity> groupActivityMockedStatic;
 
     @BeforeEach
     public void setup() {
@@ -98,6 +106,7 @@ public class GroupActivityServiceTest {
 
         val group = groupService.createGroup(activity);
         val spyGroup = spy(group);
+
         activity.groupActivities.add(group);
         group.addDocument(document);
         document.setGroupActivity(group);
@@ -131,7 +140,7 @@ public class GroupActivityServiceTest {
         String errorMessage = Assertions.assertThrows(UserInvalidOperationException.class, () -> {
             groupService.addUserToGroup(groupDestination, user, document);
         }).getMessage();
-        Assertions.assertEquals(MessageFormat.format("The user {0} is already on another group", user.id), errorMessage);
+        Assertions.assertEquals(MessageFormat.format("There are {0} users that are already in another group", 1), errorMessage);
         Assertions.assertNotEquals(user.getGroupActivity(), groupDestination);
     }
 
@@ -140,24 +149,22 @@ public class GroupActivityServiceTest {
     public void testAddToFullGroupValidation() {
         val activity = new Activity();
         val user = UserFixture.generateUser();
-        activity.userList.add(user);
-        activity.setCreatedBy(user);
-
+        injectUserInActivity(activity, user);
         injectWorkflowInActivity(activity);
 
         val document = spy(documentService.createDocument(UUID.randomUUID(), "", Set.of(user)));
 
         val group = groupService.createGroup(activity);
         groupService.addUserToGroup(group, user, document);
-        val secondUser = UserFixture.generateUser();
 
-        activity.groupActivities.add(group);
+        val secondUser = UserFixture.generateUser();
+        activity.addParticipant(secondUser);
 
         String message = Assertions.assertThrows(UserInvalidOperationException.class, () -> {
             groupService.addUserToGroup(group, secondUser, document);
         }).getMessage();
 
-        String expectedErrorMessage = MessageFormat.format("The user {0} can't be placed on group {1} because its is full", secondUser.id, group.id);
+        String expectedErrorMessage = MessageFormat.format("There are {0} users that can''t be placed on group {1} because its above the capacity", 1, group.getUuid());
         Assertions.assertEquals(expectedErrorMessage, message);
         BDDMockito.then(document).should(atMostOnce()).assignParticipant(any());
     }
@@ -178,24 +185,61 @@ public class GroupActivityServiceTest {
             groupService.addUserToGroup(group, mainUser, document);
         }).getMessage();
         String expectedErrorMessage = MessageFormat
-                .format("The user {0} can't be placed on group {1} because it not belongs to activity {2}",
-                        mainUser.id, group.id, activity.uuid);
+                .format("There are {0} users that can''t be placed on group {1} because it not belongs to activity {2}",
+                        1, group.getUuid(), activity.uuid);
         Assertions.assertEquals(expectedErrorMessage, message);
     }
 
-    private void injectWorkflowInActivity(Activity activity) {
-        val workflow = WorkflowFixture.generateWorkflow(
-                List.of(WorkflowFixture.generateStage(
-                        ActivityStages.PRE, List.of(new CircleOfWriters()))));
 
-        activity.setWorkflow(workflow);
+//  GROUP REMOVE USER FROM GROUP
+    @Test
+    @DisplayName("Should remove user from group")
+    @Disabled
+    public void testRemoveUser() {
+        val activity = new Activity();
+        val user = UserFixture.generateUser();
+        injectUserInActivity(activity, user);
+        injectWorkflowInActivity(activity);
+
+        val document = spy(documentService.createDocument(UUID.randomUUID(), "", Set.of(user)));
+        val group = spy(groupService.createGroup(activity));
+        groupService.addUserToGroup(group, user, document);
+
+        Assertions.assertTrue(document.getParticipantsAssigned().contains(user));
+        Assertions.assertTrue(group.getParticipants().contains(user));
+
+        groupService.removeUserFromGroup(activity, user);
+        Assertions.assertFalse(document.getParticipantsAssigned().contains(user));
+        Assertions.assertFalse(group.getParticipants().contains(user));
+
+        BDDMockito.then(document).should().removeParticipant(user);
+        BDDMockito.then(group).should().removeParticipant(user);
     }
 
-    private void injectUserInActivity(Activity activity, User user) {
-        activity.addParticipant(user);
-        activity.setCreatedBy(user);
+    @Test
+    @DisplayName("Should delete group after last user is removed")
+    @Disabled
+    public void testEmptyGroupAfterRemove() {
+        val activity = new Activity();
+        val user = UserFixture.generateUser();
+        injectUserInActivity(activity, user);
+        injectWorkflowInActivity(activity);
+
+        val document = documentService.createDocument(UUID.randomUUID(), "", Set.of(user));
+        val group = groupService.createGroup(activity);
+        groupService.addUserToGroup(group, user, document);
+        groupService.removeUserFromGroup(activity, user);
+
+        Assertions.assertFalse(activity.getGroupActivities().contains(group));
+
+//  @TODO This test is false positive. Try to find some scenarios to verify if the Group was really deleted.
+        groupActivityMockedStatic.verify(() -> GroupActivity.delete((String) any(), (Object) any()));
+
+        Assertions.assertEquals(0, GroupActivity.find("uuid", group.getUuid()).count());
+        Assertions.assertNull(document.getGroupActivity());
     }
 
+//  GROUP transferUserToGroup
     @Test
     @DisplayName("Should transfer an user between groups")
     @Disabled
@@ -219,16 +263,32 @@ public class GroupActivityServiceTest {
 
     @Test
     @DisplayName("Should not let transfer from group if destination group is full")
+    @Disabled
     public void testTransferUserToFullGroup() {
         throw new NotImplementedYetException();
     }
 
     //    Capacity scenarios
     @Test
-    @DisplayName("Should create a group with capacity same number of activity participants")
-    @Disabled
+    @DisplayName("Should create a group with list same capacity number of activity participants")
     public void testGroupCapacityAsSameActivityParticipantNumber() {
-        throw new NotImplementedYetException();
+        val activity = new Activity();
+        val user = UserFixture.generateUser();
+        val user1 = UserFixture.generateUser();
+        val user2 = UserFixture.generateUser();
+
+        injectUserInActivity(activity, user);
+        injectWorkflowInActivity(activity);
+
+        activity.addParticipant(user1);
+        activity.addParticipant(user2);
+        activity.persistAndFlush();
+
+        val group = groupService.createGroup(activity, Set.of(new User[]{user, user1, user2}));
+        group.persist();
+
+        Assertions.assertEquals(3, group.getCapacity());
+        Assertions.assertEquals(activity.getUserList().size(), group.getCapacity());
     }
 
     @Test
@@ -242,22 +302,105 @@ public class GroupActivityServiceTest {
     @DisplayName("Should change capacity of group")
     @Disabled
     public void testChangeGroupCapacity() {
-        throw new NotImplementedYetException();
+        val activity = new Activity();
+        val user = UserFixture.generateUser();
+
+        injectUserInActivity(activity, user);
+        injectWorkflowInActivity(activity);
+
+        val users = generateSetUsers();
+        users.add(user);
+
+        activity.getUserList().addAll(users);
+
+        val group = groupService.createGroup(activity, users);
+        group.persist();
+
+        val newCapacity = users.size();
+        groupService.changeGroupCapacity(activity, group, newCapacity);
+        users.size(); group.getCapacity();
+        Assertions.assertEquals(newCapacity, group.getCapacity());
     }
 
     @Test
-    @DisplayName("Should not change capacity when the new quantity is greater than number of participants")
-    @Disabled
+    @DisplayName("Should not change capacity when the new quantity is less than the number of GROUP participants")
     public void testChangeGroupCapacityBelowParticipantsNumberValidation() {
-        throw new NotImplementedYetException();
+        val activity = new Activity();
+        val user = UserFixture.generateUser();
+
+        injectUserInActivity(activity, user);
+        injectWorkflowInActivity(activity);
+
+        val users = generateSetUsers();
+        activity.getUserList().addAll(users);
+
+        val group = groupService.createGroup(activity, users);
+        group.persist();
+
+        val newCapacity = 2;
+        val errorMessage = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            groupService.changeGroupCapacity(activity, group, newCapacity);
+        }).getMessage();
+
+        String expectedMessage = MessageFormat.format("Capacity {0} is less than the number of group {1} participants ({2})", newCapacity, group.getUuid(), group.getParticipants().size());
+        Assertions.assertEquals(expectedMessage, errorMessage);
+        Assertions.assertEquals(activity.getUserList().size(), group.getCapacity());
     }
 
-    //    Document scenarios
+    @Test
+    @DisplayName("Should not change capacity when the new quantity is higher than the number of ACTIVITY participants")
+    public void testChangeGroupCapacityAboveOfActivityParticipants() {
+        val activity = new Activity();
+        val user = UserFixture.generateUser();
+
+        injectUserInActivity(activity, user);
+        injectWorkflowInActivity(activity);
+
+        val users = generateSetUsers();
+        activity.getUserList().addAll(users);
+        activity.persist();
+
+        val group = groupService.createGroup(activity, users);
+        group.persist();
+
+        val newCapacity = activity.getUserList().size() + 1;
+
+        val errorMessage = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            groupService.changeGroupCapacity(activity, group, newCapacity);
+        }).getMessage();
+
+        String expectedMessage = MessageFormat.format("Capacity {0} is more than the number of activity {1} participants ({2})", newCapacity, activity.getUuid(), activity.getUserList().size());
+        Assertions.assertEquals(expectedMessage, errorMessage);
+        Assertions.assertEquals(activity.getUserList().size(), group.getCapacity());
+    }
+
+
+//    Document scenarios
 //    @TODO Create document implementation first
     @Test
-    @DisplayName("Should add document and users whenever is possible")
+    @DisplayName("Should add document when create a group")
     @Disabled
     public void testAddDocumentAndUsers() {
-        throw new NotImplementedYetException();
+
+    }
+
+    private Set<User> generateSetUsers() {
+        return Set.of(new User[]{
+                UserFixture.generateUser(), UserFixture.generateUser(),
+                UserFixture.generateUser(), UserFixture.generateUser(),
+                UserFixture.generateUser(), UserFixture.generateUser()});
+    }
+
+    private void injectWorkflowInActivity(Activity activity) {
+        val workflow = WorkflowFixture.generateWorkflow(
+                List.of(WorkflowFixture.generateStage(
+                        ActivityStages.PRE, List.of(new CircleOfWriters()))));
+
+        activity.setWorkflow(workflow);
+    }
+
+    private void injectUserInActivity(Activity activity, User user) {
+        activity.addParticipant(user);
+        activity.setCreatedBy(user);
     }
 }

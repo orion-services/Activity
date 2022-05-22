@@ -110,6 +110,7 @@ public class WorkflowManageServiceTest {
                 .validate(any(), any());
 
         User user = UserFixture.generateUser();
+        user.persist();
 
         Activity activity = new Activity();
         activity.createdBy = user;
@@ -119,6 +120,8 @@ public class WorkflowManageServiceTest {
                 stage.addStep(new ReverseSnowball());
             }
         });
+
+        activity.persist();
 
         val aggregateException = Assertions.assertThrows(AggregateException.class, () -> testThis.apply(activity, user));
 

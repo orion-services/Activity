@@ -12,7 +12,7 @@ public class GroupRepository implements PanacheRepository<GroupActivity> {
     public void setNextParticipantByActivity(Activity activity, User user){
         GroupActivity groupActivity = find("activity", activity).firstResult();
         if (!groupActivity.getParticipants().contains(user)) {
-            throw new NotFoundException(MessageFormat.format("User {0} not in group {1}", user.externalId, groupActivity.id));
+            throw new NotFoundException(MessageFormat.format("User {0} not in group {1}", user.externalId, groupActivity.getUuid()));
         }
 
     }

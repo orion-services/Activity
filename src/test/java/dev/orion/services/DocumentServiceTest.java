@@ -71,6 +71,7 @@ public class DocumentServiceTest {
     @DisplayName("Should create document and have side effects")
     public void testDocumentCreationSideEffects() {
         val user = UserFixture.generateUser();
+        user.persist();
         val initialText = Faker.instance().yoda().quote();
         val requestUuid = UUID.randomUUID();
 
