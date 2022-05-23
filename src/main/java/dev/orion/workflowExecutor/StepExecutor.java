@@ -1,4 +1,4 @@
-package dev.orion.workflow;
+package dev.orion.workflowExecutor;
 
 import dev.orion.commom.exceptions.NotValidActionException;
 import dev.orion.entity.Activity;

@@ -25,6 +25,7 @@ public class BrokerStarter {
         if (isRunningTestProfile()) {
             return;
         }
+
         try {
             documentEditorConsumer.attachQueueListener();
         } catch (IOException e) {

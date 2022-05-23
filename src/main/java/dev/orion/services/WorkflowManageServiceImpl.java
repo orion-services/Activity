@@ -2,25 +2,24 @@ package dev.orion.services;
 
 import dev.orion.commom.exceptions.IncompleteWorkflowException;
 import dev.orion.commom.exceptions.NotValidActionException;
-import dev.orion.entity.Activity;
-import dev.orion.entity.Stage;
-import dev.orion.entity.Step;
-import dev.orion.entity.User;
+import dev.orion.entity.*;
 import dev.orion.services.interfaces.WorkflowManageService;
 import dev.orion.util.AggregateException;
-import dev.orion.workflow.CircleStepExecutor;
-import dev.orion.workflow.ReverseSnowBallStepExecutor;
-import dev.orion.workflow.StepExecutor;
+import dev.orion.workflowExecutor.CircleStepExecutor;
+import dev.orion.workflowExecutor.ReverseSnowBallStepExecutor;
+import dev.orion.workflowExecutor.StepExecutor;
 import io.quarkus.arc.log.LoggerName;
 import lombok.val;
 import org.jboss.logging.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.transaction.Transactional;
 import java.text.MessageFormat;
 import java.util.*;
 
 @ApplicationScoped
+@Transactional
 public class WorkflowManageServiceImpl implements WorkflowManageService {
     private final Map<String, StepExecutor> stepExecutorsMap = new HashMap<>();
 
@@ -58,6 +57,19 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
             executionQueue.poll().run();
         }
     }
+
+    @Override
+    public Workflow createOrUpdateWorkflow(Set<Stage> stages, String name, String description) {
+        val workflow = (Workflow) Workflow.find("name", name).firstResultOptional().orElse(new Workflow());
+        workflow.setName(name);
+        workflow.setDescription(description);
+        workflow.setStages(stages);
+
+        workflow.persist();
+
+        return workflow;
+    }
+
 
     private Queue<Runnable> createExecutionQueue(List<Step> steps, Activity activity, User performer) {
         Queue<Runnable> executionQueue = new LinkedList<>();
