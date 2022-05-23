@@ -4,16 +4,14 @@ import dev.orion.commom.enums.ActivityStages;
 import dev.orion.commom.enums.CircularStepFlowDirectionTypes;
 import dev.orion.commom.exceptions.IncompleteWorkflowException;
 import dev.orion.commom.exceptions.NotValidActionException;
-import dev.orion.entity.Activity;
-import dev.orion.entity.Stage;
-import dev.orion.entity.User;
-import dev.orion.entity.Workflow;
+import dev.orion.entity.*;
 import dev.orion.entity.step_type.CircleOfWriters;
 import dev.orion.entity.step_type.ReverseSnowball;
 import dev.orion.fixture.UserFixture;
+import dev.orion.fixture.WorkflowFixture;
 import dev.orion.util.AggregateException;
-import dev.orion.workflow.CircleStepExecutor;
-import dev.orion.workflow.ReverseSnowBallStepExecutor;
+import dev.orion.workflowExecutor.CircleStepExecutor;
+import dev.orion.workflowExecutor.ReverseSnowBallStepExecutor;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
 import lombok.val;
@@ -27,6 +25,9 @@ import org.mockito.MockitoAnnotations;
 
 import javax.inject.Inject;
 import javax.transaction.Transactional;
+
+import java.util.List;
+import java.util.Set;
 
 import static org.mockito.Mockito.*;
 
@@ -151,6 +152,47 @@ public class WorkflowManageServiceTest {
         Assertions.assertThrows(IncompleteWorkflowException.class, () -> testThis.apply(activity, user));
         BDDMockito.then(reverseSnowBallStepExecutor).should(never()).execute(any(), any());
         BDDMockito.then(circleStepExecutor).should(never()).execute(any(), any());
+    }
+
+//    DOCUMENT createWorkflow
+    @Test
+    @DisplayName("Should create an workflow")
+    public void testWorkflowCreation() {
+        val name = Faker.instance().rickAndMorty().character();
+        val description = Faker.instance().science().element();
+        val stepList = List.of(new Step[]{new CircleOfWriters(CircularStepFlowDirectionTypes.FROM_BEGIN_TO_END)});
+        val stagePre = Set.of(WorkflowFixture.generateStage(ActivityStages.PRE, stepList));
+
+        val workflow = testThis.createOrUpdateWorkflow(stagePre, name, description);
+
+        Assertions.assertNotNull(workflow);
+        Assertions.assertNotNull(workflow.id);
+        Assertions.assertEquals(name, workflow.getName());
+        Assertions.assertEquals(description, workflow.getDescription());
+        Assertions.assertFalse(workflow.getStages().isEmpty());
+    }
+
+    @Test
+    @DisplayName("Should update an workflow")
+    public void testWorkflowUpdate() {
+        val name = Faker.instance().rickAndMorty().character();
+        val description = Faker.instance().science().element();
+        val stepList = List.of(new Step[]{new CircleOfWriters(CircularStepFlowDirectionTypes.FROM_BEGIN_TO_END)});
+        val stagePre = Set.of(WorkflowFixture.generateStage(ActivityStages.PRE, stepList));
+
+        var workflow = testThis.createOrUpdateWorkflow(stagePre, name, description);
+        val oldId = workflow.id;
+        val workflowName = workflow.getName();
+
+//        reset the workflow variable
+        workflow = null;
+
+        val newWorkflow = testThis.createOrUpdateWorkflow(stagePre, workflowName, Faker.instance().science().element());
+
+        newWorkflow.setName(Faker.instance().rickAndMorty().character());
+        Assertions.assertNotNull(newWorkflow);
+        Assertions.assertEquals(oldId, newWorkflow.id);
+        Assertions.assertNotEquals(newWorkflow.getDescription(), description);
     }
 
     private Workflow generateWorkflow() {

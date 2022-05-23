@@ -153,7 +153,6 @@
             <groupId>net.datafaker</groupId>
             <artifactId>datafaker</artifactId>
             <version>1.2.0</version>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>

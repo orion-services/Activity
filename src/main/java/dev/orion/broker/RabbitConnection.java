@@ -4,6 +4,8 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 
+import io.quarkus.runtime.configuration.ProfileManager;
+import lombok.val;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.jboss.logging.Logger;
 
@@ -26,6 +28,7 @@ public abstract class RabbitConnection {
     protected RabbitConnection(String queueName) throws IOException, TimeoutException, URISyntaxException, NoSuchAlgorithmException, KeyManagementException {
         this.queueName = queueName;
         final Optional<String> optHostString = ConfigProvider.getConfig().getOptionalValue("rabbit.host",String.class);
+
         if (optHostString.isEmpty()) {
             LOG.warn("Hosting of rabbitMq empty, not connecting to the broker");
             return;
@@ -40,8 +43,13 @@ public abstract class RabbitConnection {
     }
 
     private void setupConnectionAndChannel(String host) throws URISyntaxException, NoSuchAlgorithmException, KeyManagementException, IOException, TimeoutException {
+        val activeProfile = ProfileManager.getActiveProfile();
         if (connection == null) {
-            factory.setUri(host);
+            if (activeProfile.equalsIgnoreCase("dev")) {
+                setLocalHost();
+            } else {
+                factory.setUri(host);
+            }
             connection = factory.newConnection();
         }
 
