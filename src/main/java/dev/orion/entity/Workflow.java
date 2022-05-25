@@ -22,6 +22,7 @@ public class Workflow extends PanacheEntity {
     @Column(nullable = false)
     private String name;
 
+    @Column(length = 500)
     private String description;
 
     @OneToMany(cascade = CascadeType.ALL)
