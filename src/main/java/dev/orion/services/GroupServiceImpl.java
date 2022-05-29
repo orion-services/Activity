@@ -46,6 +46,7 @@ public class GroupServiceImpl implements GroupService {
         val document = documentService.createDocument(UUID.randomUUID(), "", users);
 
         group.addDocument(document);
+        group.setCapacity(users.size());
 
         addUserListToGroup(group, users, document);
 

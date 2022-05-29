@@ -31,6 +31,8 @@ import java.text.MessageFormat;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.mockito.Mockito.*;
 
@@ -192,7 +194,6 @@ public class GroupActivityServiceTest {
 //  GROUP REMOVE USER FROM GROUP
     @Test
     @DisplayName("Should remove user from group")
-    @Disabled
     public void testRemoveUser() {
         val activity = new Activity();
         val user = UserFixture.generateUser();
@@ -216,7 +217,6 @@ public class GroupActivityServiceTest {
 
     @Test
     @DisplayName("Should delete group after last user is removed")
-    @Disabled
     public void testEmptyGroupAfterRemove() {
         val activity = new Activity();
         val user = UserFixture.generateUser();
@@ -290,27 +290,37 @@ public class GroupActivityServiceTest {
     }
 
     @Test
-    @DisplayName("Should create a group with same number of provided user list")
-    @Disabled
+    @DisplayName("Should create a group with capacity with same number of provided user list")
     public void testGroupCapacityAsSameProvidedUserList() {
-        throw new NotImplementedYetException();
+        val activity = new Activity();
+        val author = UserFixture.generateUser();
+
+        var users = generateSetUsers();
+        activity.getUserList().addAll(users);
+        injectUserInActivity(activity, author);
+        injectWorkflowInActivity(activity);
+
+        activity.persist();
+
+        val group = groupService.createGroup(activity, users);
+
+        Assertions.assertEquals(users.size(), group.getParticipants().size());
+        Assertions.assertEquals(users.size(), group.getCapacity());
     }
 
     @Test
     @DisplayName("Should change capacity of group")
-    @Disabled
     public void testChangeGroupCapacity() {
         val activity = new Activity();
-        val user = UserFixture.generateUser();
+        val author = UserFixture.generateUser();
 
-        injectUserInActivity(activity, user);
+        injectUserInActivity(activity, author);
         injectWorkflowInActivity(activity);
 
         val users = generateSetUsers();
-        users.add(user);
-
         activity.getUserList().addAll(users);
 
+        users.add(author);
         val group = groupService.createGroup(activity, users);
         group.persist();
 
@@ -334,6 +344,7 @@ public class GroupActivityServiceTest {
 
         val group = groupService.createGroup(activity, users);
         group.persist();
+        val groupCapacityHolder = group.getCapacity();
 
         val newCapacity = 2;
         val errorMessage = Assertions.assertThrows(IllegalArgumentException.class, () -> {
@@ -342,7 +353,7 @@ public class GroupActivityServiceTest {
 
         String expectedMessage = MessageFormat.format("Capacity {0} is less than the number of group {1} participants ({2})", newCapacity, group.getUuid(), group.getParticipants().size());
         Assertions.assertEquals(expectedMessage, errorMessage);
-        Assertions.assertEquals(activity.getUserList().size(), group.getCapacity());
+        Assertions.assertEquals(groupCapacityHolder, group.getCapacity());
     }
 
     @Test
@@ -359,17 +370,17 @@ public class GroupActivityServiceTest {
         activity.persist();
 
         val group = groupService.createGroup(activity, users);
-        group.persist();
+        val groupCapacityHolder = group.getCapacity();
 
-        val newCapacity = activity.getUserList().size() + 1;
+        val overCapacity = activity.getUserList().size() + 1;
 
         val errorMessage = Assertions.assertThrows(IllegalArgumentException.class, () -> {
-            groupService.changeGroupCapacity(activity, group, newCapacity);
+            groupService.changeGroupCapacity(activity, group, overCapacity);
         }).getMessage();
 
-        String expectedMessage = MessageFormat.format("Capacity {0} is more than the number of activity {1} participants ({2})", newCapacity, activity.getUuid(), activity.getUserList().size());
+        String expectedMessage = MessageFormat.format("Capacity {0} is more than the number of activity {1} participants ({2})", overCapacity, activity.getUuid(), activity.getUserList().size());
         Assertions.assertEquals(expectedMessage, errorMessage);
-        Assertions.assertEquals(activity.getUserList().size(), group.getCapacity());
+        Assertions.assertEquals(groupCapacityHolder, group.getCapacity());
     }
 
 
@@ -377,16 +388,27 @@ public class GroupActivityServiceTest {
 //    @TODO Create document implementation first
     @Test
     @DisplayName("Should add document when create a group with list")
-    @Disabled
     public void testAddDocumentAndUsers() {
+        val activity = new Activity();
+        val user = UserFixture.generateUser();
 
+        injectUserInActivity(activity, user);
+        injectWorkflowInActivity(activity);
+
+        val users = generateSetUsers();
+        activity.getUserList().addAll(users);
+        activity.persist();
+
+        val group = groupService.createGroup(activity, users);
+
+        Assertions.assertFalse(group.getDocuments().isEmpty());
     }
 
     private Set<User> generateSetUsers() {
-        return Set.of(new User[]{
+        return Stream.of(new User[]{
                 UserFixture.generateUser(), UserFixture.generateUser(),
                 UserFixture.generateUser(), UserFixture.generateUser(),
-                UserFixture.generateUser(), UserFixture.generateUser()});
+                UserFixture.generateUser(), UserFixture.generateUser()}).collect(Collectors.toSet());
     }
 
     private void injectWorkflowInActivity(Activity activity) {
