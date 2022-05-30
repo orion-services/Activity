@@ -1,21 +1,26 @@
 package dev.orion.services;
 
+import com.mysql.cj.protocol.Message;
 import dev.orion.broker.dto.ActivityUpdateMessageDto;
 import dev.orion.broker.producer.ActivityUpdateProducer;
 import dev.orion.commom.enums.UserStatus;
 import dev.orion.commom.exceptions.UserInvalidOperationException;
 import dev.orion.entity.Activity;
 import dev.orion.entity.User;
-import dev.orion.services.dto.UserEnhancedWithExternalDataResponse;
+import dev.orion.entity.Workflow;
+import dev.orion.services.dto.UserEnhancedWithExternalData;
 import dev.orion.services.interfaces.ActivityService;
+import dev.orion.services.interfaces.GroupService;
 import dev.orion.services.interfaces.UserService;
 import io.quarkus.arc.log.LoggerName;
 import lombok.val;
 import org.jboss.logging.Logger;
+import org.slf4j.helpers.MessageFormatter;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.transaction.Transactional;
+import javax.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -32,18 +37,24 @@ public class ActivityServiceImpl implements ActivityService {
     @Inject
     ActivityUpdateProducer activityUpdateProducer;
 
+    @Inject
+    GroupService groupService;
+
     @LoggerName("ActivityService")
     Logger logger;
 
     @Override
-    public UUID createActivity(final String userExternalId) {
+    public UUID createActivity(final String userExternalId, String workflowName) {
         val completeUserData = userService.getCompleteUserData(userExternalId);
-
-        validateUserToJoinInNewActivity(completeUserData);
+        val workflow = Workflow
+                .findByName(workflowName)
+                .orElseThrow(() -> new NotFoundException(MessageFormat.format("Workflow with name {} not found", workflowName)));
 
         Activity newActivity = new Activity();
         newActivity.createdBy = completeUserData.userEntity;
         newActivity.isActive = true;
+        newActivity.setWorkflow(workflow);
+        newActivity.addGroup(groupService.createGroup(newActivity));
 
         newActivity.persist();
         logger.info(MessageFormat.format("Activity created with UUID: {0} by user {1}", newActivity.uuid, userExternalId));
@@ -52,7 +63,7 @@ public class ActivityServiceImpl implements ActivityService {
 
     @Override
     public Activity addUserInActivity(UUID activityUuid, String userExternalId) {
-        UserEnhancedWithExternalDataResponse user = userService.getCompleteUserData(userExternalId);
+        UserEnhancedWithExternalData user = userService.getCompleteUserData(userExternalId);
         Optional<Activity> activityOpt = Activity.findByIdOptional(activityUuid);
 
         if (activityOpt.isEmpty()) {
@@ -137,7 +148,7 @@ public class ActivityServiceImpl implements ActivityService {
     @Override
     public Boolean canUserEditDocument(UUID activityUuid, String userExternalId) {
         Optional<Activity> activityOptional = Activity.findByIdOptional(activityUuid);
-        UserEnhancedWithExternalDataResponse user = userService.getCompleteUserData(userExternalId);
+        UserEnhancedWithExternalData user = userService.getCompleteUserData(userExternalId);
 
         if (activityOptional.isEmpty() || user == null) {
             logger.warn(MessageFormat.format("Activity {0} not found", activityUuid));
@@ -197,7 +208,7 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
 
-    private void validateUserToJoinInNewActivity(UserEnhancedWithExternalDataResponse user) throws UserInvalidOperationException {
+    private void validateUserToJoinInNewActivity(UserEnhancedWithExternalData user) throws UserInvalidOperationException {
         if (user.status != UserStatus.AVAILABLE || Boolean.FALSE.equals(user.isActive)) {
             String exceptionMessage = MessageFormat.format("User {0} is not available to join activity", user.uuid);
             throw new UserInvalidOperationException(exceptionMessage);

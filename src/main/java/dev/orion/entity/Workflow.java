@@ -11,6 +11,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.OneToMany;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 @Entity
@@ -30,5 +31,8 @@ public class Workflow extends PanacheEntity {
 
     public void addStepStage(Stage stage) {
         stages.add(stage);
+    }
+    public static Optional<Workflow> findByName(String name) {
+        return Workflow.find("name", name).firstResultOptional();
     }
 }

@@ -22,6 +22,7 @@ import javax.transaction.Transactional;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.text.MessageFormat;
+import java.util.List;
 import java.util.Optional;
 
 import static io.restassured.RestAssured.given;
@@ -42,7 +43,7 @@ public class ActivityEndpointTest {
 
     @BeforeEach
     public void setup() {
-        UserClientResponse userClientResponse = new UserClientResponse(userExternalId, userName, true);
+        UserClientResponse userClientResponse = new UserClientResponse(userExternalId, userName, true, List.of("dd"));
         when(userClient.getUserByExternalId(userExternalId))
                 .thenReturn(userClientResponse);
     }
@@ -107,7 +108,7 @@ public class ActivityEndpointTest {
     void testActivityCreationUserDeactivate() {
         var requestDto = new CreateActivityRequestDtoV1();
         requestDto.setUserExternalId(userExternalId);
-        UserClientResponse userClientResponse = new UserClientResponse(userExternalId, userName, false);
+        UserClientResponse userClientResponse = new UserClientResponse(userExternalId, userName, false, List.of("Role"));
         when(userClient
                 .getUserByExternalId(userExternalId))
                 .thenReturn(userClientResponse);
