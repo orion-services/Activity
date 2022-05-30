@@ -5,7 +5,7 @@ import dev.orion.entity.Activity;
 import java.util.UUID;
 
 public interface ActivityService {
-    UUID createActivity(String userToken);
+    UUID createActivity(String userToken, String workflowName);
     Activity addUserInActivity(UUID activityUuid, String userExternalId);
     Activity removeUserFromActivity(UUID activityUuid, String userExternalId);
     void disconnectUserFromActivity(UUID activityUuid, String userExternalId);

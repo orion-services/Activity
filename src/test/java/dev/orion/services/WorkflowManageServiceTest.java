@@ -16,6 +16,7 @@ import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
 import lombok.val;
 import net.datafaker.Faker;
+import org.jboss.resteasy.spi.NotImplementedYetException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -154,7 +155,7 @@ public class WorkflowManageServiceTest {
         BDDMockito.then(circleStepExecutor).should(never()).execute(any(), any());
     }
 
-//    DOCUMENT createWorkflow
+//   Workflow creation with createWorkflow
     @Test
     @DisplayName("Should create an workflow")
     public void testWorkflowCreation() {
@@ -170,6 +171,12 @@ public class WorkflowManageServiceTest {
         Assertions.assertEquals(name, workflow.getName());
         Assertions.assertEquals(description, workflow.getDescription());
         Assertions.assertFalse(workflow.getStages().isEmpty());
+    }
+
+    @Test
+    @DisplayName("Workflow creation must have at least stage for during phase")
+    public void test() {
+        throw new NotImplementedYetException();
     }
 
     @Test

@@ -31,7 +31,7 @@ public class Activity extends PanacheEntityBase {
     @OneToOne
     public User userRound;
 
-    @OneToMany(mappedBy = "activity", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "activity", cascade = CascadeType.PERSIST)
     @OrderColumn
     @JsonManagedReference
     public Set<User> userList = new LinkedHashSet<>();
@@ -39,7 +39,7 @@ public class Activity extends PanacheEntityBase {
     @ManyToOne(cascade = CascadeType.ALL, optional = false)
     public Workflow workflow;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, cascade = CascadeType.PERSIST)
     public User createdBy;
 
     public ActivityStages actualStage = ActivityStages.PRE;
@@ -64,5 +64,10 @@ public class Activity extends PanacheEntityBase {
     public void addParticipant(User user) {
         user.setActivity(this);
         userList.add(user);
+    }
+
+    public void addGroup(GroupActivity groupActivity) {
+        groupActivity.setActivityOwner(this);
+        this.groupActivities.add(groupActivity);
     }
 }

@@ -43,7 +43,7 @@ public class ActivityEndpoint {
     @Produces(MediaType.APPLICATION_JSON)
     @APIResponseSchema(CreateActivityResponseV1.class)
     public Response createActivity(@Valid CreateActivityRequestDtoV1 createActivityRequestDtoV1) {
-        var activityUuid = activityService.createActivity(createActivityRequestDtoV1.getUserExternalId());
+        var activityUuid = activityService.createActivity(createActivityRequestDtoV1.getUserExternalId(), "");
         CreateActivityResponseV1 responseBody = new CreateActivityResponseV1();
         responseBody.setUuid(activityUuid);
 

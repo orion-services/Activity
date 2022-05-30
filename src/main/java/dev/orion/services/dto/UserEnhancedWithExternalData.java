@@ -5,13 +5,13 @@ import dev.orion.entity.User;
 import dev.orion.commom.enums.UserStatus;
 
 
-public class UserEnhancedWithExternalDataResponse extends UserClientResponse {
+public class UserEnhancedWithExternalData extends UserClientResponse {
     public Long id;
     public UserStatus status;
     public User userEntity;
 
-    public UserEnhancedWithExternalDataResponse(User userEntity, UserClientResponse userClientResponse) {
-        super(userClientResponse.uuid, userClientResponse.name, userClientResponse.isActive);
+    public UserEnhancedWithExternalData(User userEntity, UserClientResponse userClientResponse) {
+        super(userClientResponse.uuid, userClientResponse.name, userClientResponse.isActive, userClientResponse.role);
         this.id = userEntity.id;
         this.status = userEntity.status;
         this.userEntity = userEntity;
