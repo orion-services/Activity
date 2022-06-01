@@ -2,7 +2,7 @@ package dev.orion.services.dto;
 
 import dev.orion.client.dto.UserClientResponse;
 import dev.orion.entity.User;
-import dev.orion.commom.enums.UserStatus;
+import dev.orion.commom.constant.UserStatus;
 
 
 public class UserEnhancedWithExternalData extends UserClientResponse {

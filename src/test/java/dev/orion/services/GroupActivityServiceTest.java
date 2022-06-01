@@ -2,8 +2,8 @@ package dev.orion.services;
 
 import dev.orion.client.DocumentClient;
 import dev.orion.client.dto.CreateDocumentResponse;
-import dev.orion.commom.enums.ActivityStages;
-import dev.orion.commom.exceptions.UserInvalidOperationException;
+import dev.orion.commom.constant.ActivityStages;
+import dev.orion.commom.exception.UserInvalidOperationException;
 import dev.orion.entity.Activity;
 import dev.orion.entity.Document;
 import dev.orion.entity.GroupActivity;

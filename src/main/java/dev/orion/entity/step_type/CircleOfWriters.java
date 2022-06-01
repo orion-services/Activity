@@ -1,6 +1,6 @@
 package dev.orion.entity.step_type;
 
-import dev.orion.commom.enums.CircularStepFlowDirectionTypes;
+import dev.orion.commom.constant.CircularStepFlowDirectionTypes;
 import dev.orion.entity.Step;
 import lombok.*;
 

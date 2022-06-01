@@ -1,14 +1,11 @@
 package dev.orion.util.setup;
 
-import dev.orion.broker.BrokerStarter;
-import dev.orion.commom.enums.ActivityStages;
+import dev.orion.commom.constant.ActivityStages;
 import dev.orion.entity.Stage;
 import dev.orion.entity.step_type.CircleOfWriters;
-import dev.orion.services.WorkflowManageServiceImpl;
 import dev.orion.services.interfaces.WorkflowManageService;
 import io.quarkus.arc.log.LoggerName;
 import io.quarkus.runtime.StartupEvent;
-import io.quarkus.runtime.configuration.ProfileManager;
 import lombok.val;
 import net.datafaker.Faker;
 import org.jboss.logging.Logger;
@@ -16,7 +13,6 @@ import org.jboss.logging.Logger;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
-import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.Set;
 

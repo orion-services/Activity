@@ -1,7 +1,7 @@
 package dev.orion.entity;
 
-import dev.orion.commom.enums.ActivityStages;
-import dev.orion.commom.enums.CircularStepFlowDirectionTypes;
+import dev.orion.commom.constant.ActivityStages;
+import dev.orion.commom.constant.CircularStepFlowDirectionTypes;
 import dev.orion.entity.step_type.CircleOfWriters;
 import io.quarkus.test.junit.QuarkusTest;
 import net.datafaker.Faker;

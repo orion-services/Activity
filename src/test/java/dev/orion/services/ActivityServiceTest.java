@@ -1,13 +1,14 @@
 package dev.orion.services;
 
-import dev.orion.commom.enums.ActivityStages;
+import dev.orion.commom.constant.ActivityStages;
+import dev.orion.commom.constant.UserRoles;
+import dev.orion.commom.exception.UserInvalidOperationException;
 import dev.orion.entity.Activity;
 import dev.orion.entity.Step;
 import dev.orion.entity.Workflow;
 import dev.orion.entity.step_type.CircleOfWriters;
 import dev.orion.fixture.UserFixture;
 import dev.orion.fixture.WorkflowFixture;
-import dev.orion.services.dto.UserEnhancedWithExternalData;
 import dev.orion.services.interfaces.ActivityService;
 import dev.orion.services.interfaces.UserService;
 import dev.orion.services.interfaces.WorkflowManageService;
@@ -16,14 +17,16 @@ import io.quarkus.test.junit.mockito.InjectMock;
 import lombok.val;
 import org.apache.commons.lang3.NotImplementedException;
 import org.junit.jupiter.api.*;
-import org.mockito.ArgumentMatchers;
 import org.mockito.BDDMockito;
 import org.mockito.MockitoAnnotations;
 
 import javax.inject.Inject;
 import javax.transaction.Transactional;
+import java.text.MessageFormat;
 import java.util.List;
 import java.util.UUID;
+
+import static org.mockito.ArgumentMatchers.anyString;
 
 @QuarkusTest
 @Transactional
@@ -45,7 +48,7 @@ public class ActivityServiceTest {
     public void setup() {
         MockitoAnnotations.openMocks(this);
         BDDMockito
-                .given(userService.getCompleteUserData(ArgumentMatchers.anyString()))
+                .given(userService.getCompleteUserData(anyString()))
                 .willReturn(UserFixture.generateUserEnhancedWithExternalDataDto());
         setWorkflow();
     }
@@ -67,29 +70,54 @@ public class ActivityServiceTest {
 
         Activity activity = Activity.findById(activityUuid);
 
-
         Assertions.assertNotNull(activityUuid);
-        Assertions.assertNotNull(workflow);
+        Assertions.assertNotNull(activity.getWorkflow());
         Assertions.assertTrue(activity.getUserList().isEmpty());
         Assertions.assertFalse(activity.getGroupActivities().isEmpty());
     }
 
+//    Activity creation user validations
     @Test
-    @DisplayName("Should call API to check if the user can create activities")
-    public void testShouldCreateAnActivityWithUser() {
-        throw new NotImplementedException();
+    @DisplayName("Should throw when creator user is not active and try create activity")
+    public void testNotActiveUserTryingToCreateActivity() {
+        val user = UserFixture.generateUserEnhancedWithExternalDataDto();
+        user.isActive = false;
+
+        BDDMockito
+                .given(userService.getCompleteUserData(anyString()))
+                .willReturn(user);
+        val exceptionMessage = Assertions.assertThrows(UserInvalidOperationException.class, () -> {
+            testingThis.createActivity(userCreatorUUID, workflow.getName());
+        }).getMessage();
+
+        BDDMockito.then(userService).should().getCompleteUserData(userCreatorUUID);
+        val expectedException = MessageFormat.format(
+                "The user {0} must be active to create an activity", user.uuid);
+        Assertions.assertEquals(
+                expectedException,
+                exceptionMessage);
     }
 
     @Test
-    @DisplayName("Activity must have a group")
-    public void testActivityHasGroup() {
-        throw new NotImplementedException();
-    }
+    @DisplayName("Should throw when creator user is not active and try create activity")
+    public void testNotInRoleUserTryingToCreateActivity() {
+        val user = UserFixture.generateUserEnhancedWithExternalDataDto();
+        user.isActive = false;
+        user.role.add(UserRoles.CREATOR);
 
-    @Test
-    @DisplayName("Activity must have a workflow")
-    public void testActivityHasWorkflow() {
-        throw new NotImplementedException();
+        BDDMockito
+                .given(userService.getCompleteUserData(anyString()))
+                .willReturn(user);
+        val exceptionMessage = Assertions.assertThrows(UserInvalidOperationException.class, () -> {
+            testingThis.createActivity(userCreatorUUID, workflow.getName());
+        }).getMessage();
+
+        BDDMockito.then(userService).should().getCompleteUserData(userCreatorUUID);
+        val expectedException = MessageFormat.format(
+                "The user {0} must be active to create an activity", user.uuid);
+        Assertions.assertEquals(
+                expectedException,
+                exceptionMessage);
     }
 
     @Test

@@ -1,7 +1,7 @@
 package dev.orion.entity;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import dev.orion.commom.enums.ActivityStages;
+import dev.orion.commom.constant.ActivityStages;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import lombok.AccessLevel;
 import lombok.Getter;

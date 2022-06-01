@@ -1,9 +1,8 @@
 package dev.orion.entity;
 
-import dev.orion.commom.enums.ActivityStages;
-import dev.orion.commom.enums.UserStatus;
+import dev.orion.commom.constant.UserStatus;
 import dev.orion.fixture.UserFixture;
-import dev.orion.commom.enums.CircularStepFlowDirectionTypes;
+import dev.orion.commom.constant.CircularStepFlowDirectionTypes;
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Test;
 

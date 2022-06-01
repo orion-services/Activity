@@ -1,6 +1,6 @@
 package dev.orion.workflowExecutor;
 
-import dev.orion.commom.exceptions.NotValidActionException;
+import dev.orion.commom.exception.NotValidActionException;
 import dev.orion.entity.Activity;
 import dev.orion.entity.User;
 

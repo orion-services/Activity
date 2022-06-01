@@ -1,6 +1,6 @@
 package dev.orion.services;
 
-import dev.orion.commom.exceptions.UserInvalidOperationException;
+import dev.orion.commom.exception.UserInvalidOperationException;
 import dev.orion.entity.Activity;
 import dev.orion.entity.Document;
 import dev.orion.entity.GroupActivity;

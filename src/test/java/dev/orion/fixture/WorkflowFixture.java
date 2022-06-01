@@ -1,12 +1,9 @@
 package dev.orion.fixture;
 
-import dev.orion.commom.enums.ActivityStages;
-import dev.orion.commom.enums.CircularStepFlowDirectionTypes;
+import dev.orion.commom.constant.ActivityStages;
 import dev.orion.entity.Stage;
 import dev.orion.entity.Step;
 import dev.orion.entity.Workflow;
-import dev.orion.entity.step_type.CircleOfWriters;
-import dev.orion.entity.step_type.ReverseSnowball;
 import lombok.val;
 import net.datafaker.Faker;
 

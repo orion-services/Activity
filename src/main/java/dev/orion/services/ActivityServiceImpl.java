@@ -1,10 +1,9 @@
 package dev.orion.services;
 
-import com.mysql.cj.protocol.Message;
 import dev.orion.broker.dto.ActivityUpdateMessageDto;
 import dev.orion.broker.producer.ActivityUpdateProducer;
-import dev.orion.commom.enums.UserStatus;
-import dev.orion.commom.exceptions.UserInvalidOperationException;
+import dev.orion.commom.constant.UserStatus;
+import dev.orion.commom.exception.UserInvalidOperationException;
 import dev.orion.entity.Activity;
 import dev.orion.entity.User;
 import dev.orion.entity.Workflow;
@@ -15,7 +14,6 @@ import dev.orion.services.interfaces.UserService;
 import io.quarkus.arc.log.LoggerName;
 import lombok.val;
 import org.jboss.logging.Logger;
-import org.slf4j.helpers.MessageFormatter;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -46,6 +44,8 @@ public class ActivityServiceImpl implements ActivityService {
     @Override
     public UUID createActivity(final String userExternalId, String workflowName) {
         val completeUserData = userService.getCompleteUserData(userExternalId);
+        validateUserCanCreateActivity(completeUserData);
+
         val workflow = Workflow
                 .findByName(workflowName)
                 .orElseThrow(() -> new NotFoundException(MessageFormat.format("Workflow with name {} not found", workflowName)));
@@ -59,6 +59,15 @@ public class ActivityServiceImpl implements ActivityService {
         newActivity.persist();
         logger.info(MessageFormat.format("Activity created with UUID: {0} by user {1}", newActivity.uuid, userExternalId));
         return newActivity.uuid;
+    }
+
+    private void validateUserCanCreateActivity(UserEnhancedWithExternalData user) {
+        if (!user.isActive) {
+            val exceptionMessage = MessageFormat.format("The user {0} must be active to create an activity", user.uuid);
+            throw new UserInvalidOperationException(exceptionMessage);
+        }
+
+//        if (user.role)
     }
 
     @Override
