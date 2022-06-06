@@ -8,6 +8,7 @@ import dev.orion.services.dto.UserEnhancedWithExternalData;
 import net.datafaker.Faker;
 
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.UUID;
 
 final public class UserFixture {
@@ -24,7 +25,7 @@ final public class UserFixture {
         userClientResponse.uuid = UUID.randomUUID().toString();
         userClientResponse.isActive = true;
         userClientResponse.name = Faker.instance().funnyName().name();
-        userClientResponse.role = Arrays.asList(new String[]{UserRoles.CREATOR, UserRoles.PARTICIPANT});
+        userClientResponse.role = new LinkedList<>(Arrays.asList(new String[]{UserRoles.CREATOR, UserRoles.PARTICIPANT}));
 
         return userClientResponse;
     }
