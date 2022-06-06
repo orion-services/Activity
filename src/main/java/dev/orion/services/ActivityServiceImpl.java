@@ -2,6 +2,7 @@ package dev.orion.services;
 
 import dev.orion.broker.dto.ActivityUpdateMessageDto;
 import dev.orion.broker.producer.ActivityUpdateProducer;
+import dev.orion.commom.constant.UserRoles;
 import dev.orion.commom.constant.UserStatus;
 import dev.orion.commom.exception.UserInvalidOperationException;
 import dev.orion.entity.Activity;
@@ -48,7 +49,7 @@ public class ActivityServiceImpl implements ActivityService {
 
         val workflow = Workflow
                 .findByName(workflowName)
-                .orElseThrow(() -> new NotFoundException(MessageFormat.format("Workflow with name {} not found", workflowName)));
+                .orElseThrow(() -> new NotFoundException(MessageFormat.format("Workflow with name {0} not found", workflowName)));
 
         Activity newActivity = new Activity();
         newActivity.createdBy = completeUserData.userEntity;
@@ -62,12 +63,23 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
     private void validateUserCanCreateActivity(UserEnhancedWithExternalData user) {
+        Optional<UserInvalidOperationException> exceptionOptional = Optional.empty();
         if (!user.isActive) {
             val exceptionMessage = MessageFormat.format("The user {0} must be active to create an activity", user.uuid);
-            throw new UserInvalidOperationException(exceptionMessage);
+            exceptionOptional = Optional.of(new UserInvalidOperationException(exceptionMessage));
         }
 
-//        if (user.role)
+        if (!user.role.contains(UserRoles.CREATOR)) {
+            val exceptionMessage = MessageFormat.format("The user {0} must have role {1} to create an activity", user.uuid, UserRoles.CREATOR);
+            exceptionOptional = Optional.of(new UserInvalidOperationException(exceptionMessage));
+        }
+
+        exceptionOptional.ifPresentOrElse(e -> {
+            logger.error(e.getMessage());
+            throw e;
+        }, () -> {
+            logger.info(MessageFormat.format("User {0} is legit to create activity", user.uuid));
+        });
     }
 
     @Override

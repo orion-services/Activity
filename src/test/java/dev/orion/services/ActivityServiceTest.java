@@ -15,13 +15,17 @@ import dev.orion.services.interfaces.WorkflowManageService;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
 import lombok.val;
-import org.apache.commons.lang3.NotImplementedException;
-import org.junit.jupiter.api.*;
+import net.datafaker.Faker;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.mockito.BDDMockito;
 import org.mockito.MockitoAnnotations;
 
 import javax.inject.Inject;
 import javax.transaction.Transactional;
+import javax.ws.rs.NotFoundException;
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.UUID;
@@ -99,11 +103,10 @@ public class ActivityServiceTest {
     }
 
     @Test
-    @DisplayName("Should throw when creator user is not active and try create activity")
+    @DisplayName("Should throw when user does not have creator role and try create activity")
     public void testNotInRoleUserTryingToCreateActivity() {
-        val user = UserFixture.generateUserEnhancedWithExternalDataDto();
-        user.isActive = false;
-        user.role.add(UserRoles.CREATOR);
+        var user = UserFixture.generateUserEnhancedWithExternalDataDto();
+        user.role.remove(UserRoles.CREATOR);
 
         BDDMockito
                 .given(userService.getCompleteUserData(anyString()))
@@ -114,7 +117,7 @@ public class ActivityServiceTest {
 
         BDDMockito.then(userService).should().getCompleteUserData(userCreatorUUID);
         val expectedException = MessageFormat.format(
-                "The user {0} must be active to create an activity", user.uuid);
+                "The user {0} must have role {1} to create an activity", user.uuid, UserRoles.CREATOR);
         Assertions.assertEquals(
                 expectedException,
                 exceptionMessage);
@@ -123,6 +126,15 @@ public class ActivityServiceTest {
     @Test
     @DisplayName("Activity must throw an exception on creation when a workflow is not found")
     public void testActivityWorkflowValidation() {
-        throw new NotImplementedException();
+        val invalidWorkflowName =  Faker.instance().aviation().aircraft();
+        val exceptionMessage = Assertions.assertThrows(NotFoundException.class, () -> {
+            testingThis.createActivity(userCreatorUUID, invalidWorkflowName);
+        }).getMessage();
+
+        val expectedExceptionMessage = MessageFormat.format(
+                "Workflow with name {0} not found", invalidWorkflowName);
+        Assertions.assertEquals(
+                expectedExceptionMessage,
+                exceptionMessage);
     }
 }
