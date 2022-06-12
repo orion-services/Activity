@@ -1,5 +1,6 @@
 package dev.orion.services;
 
+import dev.orion.commom.constant.ActivityStages;
 import dev.orion.commom.exception.IncompleteWorkflowException;
 import dev.orion.commom.exception.NotValidActionException;
 import dev.orion.entity.*;
@@ -60,6 +61,10 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
 
     @Override
     public Workflow createOrUpdateWorkflow(Set<Stage> stages, String name, String description) {
+        if (stages.stream().noneMatch(stage -> stage.getStage().equals(ActivityStages.DURING))) {
+            throw new IncompleteWorkflowException("Cannot create workflow without have a DURING phase stage");
+        }
+
         val workflow = (Workflow) Workflow.find("name", name).firstResultOptional().orElse(new Workflow());
         workflow.setName(name);
         workflow.setDescription(description);
