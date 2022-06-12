@@ -49,15 +49,21 @@ public class ActivityServiceImpl implements ActivityService {
                 .findByName(workflowName)
                 .orElseThrow(() -> new NotFoundException(MessageFormat.format("Workflow with name {0} not found", workflowName)));
 
-        Activity newActivity = new Activity();
-        newActivity.createdBy = completeUserData.userEntity;
-        newActivity.isActive = true;
-        newActivity.setWorkflow(workflow);
-        newActivity.addGroup(groupService.createGroup(newActivity));
-
+        Activity newActivity = mountNewActivity(completeUserData, workflow);
         newActivity.persist();
+
         logger.info(MessageFormat.format("Activity created with UUID: {0} by user {1}", newActivity.uuid, userExternalId));
         return newActivity.uuid;
+    }
+
+    private Activity mountNewActivity(UserEnhancedWithExternalData completeUserData, Workflow workflow) {
+        Activity activity = new Activity();
+        activity.createdBy = completeUserData.userEntity;
+        activity.isActive = true;
+        activity.setWorkflow(workflow);
+        activity.addGroup(groupService.createGroup(activity));
+
+        return activity;
     }
 
     private void validateUserCanCreateActivity(UserEnhancedWithExternalData user) {
