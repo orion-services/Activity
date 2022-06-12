@@ -2,6 +2,7 @@ package dev.orion.services;
 
 import dev.orion.broker.dto.ActivityUpdateMessageDto;
 import dev.orion.broker.producer.ActivityUpdateProducer;
+import dev.orion.commom.constant.ActivityStages;
 import dev.orion.commom.constant.UserRoles;
 import dev.orion.commom.constant.UserStatus;
 import dev.orion.commom.exception.UserInvalidOperationException;
@@ -22,10 +23,7 @@ import javax.transaction.Transactional;
 import javax.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @ApplicationScoped
 @Transactional
@@ -85,38 +83,73 @@ public class ActivityServiceImpl implements ActivityService {
     @Override
     public Activity addUserInActivity(UUID activityUuid, String userExternalId) {
         UserEnhancedWithExternalData user = userService.getCompleteUserData(userExternalId);
-        Optional<Activity> activityOpt = Activity.findByIdOptional(activityUuid);
+        Optional<Activity> optionalActivity = Activity.findByIdOptional(activityUuid);
+        setUserToAvailableIfDroppedFromActivity(user.userEntity);
 
-        if (activityOpt.isEmpty()) {
-            throw new UserInvalidOperationException("Activity not found");
-        }
+        validateUserInsertion(optionalActivity, user, activityUuid);
+        var activity = optionalActivity.get();
 
-        var activity = activityOpt.get();
-        if (activity.userList.contains(user.userEntity)) {
-            if (user.isActive == Boolean.FALSE) {
-                throw new UserInvalidOperationException(MessageFormat.format("User {0} must be active to join in activity", userExternalId));
-            } else if (activity.isActive == Boolean.FALSE) {
-                throw new UserInvalidOperationException(MessageFormat.format("Activity {0} must be active to add an user", activity.uuid));
-            }
-        } else {
-            if (user.userEntity.activity != null && user.userEntity.status == UserStatus.DISCONNECTED) {
-                user.userEntity.activity.userList.remove(user.userEntity);
-                user.userEntity.status = UserStatus.AVAILABLE;
-            }
-            validateUserToJoinInNewActivity(user);
-            activity.userList.add(user.userEntity);
-        }
-
-
-        if (activity.userRound == null) {
-            activity.userRound = user.userEntity;
-        }
+        activity.addParticipant(user.userEntity);
         user.userEntity.status = UserStatus.CONNECTED;
-        user.userEntity.activity = activity;
 
         logger.info(MessageFormat.format("User ({0}) added to activity: ({1})", user.uuid, activity.uuid));
+        activity.persist();
 
         return activity;
+    }
+
+    private void validateUserInsertion(Optional<Activity> optionalActivity, UserEnhancedWithExternalData user, UUID activityUuid) {
+        if (optionalActivity.isEmpty()) {
+            throw new UserInvalidOperationException(MessageFormat.format("Activity with UUID {0} not found", activityUuid));
+        }
+
+        val activity = optionalActivity.get();
+        if (activity.actualStage != ActivityStages.PRE) {
+            String exceptionMessage = MessageFormat.format("Cannot add user {0} to Activity {1} because it has already start", user.uuid, activity.uuid);
+            throw new UserInvalidOperationException(exceptionMessage);
+        }
+
+        if (Boolean.FALSE == activity.isActive) {
+            String exceptionMessage = MessageFormat.format("Activity {0} must be active to add user {1}", activityUuid, user.uuid);
+            throw new UserInvalidOperationException(exceptionMessage);
+        }
+
+        validateUserToJoinInNewActivity(user);
+    }
+
+    private void setUserToAvailableIfDroppedFromActivity(User user) {
+        if (user.activity != null && user.status == UserStatus.DISCONNECTED) {
+            user.activity.remove(user);
+            user.status = UserStatus.AVAILABLE;
+        }
+    }
+
+
+    private void validateUserToJoinInNewActivity(UserEnhancedWithExternalData user) throws UserInvalidOperationException {
+        val validationFails = new LinkedList<String>();
+
+        if (Boolean.FALSE == Objects.isNull(user.getUserEntity().activity)) {
+            String exceptionMessage = "it is already in another activity";
+            validationFails.add(exceptionMessage);
+        }
+
+        if (user.status != UserStatus.AVAILABLE) {
+            String exceptionMessage = MessageFormat.format("it is not {0}", UserStatus.AVAILABLE);
+            validationFails.add(exceptionMessage);
+        }
+
+        if (Boolean.FALSE == user.isActive) {
+            String exceptionMessage = "it is not ACTIVE";
+            validationFails.add(exceptionMessage);
+        }
+
+        if (!validationFails.isEmpty()) {
+            String exceptionMessage = MessageFormat.format("User {0} is not valid to join activity because: ", user.uuid);
+            val exception = new UserInvalidOperationException(exceptionMessage, validationFails);
+
+            logger.error(exception.getMessage());
+            throw exception;
+        }
     }
 
     @Override
@@ -229,12 +262,6 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
 
-    private void validateUserToJoinInNewActivity(UserEnhancedWithExternalData user) throws UserInvalidOperationException {
-        if (user.status != UserStatus.AVAILABLE || Boolean.FALSE.equals(user.isActive)) {
-            String exceptionMessage = MessageFormat.format("User {0} is not available to join activity", user.uuid);
-            throw new UserInvalidOperationException(exceptionMessage);
-        }
-    }
 
     private boolean activityHasOnlineParticipants(Activity activity) {
         return activity.userList.stream().anyMatch(user -> user.status == UserStatus.CONNECTED);

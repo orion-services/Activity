@@ -2,6 +2,7 @@ package dev.orion.entity;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import dev.orion.commom.constant.ActivityStages;
+import dev.orion.commom.constant.UserStatus;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -66,8 +67,26 @@ public class Activity extends PanacheEntityBase {
         userList.add(user);
     }
 
+    public void remove(User user) {
+        user.setActivity(null);
+        userList.remove(user);
+    }
+
     public void addGroup(GroupActivity groupActivity) {
         groupActivity.setActivityOwner(this);
         this.groupActivities.add(groupActivity);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Activity activity = (Activity) o;
+        return uuid.equals(activity.uuid) && workflow.equals(activity.workflow) && isActive.equals(activity.isActive);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(uuid, workflow, isActive);
     }
 }
