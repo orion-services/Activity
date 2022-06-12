@@ -127,7 +127,7 @@ public class ActivityServiceTest {
     }
 
     @Test
-    @DisplayName("Activity must throw an exception on creation when a workflow is not found")
+    @DisplayName("[createActivity] Activity must throw an exception on creation when a workflow is not found")
     public void testActivityWorkflowValidation() {
         val invalidWorkflowName =  Faker.instance().aviation().aircraft();
         val exceptionMessage = Assertions.assertThrows(NotFoundException.class, () -> {
