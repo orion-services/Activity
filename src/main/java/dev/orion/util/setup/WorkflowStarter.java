@@ -28,7 +28,7 @@ public class WorkflowStarter {
         LOGGER.info("Creating or updating workflows");
 
         val stages = generateMockStages();
-        val name = Faker.instance().funnyName().name();
+        val name = "Workflow_test";
         val description = Faker.instance().yoda().quote();
 
         val workflow = manageService.createOrUpdateWorkflow(stages, name, description);
