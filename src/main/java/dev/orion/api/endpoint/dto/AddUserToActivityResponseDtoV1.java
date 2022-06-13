@@ -22,7 +22,6 @@ public class AddUserToActivityResponseDtoV1 {
                 .stream()
                 .map(item -> item.externalId)
                 .collect(Collectors.toSet());
-        this.participantRound = activity.userRound.externalId;
         this.isActive = activity.isActive;
         this.lastUpdated = activity.getUpdatedAt();
         this.createdBy = activity.createdBy.externalId;
