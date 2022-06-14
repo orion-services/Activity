@@ -5,7 +5,6 @@
     +Uuid uuid
     +Document document
     +User[] userList
-    +User userRound
     +User createdBy
     +Boolean isActive
     +DateTime lastUpdateDateTime

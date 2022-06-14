@@ -11,6 +11,6 @@ public class CreateActivityRequestDtoV1 {
     @NotBlank(message = "User may not be blank")
     private String userExternalId;
 
-    @NotBlank
+    @NotBlank(message = "Workflow may not be blank")
     private String workflowName;
 }

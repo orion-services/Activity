@@ -179,9 +179,7 @@ public class ActivityServiceImpl implements ActivityService {
                 user.status = UserStatus.DISCONNECTED;
                 Activity activity = activityOptional.get();
                 logger.info(MessageFormat.format("User {0} was disconnect from activity {1}", userExternalId, activityUuid));
-                if (activity.userRound.equals(user) && this.activityHasOnlineParticipants(activity)) {
-                    this.nextRound(activityUuid);
-                } else {
+                if (Boolean.FALSE == this.activityHasOnlineParticipants(activity)) {
                     this.endActivity(activityUuid);
                     logger.info(MessageFormat.format("Activity {0} is deactivated due there is no online participants", activityUuid));
                 }
@@ -217,7 +215,6 @@ public class ActivityServiceImpl implements ActivityService {
 
         Activity activity = activityOptional.get();
         if (Boolean.TRUE.equals(user.isActive)
-                && activity.userRound.equals(user.userEntity)
                 && user.status.equals(UserStatus.CONNECTED)
                 && Boolean.TRUE.equals(activity.isActive)) {
             return true;
@@ -253,11 +250,11 @@ public class ActivityServiceImpl implements ActivityService {
                 this.endActivity(activity.uuid);
                 throw new UserInvalidOperationException(MessageFormat.format("Activity {0} is deactivated due there is no online participants", activityUuid));
             }
-            User nextUserRound = getNextUserRound(activity);
+//            User nextUserRound = getNextUserRound(activity);
 
-            logger.info(MessageFormat.format("Activity: {0} set the user {1} to next round", activity.uuid, nextUserRound.externalId));
+//            logger.info(MessageFormat.format("Activity: {0} set the user {1} to next round", activity.uuid, nextUserRound.externalId));
 
-            activity.userRound = nextUserRound;
+//            activity.userRound = nextUserRound;
             ActivityUpdateMessageDto activityUpdateMessageDto = new ActivityUpdateMessageDto(activity);
             try {
                 activityUpdateProducer.sendMessage(activityUpdateMessageDto);
@@ -273,21 +270,21 @@ public class ActivityServiceImpl implements ActivityService {
         return activity.userList.stream().anyMatch(user -> user.status == UserStatus.CONNECTED);
     }
 
-    private User getNextUserRound(Activity activity) {
-        User userRound = activity.userRound;
-        List<User> userQueue = new ArrayList<>(activity.userList);
-
-        int userIndexOnQueue = userQueue.indexOf(userRound);
-
-        if (userIndexOnQueue == activity.userList.size()) {
-            return userQueue.get(0);
-        }
-
-        return activity
-                .userList
-                .stream()
-                .skip(userIndexOnQueue)
-                .findFirst()
-                .get();
-    }
+//    private User getNextUserRound(Activity activity) {
+//        User userRound = activity.userRound;
+//        List<User> userQueue = new ArrayList<>(activity.userList);
+//
+//        int userIndexOnQueue = userQueue.indexOf(userRound);
+//
+//        if (userIndexOnQueue == activity.userList.size()) {
+//            return userQueue.get(0);
+//        }
+//
+//        return activity
+//                .userList
+//                .stream()
+//                .skip(userIndexOnQueue)
+//                .findFirst()
+//                .get();
+//    }
 }

@@ -24,11 +24,13 @@ public class WorkflowStarter {
     @Inject
     WorkflowManageService manageService;
 
+    public static final String GENERIC_WORKFLOW_NAME =  "Workflow_test";
+
     void onStart(@Observes StartupEvent ev) {
         LOGGER.info("Creating or updating workflows");
 
         val stages = generateMockStages();
-        val name = "Workflow_test";
+        val name = GENERIC_WORKFLOW_NAME;
         val description = Faker.instance().yoda().quote();
 
         val workflow = manageService.createOrUpdateWorkflow(stages, name, description);

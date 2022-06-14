@@ -28,10 +28,6 @@ public class Activity extends PanacheEntityBase {
     @JsonManagedReference
     public List<GroupActivity> groupActivities = new ArrayList<>();
 
-//    REMOVE
-    @OneToOne
-    public User userRound;
-
     @OneToMany(mappedBy = "activity", cascade = CascadeType.PERSIST)
     @OrderColumn
     @JsonManagedReference

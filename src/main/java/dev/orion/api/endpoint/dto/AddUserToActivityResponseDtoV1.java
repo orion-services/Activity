@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 public class AddUserToActivityResponseDtoV1 {
     public UUID uuid;
     public Set<String> participants;
-    public String participantRound;
     public Boolean isActive;
     public LocalDateTime lastUpdated;
     public String createdBy;
