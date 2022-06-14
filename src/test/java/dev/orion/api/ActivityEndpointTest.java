@@ -3,11 +3,15 @@ package dev.orion.api;
 
 import dev.orion.api.endpoint.ActivityEndpoint;
 import dev.orion.api.endpoint.dto.AddUserToActivityRequestDtoV1;
+import dev.orion.api.endpoint.dto.AddUserToActivityResponseDtoV1;
 import dev.orion.api.endpoint.dto.CreateActivityRequestDtoV1;
 import dev.orion.client.UserClient;
 import dev.orion.client.dto.UserClientResponse;
 import dev.orion.commom.constant.UserRoles;
 import dev.orion.entity.Activity;
+import dev.orion.entity.Document;
+import dev.orion.entity.GroupActivity;
+import dev.orion.entity.User;
 import dev.orion.fixture.UserFixture;
 import dev.orion.services.interfaces.ActivityService;
 import dev.orion.services.interfaces.GroupService;
@@ -20,10 +24,7 @@ import lombok.val;
 import net.bytebuddy.utility.RandomString;
 import net.datafaker.Faker;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
@@ -55,8 +56,6 @@ public class ActivityEndpointTest {
     @InjectSpy
     GroupService groupService;
 
-    UUID groupUuid;
-
     @BeforeEach
     public void setup() {
         MockitoAnnotations.openMocks(this); // Start mocks
@@ -67,15 +66,6 @@ public class ActivityEndpointTest {
 
         when(userClient.getUserByExternalId(userExternalId))
                 .thenReturn(userClientResponse);
-//        generateActivityAndGroup();
-    }
-    private void generateActivityAndGroup() {
-        val activityUuid = activityService.createActivity(userExternalId, WorkflowStarter.GENERIC_WORKFLOW_NAME);
-
-        val activity = (Activity) Activity.findById(activityUuid);
-        groupUuid = groupService.createGroup(activity).getUuid();
-
-        Mockito.clearInvocations(activityService, groupService);
     }
 
     //    Activity creation
@@ -194,7 +184,7 @@ public class ActivityEndpointTest {
     @DisplayName("[/{activityUuid}/addUser - POST] It should add user into activity")
     public void testAddUserIntoActivity() {
         val activityUuid = activityService.createActivity(userExternalId, WorkflowStarter.GENERIC_WORKFLOW_NAME);
-        given()
+        val response = given()
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(getAddUserToActivityBody())
                 .pathParam("activityUuid", activityUuid)
@@ -202,11 +192,13 @@ public class ActivityEndpointTest {
                 .post("/{activityUuid}/addUser")
                 .then()
                 .statusCode(Response.Status.OK.getStatusCode())
-                .body(containsString(activityUuid.toString()), containsString(userExternalId))
-                .body("participants", hasItem(userExternalId));
+                .extract()
+                .body()
+                .as(AddUserToActivityResponseDtoV1.class);
 
+        Assertions.assertEquals(activityUuid, response.getUuid());
+        Assertions.assertTrue(response.getParticipants().contains(userExternalId));
         then(activityService).should().addUserInActivity(activityUuid, userExternalId);
-//        then(groupService).should().addUserToGroup(activityUuid, );
     }
 
     private AddUserToActivityRequestDtoV1 getAddUserToActivityBody() {
