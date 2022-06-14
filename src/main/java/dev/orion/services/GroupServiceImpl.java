@@ -1,5 +1,6 @@
 package dev.orion.services;
 
+import com.mysql.cj.protocol.Message;
 import dev.orion.commom.exception.UserInvalidOperationException;
 import dev.orion.entity.Activity;
 import dev.orion.entity.Document;
@@ -14,6 +15,8 @@ import org.jboss.resteasy.spi.NotImplementedYetException;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.transaction.Transactional;
+import javax.ws.rs.NotFoundException;
 import java.text.MessageFormat;
 import java.util.Objects;
 import java.util.Set;
@@ -21,6 +24,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @ApplicationScoped
+@Transactional
 public class GroupServiceImpl implements GroupService {
 
     @LoggerName("GroupServiceImpl")
@@ -29,7 +33,6 @@ public class GroupServiceImpl implements GroupService {
     @Inject
     DocumentService documentService;
 
-//    @TODO add document to group
     @Override
     public GroupActivity createGroup(Activity activity) {
         val group = new GroupActivity();
@@ -54,11 +57,17 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public void addUserToGroup(GroupActivity groupActivity, User user, Document document) {
-        validateUserInsertionOnGroup(groupActivity, Set.of(user));
+    public void addUserToGroup(UUID groupUUID, User user, Document document) {
+        val group = (GroupActivity) GroupActivity.findByIdOptional(groupUUID).orElseThrow(() -> new NotFoundException(MessageFormat.format("Group {0} not found", groupUUID)));
+        addUserToGroup(group, user, document);
+    }
 
-        addUserListToGroup(groupActivity, Set.of(user), document);
-        groupActivity.persist();
+    @Override
+    public void addUserToGroup(GroupActivity group, User user, Document document) {
+        validateUserInsertionOnGroup(group, Set.of(user));
+
+        addUserListToGroup(group, Set.of(user), document);
+        group.persist();
     }
 
     private GroupActivity addUserListToGroup(GroupActivity groupActivity, Set<User> users, Document document) {

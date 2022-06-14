@@ -7,11 +7,14 @@ import dev.orion.entity.User;
 
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 public interface GroupService {
     GroupActivity createGroup(Activity activity);
     GroupActivity createGroup(Activity activity, Set<User> users);
-    void addUserToGroup(GroupActivity groupActivity, User user, Document document);
+//    Adds for test facility
+    void addUserToGroup(GroupActivity groupUUID, User user, Document document);
+    void addUserToGroup(UUID groupUUID, User user, Document document);
     void removeUserFromGroup(Activity activity, User user);
     void transferUserToGroup(Activity activity, User user, GroupActivity destinationGroupActivity);
     void changeGroupCapacity(Activity activity, GroupActivity groupActivity, Integer newCapacity);

@@ -27,6 +27,7 @@ import org.mockito.Spy;
 
 import javax.inject.Inject;
 import javax.transaction.Transactional;
+import javax.ws.rs.NotFoundException;
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.Set;
@@ -88,6 +89,47 @@ public class GroupActivityServiceTest {
         BDDMockito.then(document).should().addParticipant(user);
         BDDMockito.then(spyGroup).should().addParticipant(user);
         BDDMockito.then(spyGroup).should().addDocument(document);
+    }
+
+    @Test
+    @DisplayName("[addUserToGroup] Should add user to the group by group UUID")
+    public void testAddToTheGroupByUuid() {
+        val activity = new Activity();
+        val user = UserFixture.generateUser();
+
+        injectUserInActivity(activity, user);
+        injectWorkflowInActivity(activity);
+
+        val document = spy(documentService.createDocument(UUID.randomUUID(), "", Set.of(user)));
+
+        val group = testThis.createGroup(activity);
+        group.persist();
+        activity.groupActivities.add(group);
+
+        testThis.addUserToGroup(group.getUuid(), user, document);
+
+        Assertions.assertEquals(group.getParticipants().size(), 1);
+        Assertions.assertEquals(user.getGroupActivity(), group);
+        Assertions.assertTrue(document.getParticipantsAssigned().contains(user));
+        Assertions.assertTrue(group.getDocuments().contains(document));
+
+        BDDMockito.then(document).should().addParticipant(user);
+    }
+
+    @Test
+    @DisplayName("[addUserToGroup] Should throw when group is not found")
+    public void testValidateFindGroupByUuidWhenAddUserToGroup() {
+        val user = UserFixture.generateUser();
+        user.persist();
+
+        val document = spy(documentService.createDocument(UUID.randomUUID(), "", Set.of(user)));
+        val groupUUID = UUID.randomUUID();
+        val exceptionMessage = Assertions.assertThrows(NotFoundException.class, () ->
+                testThis.addUserToGroup(groupUUID, user, document)).getMessage();
+
+        val expectedExceptionMessage = MessageFormat.format("Group {0} not found", groupUUID);
+        Assertions.assertEquals(expectedExceptionMessage, exceptionMessage);
+        BDDMockito.then(document).should(never()).setGroupActivity(any());
     }
 
     @Test

@@ -7,6 +7,7 @@ import dev.orion.api.endpoint.dto.CreateActivityResponseV1;
 import dev.orion.entity.Activity;
 import dev.orion.services.interfaces.ActivityService;
 import dev.orion.commom.exception.UserInvalidOperationException;
+import dev.orion.services.interfaces.GroupService;
 import lombok.val;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponseSchema;
 import org.jboss.resteasy.annotations.jaxrs.PathParam;
@@ -18,12 +19,16 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.text.MessageFormat;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Path("/v1/activity")
 public class ActivityEndpoint {
 
     @Inject
     ActivityService activityService;
+
+    @Inject
+    GroupService groupService;
 
     @GET
     @Path("/{activityUuid}")
@@ -45,8 +50,11 @@ public class ActivityEndpoint {
     @APIResponseSchema(CreateActivityResponseV1.class)
     public Response createActivity(@Valid CreateActivityRequestDtoV1 createActivityRequestDtoV1) {
         val activityUuid = activityService.createActivity(createActivityRequestDtoV1.getUserExternalId(), createActivityRequestDtoV1.getWorkflowName());
+        val activity = (Activity) Activity.findById(activityUuid);
+
         val responseBody = new CreateActivityResponseV1();
         responseBody.setUuid(activityUuid);
+        responseBody.setGroups(activity.getGroupActivities().stream().map(groupActivity -> groupActivity.getUuid()).collect(Collectors.toList()));
 
         return Response
                 .status(Response.Status.CREATED)
