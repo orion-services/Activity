@@ -5,18 +5,25 @@ import dev.orion.api.endpoint.ActivityEndpoint;
 import dev.orion.api.endpoint.dto.AddUserToActivityRequestDtoV1;
 import dev.orion.api.endpoint.dto.AddUserToActivityResponseDtoV1;
 import dev.orion.api.endpoint.dto.CreateActivityRequestDtoV1;
+import dev.orion.api.endpoint.dto.DefaultErrorResponseDtoV1;
 import dev.orion.client.UserClient;
 import dev.orion.client.dto.UserClientResponse;
+import dev.orion.commom.constant.ActivityStages;
 import dev.orion.commom.constant.UserRoles;
+import dev.orion.commom.constant.UserStatus;
 import dev.orion.entity.Activity;
-import dev.orion.entity.Document;
-import dev.orion.entity.GroupActivity;
-import dev.orion.entity.User;
 import dev.orion.fixture.UserFixture;
+import dev.orion.services.UserServiceImpl;
+import dev.orion.services.dto.UserEnhancedWithExternalData;
 import dev.orion.services.interfaces.ActivityService;
 import dev.orion.services.interfaces.GroupService;
+import dev.orion.services.interfaces.UserService;
 import dev.orion.util.setup.WorkflowStarter;
+import io.quarkus.hibernate.orm.panache.PanacheEntity;
+import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import io.quarkus.panache.mock.PanacheMock;
 import io.quarkus.test.common.http.TestHTTPEndpoint;
+import io.quarkus.test.junit.QuarkusMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
 import io.quarkus.test.junit.mockito.InjectSpy;
@@ -25,13 +32,17 @@ import net.bytebuddy.utility.RandomString;
 import net.datafaker.Faker;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.junit.jupiter.api.*;
+import org.mockito.BDDMockito;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
-import javax.inject.Inject;
+import javax.transaction.TransactionScoped;
+import javax.transaction.Transactional;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.text.MessageFormat;
+import java.util.Optional;
 import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
@@ -44,9 +55,8 @@ import static org.mockito.Mockito.when;
 
 @QuarkusTest
 @TestHTTPEndpoint(ActivityEndpoint.class)
-@Disabled
 public class ActivityEndpointTest {
-    final private String userExternalId = RandomString.make();
+    final private String userUuid = RandomString.make();
     final private String userName = Faker.instance().name().fullName();
     @InjectMock
     @RestClient
@@ -61,11 +71,10 @@ public class ActivityEndpointTest {
         MockitoAnnotations.openMocks(this); // Start mocks
 
         UserClientResponse userClientResponse = UserFixture.generateClientResponseDto();
-        userClientResponse.uuid = userExternalId;
+        userClientResponse.uuid = userUuid;
         userClientResponse.name = userName;
 
-        when(userClient.getUserByExternalId(userExternalId))
-                .thenReturn(userClientResponse);
+        mockUserRequest(userClientResponse);
     }
 
     //    Activity creation
@@ -83,7 +92,7 @@ public class ActivityEndpointTest {
                 .extract()
                 .path("uuid");
 
-        then(activityService).should().createActivity(userExternalId, WorkflowStarter.GENERIC_WORKFLOW_NAME);
+        then(activityService).should().createActivity(userUuid, WorkflowStarter.GENERIC_WORKFLOW_NAME);
         val activity = (Activity) Activity.findById(UUID.fromString(uuid));
         then(groupService).should().createGroup(activity);
     }
@@ -115,7 +124,7 @@ public class ActivityEndpointTest {
         userClientResponse.isActive = false;
 
         when(userClient
-                .getUserByExternalId(userExternalId))
+                .getUserByExternalId(userUuid))
                 .thenReturn(userClientResponse);
 
         val expectedErrorMessage = MessageFormat.format("The user {0} must be active to create an activity", userClientResponse.uuid);
@@ -137,7 +146,7 @@ public class ActivityEndpointTest {
         userClientResponse.role.remove(UserRoles.CREATOR);
 
         when(userClient
-                .getUserByExternalId(userExternalId))
+                .getUserByExternalId(userUuid))
                 .thenReturn(userClientResponse);
 
         val expectedErrorMessage = MessageFormat.format("The user {0} must have role {1} to create an activity", userClientResponse.uuid, UserRoles.CREATOR);
@@ -173,35 +182,161 @@ public class ActivityEndpointTest {
 
     private CreateActivityRequestDtoV1 getActivityCreationRequestDto() {
         val requestDto = new CreateActivityRequestDtoV1();
-        requestDto.setUserExternalId(userExternalId);
+        requestDto.setUserExternalId(userUuid);
         requestDto.setWorkflowName(WorkflowStarter.GENERIC_WORKFLOW_NAME);
 
         return requestDto;
     }
 
-// Add user into activity
+    // Add user into activity
     @Test
     @DisplayName("[/{activityUuid}/addUser - POST] It should add user into activity")
     public void testAddUserIntoActivity() {
-        val activityUuid = activityService.createActivity(userExternalId, WorkflowStarter.GENERIC_WORKFLOW_NAME);
-        val response = given()
+        val activityUuid = activityService.createActivity(userUuid, WorkflowStarter.GENERIC_WORKFLOW_NAME);
+        val response = requestAddUserInActivity(activityUuid, AddUserToActivityResponseDtoV1.class, Response.Status.OK.getStatusCode());
+
+        Assertions.assertEquals(activityUuid, response.getUuid());
+        Assertions.assertTrue(response.getParticipants().contains(userUuid));
+        then(activityService).should().addUserInActivity(activityUuid, userUuid);
+    }
+
+    @Test
+    @DisplayName("[/{activityUuid}/addUser - POST] Activity must validate if activity exists")
+    public void testAddUserValidateActivityExists() {
+        val randomUUID = UUID.randomUUID();
+        val response = requestAddUserInActivity(randomUUID, DefaultErrorResponseDtoV1.class, Response.Status.BAD_REQUEST.getStatusCode());
+
+        val expectedExceptionMessage = MessageFormat.format("Activity with UUID {0} not found", randomUUID);
+        Assertions.assertTrue(response.getErrors().contains(expectedExceptionMessage));
+    }
+
+    @Test
+    @DisplayName("[/{activityUuid}/addUser - POST] Activity must validate if user is in another activity before try add")
+    public void testAddUserAlreadyInAnotherActivity() {
+        val activityUuid = activityService.createActivity(userUuid, WorkflowStarter.GENERIC_WORKFLOW_NAME);
+
+        val userEnhancedWithExternalData = UserFixture.generateUserEnhancedWithExternalDataDto();
+        userEnhancedWithExternalData.getUserEntity().activity = new Activity();
+        val userService = mockEnhancedUser(userEnhancedWithExternalData);
+
+        val response = requestAddUserInActivity(activityUuid, DefaultErrorResponseDtoV1.class, Response.Status.BAD_REQUEST.getStatusCode());
+
+        val expectedExceptionMessage = MessageFormat.format("User {0} is not valid to join activity because: it is already in another activity", userEnhancedWithExternalData.uuid);
+        Assertions.assertTrue(response.getErrors().contains(expectedExceptionMessage));
+        BDDMockito.then(userService).should().getCompleteUserData(userUuid);
+    }
+
+    @Test
+    @DisplayName("[/{activityUuid}/addUser - POST] Activity must validate if user is active before try add")
+    public void testAddUserNotActive() {
+        val activityUuid = activityService.createActivity(userUuid, WorkflowStarter.GENERIC_WORKFLOW_NAME);
+        val userEnhancedWithExternalData = UserFixture.generateUserEnhancedWithExternalDataDto();
+        userEnhancedWithExternalData.isActive = false;
+        val userService = mockEnhancedUser(userEnhancedWithExternalData);
+
+        val response = requestAddUserInActivity(activityUuid, DefaultErrorResponseDtoV1.class, Response.Status.BAD_REQUEST.getStatusCode());
+
+        val expectedExceptionMessage = MessageFormat.format("User {0} is not valid to join activity because: it is not ACTIVE", userEnhancedWithExternalData.uuid);
+        Assertions.assertTrue(response.getErrors().contains(expectedExceptionMessage));
+        BDDMockito.then(userService).should().getCompleteUserData(userUuid);
+    }
+
+    @Test
+    @DisplayName("[/{activityUuid}/addUser - POST] Activity must validate if user is AVAILABLE")
+    public void testAddUserNotAvailable() {
+        val activityUuid = activityService.createActivity(userUuid, WorkflowStarter.GENERIC_WORKFLOW_NAME);
+        val userEnhancedWithExternalData = UserFixture.generateUserEnhancedWithExternalDataDto();
+        userEnhancedWithExternalData.status = UserStatus.CONNECTED;
+        mockEnhancedUser(userEnhancedWithExternalData);
+
+        val response = requestAddUserInActivity(activityUuid, DefaultErrorResponseDtoV1.class, Response.Status.BAD_REQUEST.getStatusCode());
+
+        val expectedExceptionMessage = MessageFormat.format("User {0} is not valid to join activity because: it is not AVAILABLE", userEnhancedWithExternalData.uuid);
+        Assertions.assertTrue(response.getErrors().contains(expectedExceptionMessage));
+    }
+
+    @Test
+    @DisplayName("[/{activityUuid}/addUser - POST] Activity must format the exception message when validation catch something on add user ")
+    public void testAddUserExceptionFormatWithMultipleErrors() {
+        val activityUuid = activityService.createActivity(userUuid, WorkflowStarter.GENERIC_WORKFLOW_NAME);
+        val userEnhancedWithExternalData = UserFixture.generateUserEnhancedWithExternalDataDto();
+        userEnhancedWithExternalData.getUserEntity().activity = new Activity();
+        userEnhancedWithExternalData.status = UserStatus.CONNECTED;
+        userEnhancedWithExternalData.isActive = false;
+
+        mockEnhancedUser(userEnhancedWithExternalData);
+
+        val response = requestAddUserInActivity(activityUuid, DefaultErrorResponseDtoV1.class, Response.Status.BAD_REQUEST.getStatusCode());
+
+        val expectedExceptionMessage = MessageFormat.format("User {0} is not valid to join activity because: it is already in another activity, it is not AVAILABLE and it is not ACTIVE", userEnhancedWithExternalData.uuid);
+        Assertions.assertTrue(response.getErrors().contains(expectedExceptionMessage));
+    }
+
+    @Test
+    @DisplayName("[/{activityUuid}/addUser - POST] Activity must validate if it is active before add user")
+    public void testAddUserValidateActivityIsActive() {
+        val activityUuid = activityService.createActivity(userUuid, WorkflowStarter.GENERIC_WORKFLOW_NAME);
+        val userEnhancedWithExternalData = UserFixture.generateUserEnhancedWithExternalDataDto();
+
+        mockEnhancedUser(userEnhancedWithExternalData);
+
+        Activity activity = Activity.findById(activityUuid);
+        activity.isActive = false;
+
+        PanacheMock.mock(Activity.class);
+        when(Activity.findByIdOptional(any())).thenReturn(Optional.of(activity));
+
+        val response = requestAddUserInActivity(activityUuid, DefaultErrorResponseDtoV1.class, Response.Status.BAD_REQUEST.getStatusCode());
+
+        val expectedExceptionMessage = MessageFormat.format("Activity {0} must be active to add user {1}", activityUuid, userEnhancedWithExternalData.uuid);
+        Assertions.assertTrue(response.getErrors().contains(expectedExceptionMessage));
+    }
+
+    @Test
+    @DisplayName("[/{activityUuid}/addUser - POST] Activity must validate if it has not started before add user")
+    public void testAddUserValidateActivityHasNotStarted() {
+        val activityUuid = activityService.createActivity(userUuid, WorkflowStarter.GENERIC_WORKFLOW_NAME);
+        val userEnhancedWithExternalData = UserFixture.generateUserEnhancedWithExternalDataDto();
+        mockEnhancedUser(userEnhancedWithExternalData);
+        Activity activity = Activity.findById(activityUuid);
+        activity.setActualStage(ActivityStages.DURING);
+
+        PanacheMock.mock(Activity.class);
+        when(Activity.findByIdOptional(any())).thenReturn(Optional.of(activity));
+
+        val response = requestAddUserInActivity(activityUuid, DefaultErrorResponseDtoV1.class, Response.Status.BAD_REQUEST.getStatusCode());
+
+        val expectedExceptionMessage = MessageFormat.format("Cannot add user {0} to Activity {1} because it has already start", userEnhancedWithExternalData.uuid, activityUuid);
+        Assertions.assertTrue(response.getErrors().contains(expectedExceptionMessage));
+    }
+
+    private <T> T requestAddUserInActivity(UUID activityUuid, Class<T> responseClass, int expectedStatusCode) {
+        return given()
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(getAddUserToActivityBody())
+                .body(new AddUserToActivityRequestDtoV1(userUuid))
                 .pathParam("activityUuid", activityUuid)
                 .when()
                 .post("/{activityUuid}/addUser")
                 .then()
-                .statusCode(Response.Status.OK.getStatusCode())
+                .statusCode(expectedStatusCode)
                 .extract()
                 .body()
-                .as(AddUserToActivityResponseDtoV1.class);
-
-        Assertions.assertEquals(activityUuid, response.getUuid());
-        Assertions.assertTrue(response.getParticipants().contains(userExternalId));
-        then(activityService).should().addUserInActivity(activityUuid, userExternalId);
+                .as(responseClass);
     }
 
-    private AddUserToActivityRequestDtoV1 getAddUserToActivityBody() {
-        return new AddUserToActivityRequestDtoV1(userExternalId);
+    private void mockUserRequest(UserClientResponse user) {
+        when(userClient.getUserByExternalId(userUuid))
+                .thenReturn(user);
+    }
+
+    private UserService mockEnhancedUser(UserEnhancedWithExternalData user) {
+        val userService = Mockito.mock(UserServiceImpl.class);
+        QuarkusMock.installMockForType(userService, UserServiceImpl.class);
+
+        BDDMockito
+                .given(userService.getCompleteUserData(anyString()))
+                .willReturn(user);
+
+        return userService;
     }
 }

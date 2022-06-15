@@ -105,6 +105,18 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
     private void validateUserInsertion(Optional<Activity> optionalActivity, UserEnhancedWithExternalData user, UUID activityUuid) {
+        validateActivityToAddUser(optionalActivity, user, activityUuid);
+        validateUserToJoinInNewActivity(user);
+    }
+
+    private void setUserToAvailableIfDroppedFromActivity(User user) {
+        if (user.activity != null && user.status == UserStatus.DISCONNECTED) {
+            user.activity.remove(user);
+            user.status = UserStatus.AVAILABLE;
+        }
+    }
+
+    private void validateActivityToAddUser(Optional<Activity> optionalActivity, UserEnhancedWithExternalData user, UUID activityUuid) {
         if (optionalActivity.isEmpty()) {
             throw new UserInvalidOperationException(MessageFormat.format("Activity with UUID {0} not found", activityUuid));
         }
@@ -119,17 +131,7 @@ public class ActivityServiceImpl implements ActivityService {
             String exceptionMessage = MessageFormat.format("Activity {0} must be active to add user {1}", activityUuid, user.uuid);
             throw new UserInvalidOperationException(exceptionMessage);
         }
-
-        validateUserToJoinInNewActivity(user);
     }
-
-    private void setUserToAvailableIfDroppedFromActivity(User user) {
-        if (user.activity != null && user.status == UserStatus.DISCONNECTED) {
-            user.activity.remove(user);
-            user.status = UserStatus.AVAILABLE;
-        }
-    }
-
 
     private void validateUserToJoinInNewActivity(UserEnhancedWithExternalData user) throws UserInvalidOperationException {
         val validationFails = new LinkedList<String>();
