@@ -43,7 +43,9 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
         setupExecutorsMap();
 
         val actualStageOpt = extractActualStage(activity);
-
+        if (actualStageOpt.isEmpty()) {
+            return;
+        }
 
         val actualStage = actualStageOpt.get();
         if (actualStage.getSteps().isEmpty()) {

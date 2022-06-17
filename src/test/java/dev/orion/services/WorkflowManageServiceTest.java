@@ -16,7 +16,6 @@ import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
 import lombok.val;
 import net.datafaker.Faker;
-import org.jboss.resteasy.spi.NotImplementedYetException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -59,7 +58,7 @@ public class WorkflowManageServiceTest {
         user.persist();
 
         Activity activity = new Activity();
-        activity.createdBy = user;
+        activity.creator = user;
         activity.workflow = generateWorkflow();
         activity.persist();
 
@@ -83,7 +82,7 @@ public class WorkflowManageServiceTest {
         user.persist();
 
         Activity activity = new Activity();
-        activity.createdBy = user;
+        activity.creator = user;
 
         //  Test incoming from database
         activity.workflow = generateWorkflow();
@@ -115,7 +114,7 @@ public class WorkflowManageServiceTest {
         user.persist();
 
         Activity activity = new Activity();
-        activity.createdBy = user;
+        activity.creator = user;
         activity.workflow = generateWorkflow();
         activity.workflow.getStages().forEach(stage -> {
             if (stage.getStage().equals(ActivityStages.PRE)) {
@@ -135,6 +134,20 @@ public class WorkflowManageServiceTest {
     }
 
     @Test
+    @DisplayName("[apply] Should do nothing when there's no step in stage")
+    public void testNoActualStageThrowValidation() {
+        Activity activity = new Activity();
+        activity.creator = UserFixture.generateUser();
+        activity.workflow = generateWorkflow();
+
+        activity.setActualStage(ActivityStages.AFTER);
+
+        testThis.apply(activity, activity.getCreator());
+        BDDMockito.then(circleStepExecutor).should(never()).execute(any(), any());
+        BDDMockito.then(reverseSnowBallStepExecutor).should(never()).execute(any(), any());
+    }
+
+    @Test
     @DisplayName("[apply] Should throw error when workflow has no stages")
     public void testShouldThrowErrorWhenWorkflowHasNoStep() {
         Workflow workflow = new Workflow();
@@ -147,7 +160,7 @@ public class WorkflowManageServiceTest {
 
         User user = UserFixture.generateUser();
         Activity activity = new Activity();
-        activity.createdBy = user;
+        activity.creator = user;
         activity.workflow = workflow;
 
         Assertions.assertThrows(IncompleteWorkflowException.class, () -> testThis.apply(activity, user));
@@ -174,7 +187,7 @@ public class WorkflowManageServiceTest {
     }
 
     @Test
-    @DisplayName("Workflow creation must have at least stage for during phase")
+    @DisplayName("[createOrUpdateWorkflow] Workflow creation must have at least stage for during phase")
     public void test() {
         val name = Faker.instance().rickAndMorty().character();
         val description = Faker.instance().science().element();

@@ -13,7 +13,7 @@ public interface GroupService {
     GroupActivity createGroup(Activity activity);
     GroupActivity createGroup(Activity activity, Set<User> users);
 //    Adds for test facility
-    void addUserToGroup(GroupActivity groupUUID, User user, Document document);
+    void addUserToGroup(GroupActivity group, User user, Document document);
     void addUserToGroup(UUID groupUUID, User user, Document document);
     void removeUserFromGroup(Activity activity, User user);
     void transferUserToGroup(Activity activity, User user, GroupActivity destinationGroupActivity);

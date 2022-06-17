@@ -2,10 +2,10 @@ package dev.orion.api;
 
 
 import dev.orion.api.endpoint.ActivityEndpoint;
-import dev.orion.api.endpoint.dto.AddUserToActivityRequestDtoV1;
-import dev.orion.api.endpoint.dto.AddUserToActivityResponseDtoV1;
-import dev.orion.api.endpoint.dto.CreateActivityRequestDtoV1;
-import dev.orion.api.endpoint.dto.DefaultErrorResponseDtoV1;
+import dev.orion.api.endpoint.body.AddUserToActivityRequestBody;
+import dev.orion.api.endpoint.body.AddUserToActivityResponseBody;
+import dev.orion.api.endpoint.body.CreateActivityRequestBody;
+import dev.orion.api.endpoint.body.DefaultErrorResponseBody;
 import dev.orion.client.UserClient;
 import dev.orion.client.dto.UserClientResponse;
 import dev.orion.commom.constant.ActivityStages;
@@ -19,8 +19,6 @@ import dev.orion.services.interfaces.ActivityService;
 import dev.orion.services.interfaces.GroupService;
 import dev.orion.services.interfaces.UserService;
 import dev.orion.util.setup.WorkflowStarter;
-import io.quarkus.hibernate.orm.panache.PanacheEntity;
-import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.panache.mock.PanacheMock;
 import io.quarkus.test.common.http.TestHTTPEndpoint;
 import io.quarkus.test.junit.QuarkusMock;
@@ -31,14 +29,12 @@ import lombok.val;
 import net.bytebuddy.utility.RandomString;
 import net.datafaker.Faker;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.*;
 import org.mockito.BDDMockito;
-import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
-import javax.transaction.TransactionScoped;
-import javax.transaction.Transactional;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.text.MessageFormat;
@@ -47,8 +43,7 @@ import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.when;
@@ -68,8 +63,6 @@ public class ActivityEndpointTest {
 
     @BeforeEach
     public void setup() {
-        MockitoAnnotations.openMocks(this); // Start mocks
-
         UserClientResponse userClientResponse = UserFixture.generateClientResponseDto();
         userClientResponse.uuid = userUuid;
         userClientResponse.name = userName;
@@ -88,13 +81,12 @@ public class ActivityEndpointTest {
                 .post()
                 .then()
                 .statusCode(Response.Status.CREATED.getStatusCode())
-                .body("uuid", notNullValue(), "groups", hasItem(notNullValue()))
+                .body("uuid", notNullValue(), "groups", is(Matchers.empty()))
                 .extract()
                 .path("uuid");
 
         then(activityService).should().createActivity(userUuid, WorkflowStarter.GENERIC_WORKFLOW_NAME);
         val activity = (Activity) Activity.findById(UUID.fromString(uuid));
-        then(groupService).should().createGroup(activity);
     }
 
     @Test
@@ -180,8 +172,8 @@ public class ActivityEndpointTest {
         then(groupService).should(never()).createGroup(any());
     }
 
-    private CreateActivityRequestDtoV1 getActivityCreationRequestDto() {
-        val requestDto = new CreateActivityRequestDtoV1();
+    private CreateActivityRequestBody getActivityCreationRequestDto() {
+        val requestDto = new CreateActivityRequestBody();
         requestDto.setUserExternalId(userUuid);
         requestDto.setWorkflowName(WorkflowStarter.GENERIC_WORKFLOW_NAME);
 
@@ -193,7 +185,7 @@ public class ActivityEndpointTest {
     @DisplayName("[/{activityUuid}/addUser - POST] It should add user into activity")
     public void testAddUserIntoActivity() {
         val activityUuid = activityService.createActivity(userUuid, WorkflowStarter.GENERIC_WORKFLOW_NAME);
-        val response = requestAddUserInActivity(activityUuid, AddUserToActivityResponseDtoV1.class, Response.Status.OK.getStatusCode());
+        val response = requestAddUserInActivity(activityUuid, AddUserToActivityResponseBody.class, Response.Status.OK.getStatusCode());
 
         Assertions.assertEquals(activityUuid, response.getUuid());
         Assertions.assertTrue(response.getParticipants().contains(userUuid));
@@ -204,7 +196,7 @@ public class ActivityEndpointTest {
     @DisplayName("[/{activityUuid}/addUser - POST] Activity must validate if activity exists")
     public void testAddUserValidateActivityExists() {
         val randomUUID = UUID.randomUUID();
-        val response = requestAddUserInActivity(randomUUID, DefaultErrorResponseDtoV1.class, Response.Status.BAD_REQUEST.getStatusCode());
+        val response = requestAddUserInActivity(randomUUID, DefaultErrorResponseBody.class, Response.Status.BAD_REQUEST.getStatusCode());
 
         val expectedExceptionMessage = MessageFormat.format("Activity with UUID {0} not found", randomUUID);
         Assertions.assertTrue(response.getErrors().contains(expectedExceptionMessage));
@@ -219,7 +211,7 @@ public class ActivityEndpointTest {
         userEnhancedWithExternalData.getUserEntity().activity = new Activity();
         val userService = mockEnhancedUser(userEnhancedWithExternalData);
 
-        val response = requestAddUserInActivity(activityUuid, DefaultErrorResponseDtoV1.class, Response.Status.BAD_REQUEST.getStatusCode());
+        val response = requestAddUserInActivity(activityUuid, DefaultErrorResponseBody.class, Response.Status.BAD_REQUEST.getStatusCode());
 
         val expectedExceptionMessage = MessageFormat.format("User {0} is not valid to join activity because: it is already in another activity", userEnhancedWithExternalData.uuid);
         Assertions.assertTrue(response.getErrors().contains(expectedExceptionMessage));
@@ -234,7 +226,7 @@ public class ActivityEndpointTest {
         userEnhancedWithExternalData.isActive = false;
         val userService = mockEnhancedUser(userEnhancedWithExternalData);
 
-        val response = requestAddUserInActivity(activityUuid, DefaultErrorResponseDtoV1.class, Response.Status.BAD_REQUEST.getStatusCode());
+        val response = requestAddUserInActivity(activityUuid, DefaultErrorResponseBody.class, Response.Status.BAD_REQUEST.getStatusCode());
 
         val expectedExceptionMessage = MessageFormat.format("User {0} is not valid to join activity because: it is not ACTIVE", userEnhancedWithExternalData.uuid);
         Assertions.assertTrue(response.getErrors().contains(expectedExceptionMessage));
@@ -249,7 +241,7 @@ public class ActivityEndpointTest {
         userEnhancedWithExternalData.status = UserStatus.CONNECTED;
         mockEnhancedUser(userEnhancedWithExternalData);
 
-        val response = requestAddUserInActivity(activityUuid, DefaultErrorResponseDtoV1.class, Response.Status.BAD_REQUEST.getStatusCode());
+        val response = requestAddUserInActivity(activityUuid, DefaultErrorResponseBody.class, Response.Status.BAD_REQUEST.getStatusCode());
 
         val expectedExceptionMessage = MessageFormat.format("User {0} is not valid to join activity because: it is not AVAILABLE", userEnhancedWithExternalData.uuid);
         Assertions.assertTrue(response.getErrors().contains(expectedExceptionMessage));
@@ -266,7 +258,7 @@ public class ActivityEndpointTest {
 
         mockEnhancedUser(userEnhancedWithExternalData);
 
-        val response = requestAddUserInActivity(activityUuid, DefaultErrorResponseDtoV1.class, Response.Status.BAD_REQUEST.getStatusCode());
+        val response = requestAddUserInActivity(activityUuid, DefaultErrorResponseBody.class, Response.Status.BAD_REQUEST.getStatusCode());
 
         val expectedExceptionMessage = MessageFormat.format("User {0} is not valid to join activity because: it is already in another activity, it is not AVAILABLE and it is not ACTIVE", userEnhancedWithExternalData.uuid);
         Assertions.assertTrue(response.getErrors().contains(expectedExceptionMessage));
@@ -286,7 +278,7 @@ public class ActivityEndpointTest {
         PanacheMock.mock(Activity.class);
         when(Activity.findByIdOptional(any())).thenReturn(Optional.of(activity));
 
-        val response = requestAddUserInActivity(activityUuid, DefaultErrorResponseDtoV1.class, Response.Status.BAD_REQUEST.getStatusCode());
+        val response = requestAddUserInActivity(activityUuid, DefaultErrorResponseBody.class, Response.Status.BAD_REQUEST.getStatusCode());
 
         val expectedExceptionMessage = MessageFormat.format("Activity {0} must be active to add user {1}", activityUuid, userEnhancedWithExternalData.uuid);
         Assertions.assertTrue(response.getErrors().contains(expectedExceptionMessage));
@@ -304,7 +296,7 @@ public class ActivityEndpointTest {
         PanacheMock.mock(Activity.class);
         when(Activity.findByIdOptional(any())).thenReturn(Optional.of(activity));
 
-        val response = requestAddUserInActivity(activityUuid, DefaultErrorResponseDtoV1.class, Response.Status.BAD_REQUEST.getStatusCode());
+        val response = requestAddUserInActivity(activityUuid, DefaultErrorResponseBody.class, Response.Status.BAD_REQUEST.getStatusCode());
 
         val expectedExceptionMessage = MessageFormat.format("Cannot add user {0} to Activity {1} because it has already start", userEnhancedWithExternalData.uuid, activityUuid);
         Assertions.assertTrue(response.getErrors().contains(expectedExceptionMessage));
@@ -313,7 +305,7 @@ public class ActivityEndpointTest {
     private <T> T requestAddUserInActivity(UUID activityUuid, Class<T> responseClass, int expectedStatusCode) {
         return given()
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(new AddUserToActivityRequestDtoV1(userUuid))
+                .body(new AddUserToActivityRequestBody(userUuid))
                 .pathParam("activityUuid", activityUuid)
                 .when()
                 .post("/{activityUuid}/addUser")

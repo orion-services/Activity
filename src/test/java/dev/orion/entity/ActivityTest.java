@@ -26,7 +26,7 @@ public class ActivityTest {
         activity.isActive = true;
         activity.workflow = new Workflow("A name", "dd", new HashSet<Stage>());
         List<User> users = populateDbWithUsers(12);
-        activity.createdBy = users.get(0);
+        activity.creator = users.get(0);
 
 //        Prevent share the same instance of user list
         activity.userList.addAll(new ArrayList<>(users));

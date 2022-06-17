@@ -1,4 +1,4 @@
-package dev.orion.api.endpoint.dto;
+package dev.orion.api.endpoint.body;
 
 import dev.orion.entity.Activity;
 import lombok.AllArgsConstructor;
@@ -15,14 +15,14 @@ import java.util.stream.Collectors;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class AddUserToActivityResponseDtoV1 {
+public class AddUserToActivityResponseBody {
     public UUID uuid;
     public Set<String> participants;
     public Boolean isActive;
     public LocalDateTime lastUpdated;
     public String createdBy;
 
-    public AddUserToActivityResponseDtoV1(Activity activity) {
+    public AddUserToActivityResponseBody(Activity activity) {
         this.uuid = activity.uuid;
         this.participants = activity
                 .userList
@@ -31,6 +31,6 @@ public class AddUserToActivityResponseDtoV1 {
                 .collect(Collectors.toSet());
         this.isActive = activity.isActive;
         this.lastUpdated = activity.getUpdatedAt();
-        this.createdBy = activity.createdBy.externalId;
+        this.createdBy = activity.creator.externalId;
     }
 }

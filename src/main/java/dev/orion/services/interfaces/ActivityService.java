@@ -10,6 +10,8 @@ public interface ActivityService {
     Activity removeUserFromActivity(UUID activityUuid, String userExternalId);
     void disconnectUserFromActivity(UUID activityUuid, String userExternalId);
     Activity endActivity(UUID activityUuid);
+
+    Activity startActivity(UUID activityUUID);
     Boolean canUserEditDocument(UUID activityUuid, String userExternalId);
     void nextRound(UUID activityUuid);
 }

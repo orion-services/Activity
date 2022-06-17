@@ -2,7 +2,6 @@ package dev.orion.entity;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import dev.orion.commom.constant.ActivityStages;
-import dev.orion.commom.constant.UserStatus;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -37,7 +36,7 @@ public class Activity extends PanacheEntityBase {
     public Workflow workflow;
 
     @ManyToOne(optional = false, cascade = CascadeType.PERSIST)
-    public User createdBy;
+    public User creator;
 
     public ActivityStages actualStage = ActivityStages.PRE;
 

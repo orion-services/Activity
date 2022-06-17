@@ -5,6 +5,7 @@ import dev.orion.broker.producer.ActivityUpdateProducer;
 import dev.orion.commom.constant.ActivityStages;
 import dev.orion.commom.constant.UserRoles;
 import dev.orion.commom.constant.UserStatus;
+import dev.orion.commom.exception.InvalidActivityActionException;
 import dev.orion.commom.exception.UserInvalidOperationException;
 import dev.orion.entity.Activity;
 import dev.orion.entity.User;
@@ -13,6 +14,7 @@ import dev.orion.services.dto.UserEnhancedWithExternalData;
 import dev.orion.services.interfaces.ActivityService;
 import dev.orion.services.interfaces.GroupService;
 import dev.orion.services.interfaces.UserService;
+import dev.orion.services.interfaces.WorkflowManageService;
 import io.quarkus.arc.log.LoggerName;
 import lombok.val;
 import org.jboss.logging.Logger;
@@ -24,6 +26,7 @@ import javax.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 @Transactional
@@ -36,6 +39,9 @@ public class ActivityServiceImpl implements ActivityService {
 
     @Inject
     GroupService groupService;
+
+    @Inject
+    WorkflowManageService workflowManageService;
 
     @LoggerName("ActivityService")
     Logger logger;
@@ -58,10 +64,9 @@ public class ActivityServiceImpl implements ActivityService {
 
     private Activity mountNewActivity(UserEnhancedWithExternalData completeUserData, Workflow workflow) {
         Activity activity = new Activity();
-        activity.createdBy = completeUserData.userEntity;
+        activity.creator = completeUserData.userEntity;
         activity.isActive = true;
         activity.setWorkflow(workflow);
-        activity.addGroup(groupService.createGroup(activity));
 
         return activity;
     }
@@ -96,7 +101,7 @@ public class ActivityServiceImpl implements ActivityService {
         var activity = optionalActivity.get();
 
         activity.addParticipant(user.userEntity);
-        user.userEntity.status = UserStatus.CONNECTED;
+        user.getUserEntity().setStatus(UserStatus.DISCONNECTED);
 
         logger.info(MessageFormat.format("User ({0}) added to activity: ({1})", user.uuid, activity.uuid));
         activity.persist();
@@ -203,6 +208,45 @@ public class ActivityServiceImpl implements ActivityService {
         }
 
         return null;
+    }
+
+    @Override
+    public Activity startActivity(UUID activityUUID) {
+        val activity = (Activity) Activity.findById(activityUUID);
+        validateActivityToStart(activity);
+
+        workflowManageService.apply(activity, activity.getCreator());
+        createGroupIfNotExists(activityUUID);
+
+        activity.setActualStage(ActivityStages.DURING);
+        return activity;
+    }
+
+    private Set<User> getNotConnectedUsers(Activity activity) {
+        return activity.userList.stream().filter(user -> user.status != UserStatus.CONNECTED).collect(Collectors.toSet());
+    }
+
+    private void validateActivityToStart(Activity activity) {
+        val notConnectedUsers = getNotConnectedUsers(activity);
+        if (Boolean.FALSE == activity.isActive) {
+            val exceptionMessage = MessageFormat.format("Activity {0} must be active", activity.uuid);
+            throw new InvalidActivityActionException(exceptionMessage);
+        }
+
+        if (Boolean.FALSE == notConnectedUsers.isEmpty()) {
+            val notConnectedUsersUUID = notConnectedUsers.stream().map(user -> user.getExternalId()).collect(Collectors.toList());
+            val exceptionMessage = MessageFormat.format("Activity {0} has the following users not connected: {1}", activity.uuid, notConnectedUsersUUID);
+            throw new InvalidActivityActionException(exceptionMessage);
+        }
+    }
+
+    private void createGroupIfNotExists(UUID activityUUID) {
+        val activity = (Activity) Activity.findById(activityUUID);
+        if (!activity.getGroupActivities().isEmpty()) {
+            return;
+        }
+
+        groupService.createGroup(activity);
     }
 
     @Override

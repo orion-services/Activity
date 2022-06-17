@@ -21,9 +21,7 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.resteasy.spi.NotImplementedYetException;
 import org.junit.jupiter.api.*;
 import org.mockito.BDDMockito;
-import org.mockito.MockedStatic;
 import org.mockito.MockitoAnnotations;
-import org.mockito.Spy;
 
 import javax.inject.Inject;
 import javax.transaction.Transactional;
@@ -458,6 +456,6 @@ public class GroupActivityServiceTest {
 
     private void injectUserInActivity(Activity activity, User user) {
         activity.addParticipant(user);
-        activity.setCreatedBy(user);
+        activity.setCreator(user);
     }
 }

@@ -1,12 +1,10 @@
-package dev.orion.api.endpoint.dto;
-
-import com.fasterxml.jackson.annotation.JsonFormat;
+package dev.orion.api.endpoint.body;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DefaultErrorResponseDtoV1 {
+public class DefaultErrorResponseBody {
     private List<String> errors = new ArrayList<>();
 
     private final LocalDateTime occurredAt = LocalDateTime.now();

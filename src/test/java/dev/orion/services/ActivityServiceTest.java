@@ -3,6 +3,8 @@ package dev.orion.services;
 import dev.orion.commom.constant.ActivityStages;
 import dev.orion.commom.constant.UserRoles;
 import dev.orion.commom.constant.UserStatus;
+import dev.orion.commom.exception.InvalidActivityActionException;
+import dev.orion.commom.exception.NotValidActionException;
 import dev.orion.commom.exception.UserInvalidOperationException;
 import dev.orion.entity.Activity;
 import dev.orion.entity.Step;
@@ -17,6 +19,7 @@ import dev.orion.services.interfaces.UserService;
 import dev.orion.services.interfaces.WorkflowManageService;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
+import io.quarkus.test.junit.mockito.InjectSpy;
 import lombok.val;
 import net.datafaker.Faker;
 import org.junit.jupiter.api.Assertions;
@@ -24,6 +27,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.BDDMockito;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import javax.inject.Inject;
@@ -32,7 +36,9 @@ import javax.ws.rs.NotFoundException;
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 
 @QuarkusTest
@@ -46,7 +52,7 @@ public class ActivityServiceTest {
 
     String userCreatorUUID = UUID.randomUUID().toString();
 
-    @Inject
+    @InjectSpy
     WorkflowManageService workflowManageService;
     Workflow workflow;
 
@@ -84,7 +90,7 @@ public class ActivityServiceTest {
         Assertions.assertNotNull(activityUuid);
         Assertions.assertNotNull(activity.getWorkflow());
         Assertions.assertTrue(activity.getUserList().isEmpty());
-        Assertions.assertFalse(activity.getGroupActivities().isEmpty());
+        Assertions.assertTrue(activity.getGroupActivities().isEmpty());
     }
 
 //    Activity creation user validations
@@ -156,7 +162,7 @@ public class ActivityServiceTest {
         Assertions.assertEquals(1, activity.getUserList().size());
         Assertions.assertEquals(activity, userEnhancedWithExternalData.getUserEntity().activity);
         Assertions.assertTrue(activity.getUserList().contains(userEnhancedWithExternalData.getUserEntity()));
-        Assertions.assertEquals(UserStatus.CONNECTED, userEnhancedWithExternalData.getUserEntity().status);
+        Assertions.assertEquals(UserStatus.DISCONNECTED, userEnhancedWithExternalData.getUserEntity().status);
     }
 
     @Test
@@ -275,5 +281,63 @@ public class ActivityServiceTest {
 
         val expectedExceptionMessage = MessageFormat.format("Cannot add user {0} to Activity {1} because it has already start", userEnhancedWithExternalData.uuid, activityUuid);
         Assertions.assertEquals(expectedExceptionMessage, exceptionMessage);
+    }
+
+    @Test
+    @DisplayName("[startActivity] Should start activity normally")
+    public void testActivityStarting() {
+        val activityUuid = testingThis.createActivity(userCreatorUUID, workflow.getName());
+        val activity = (Activity) Activity.findById(activityUuid);
+        testingThis.startActivity(activityUuid);
+
+        Assertions.assertEquals(ActivityStages.DURING ,activity.getActualStage());
+        BDDMockito.then(workflowManageService).should().apply(activity, activity.getCreator());
+    }
+
+    @Test
+    @DisplayName("[startActivity] Should not start inactive activity")
+    public void testValidationOfInactiveActivityStarting() {
+        val activityUuid = testingThis.createActivity(userCreatorUUID, workflow.getName());
+        val activity = (Activity) Activity.findById(activityUuid);
+        activity.setIsActive(false);
+
+        val exceptionMessage = Assertions.assertThrows(InvalidActivityActionException.class, () -> {
+            testingThis.startActivity(activityUuid);
+        }).getMessage();
+
+        val expectedMessage = MessageFormat.format("Activity {0} must be active", activity.uuid);
+
+        Assertions.assertEquals(expectedMessage, exceptionMessage);
+        BDDMockito.then(workflowManageService).should(BDDMockito.never()).apply(activity, activity.getCreator());
+    }
+
+    @Test
+    @DisplayName("[startActivity] Should not start inactive activity")
+    public void testValidationOfNotConnectedActivityStarting() {
+        val activityUuid = testingThis.createActivity(userCreatorUUID, workflow.getName());
+        val activity = (Activity) Activity.findById(activityUuid);
+
+        val user = UserFixture.generateUser();
+        activity.addParticipant(user);
+
+        val exceptionMessage = Assertions.assertThrows(InvalidActivityActionException.class, () -> {
+            testingThis.startActivity(activityUuid);
+        }).getMessage();
+
+        val expectedMessage = MessageFormat.format("Activity {0} has the following users not connected: {1}", activity.uuid, List.of(user.getExternalId()));
+
+        Assertions.assertEquals(expectedMessage, exceptionMessage);
+        BDDMockito.then(workflowManageService).should(BDDMockito.never()).apply(any(Activity.class), any(User.class));
+    }
+
+    @Test
+    @DisplayName("[startActivity] Should create group if not exists")
+    public void testGroupCreationIfNotExistsWhenStartActivity() {
+        val activityUuid = testingThis.createActivity(userCreatorUUID, workflow.getName());
+        testingThis.startActivity(activityUuid);
+
+        val activity = (Activity) Activity.findById(activityUuid);
+        Assertions.assertFalse(activity.getGroupActivities().isEmpty());
+        BDDMockito.then(workflowManageService).should().apply(activity, activity.getCreator());
     }
 }
