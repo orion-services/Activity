@@ -187,7 +187,7 @@ public class ActivityServiceImpl implements ActivityService {
                 Activity activity = activityOptional.get();
                 logger.info(MessageFormat.format("User {0} was disconnect from activity {1}", userExternalId, activityUuid));
                 if (Boolean.FALSE == this.activityHasOnlineParticipants(activity)) {
-                    this.endActivity(activityUuid);
+                    endActivity(activityUuid);
                     logger.info(MessageFormat.format("Activity {0} is deactivated due there is no online participants", activityUuid));
                 }
             });

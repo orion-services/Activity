@@ -2,14 +2,18 @@ package dev.orion.services;
 
 import dev.orion.client.UserClient;
 import dev.orion.client.dto.UserClientResponse;
+import dev.orion.commom.constant.UserStatus;
+import dev.orion.commom.exception.UserInvalidOperationException;
 import dev.orion.entity.User;
 import dev.orion.services.dto.UserEnhancedWithExternalData;
 import dev.orion.services.interfaces.UserService;
+import lombok.val;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.transaction.Transactional;
+import java.text.MessageFormat;
 import java.util.Optional;
 
 @ApplicationScoped
@@ -18,19 +22,6 @@ public class UserServiceImpl implements UserService {
     @Inject
     @RestClient
     UserClient userClient;
-
-    @Override
-    public User getLocalUserByExternalId(String userExternalId) throws RuntimeException {
-        Optional<User> optUser = User.findUserByExternalId(userExternalId);
-        if(optUser.isPresent()) {
-            return  optUser.get();
-        }
-
-        User user = new User(userExternalId);
-        user.persist();
-
-        return user;
-    }
 
     @Override
     public UserEnhancedWithExternalData getCompleteUserData(String userExternalId) {
@@ -46,5 +37,18 @@ public class UserServiceImpl implements UserService {
         }
 
         return new UserEnhancedWithExternalData(userEntity, userClientResponse);
+    }
+
+    @Override
+    public Long connectUser(String userExternalId) {
+        val userResponse = getCompleteUserData(userExternalId);
+        val user = userResponse.getUserEntity();
+        if (user.activity == null) {
+            throw new UserInvalidOperationException(MessageFormat.format("The user {0} must be in activity to be connected", userExternalId));
+        }
+
+        user.setStatus(UserStatus.CONNECTED);
+        user.persist();
+        return user.id;
     }
 }
