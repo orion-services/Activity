@@ -1,11 +1,14 @@
 package dev.orion.fixture;
 
 import dev.orion.client.dto.UserClientResponse;
-import dev.orion.commom.enums.UserStatus;
+import dev.orion.commom.constant.UserRoles;
+import dev.orion.commom.constant.UserStatus;
 import dev.orion.entity.User;
-import dev.orion.services.dto.UserEnhancedWithExternalDataResponse;
+import dev.orion.services.dto.UserEnhancedWithExternalData;
 import net.datafaker.Faker;
 
+import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.UUID;
 
 final public class UserFixture {
@@ -17,18 +20,20 @@ final public class UserFixture {
         return user;
     }
 
-    static public UserClientResponse generateClientDto() {
+    static public UserClientResponse generateClientResponseDto() {
         UserClientResponse userClientResponse = new UserClientResponse();
+        userClientResponse.uuid = UUID.randomUUID().toString();
         userClientResponse.isActive = true;
         userClientResponse.name = Faker.instance().funnyName().name();
+        userClientResponse.role = new LinkedList<>(Arrays.asList(new String[]{UserRoles.CREATOR, UserRoles.PARTICIPANT}));
 
         return userClientResponse;
     }
 
-    static public UserEnhancedWithExternalDataResponse generateUserEnhancedWithExternalDataDto() {
+    static public UserEnhancedWithExternalData generateUserEnhancedWithExternalDataDto() {
         var user = generateUser();
-        var userClientDto = generateClientDto();
+        var userClientDto = generateClientResponseDto();
 
-        return new UserEnhancedWithExternalDataResponse(user, userClientDto);
+        return new UserEnhancedWithExternalData(user, userClientDto);
     }
 }

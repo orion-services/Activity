@@ -30,7 +30,6 @@ public class ActivityUpdateMessageDto {
                 .map(item -> item.externalId)
                 .collect(Collectors.toSet());
 
-        this.participantRound = activity.userRound.externalId;
         this.isActive = activity.isActive;
     }
 

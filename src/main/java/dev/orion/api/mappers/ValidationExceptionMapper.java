@@ -1,6 +1,6 @@
 package dev.orion.api.mappers;
 
-import dev.orion.api.endpoint.dto.DefaultErrorResponseDtoV1;
+import dev.orion.api.endpoint.body.DefaultErrorResponseBody;
 
 import javax.validation.ConstraintViolationException;
 import javax.ws.rs.core.Response;
@@ -17,17 +17,17 @@ public class ValidationExceptionMapper implements ExceptionMapper<ConstraintViol
     @Override
     public Response toResponse(ConstraintViolationException exception) {
         var constraintViolations = exception.getConstraintViolations();
-        DefaultErrorResponseDtoV1 defaultErrorResponseDtoV1 = new DefaultErrorResponseDtoV1();
+        DefaultErrorResponseBody defaultErrorResponseBody = new DefaultErrorResponseBody();
 
         if (constraintViolations != null) {
-            constraintViolations.forEach(constraint -> defaultErrorResponseDtoV1.addError(constraint.getMessageTemplate()));
-            var errors = defaultErrorResponseDtoV1.getErrors();
+            constraintViolations.forEach(constraint -> defaultErrorResponseBody.addError(constraint.getMessageTemplate()));
+            var errors = defaultErrorResponseBody.getErrors();
 
             var message = MessageFormat.format("Invalid body request with the following errors: {0}", errors);
             LOGGER.warning(message);
 
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(defaultErrorResponseDtoV1)
+                    .entity(defaultErrorResponseBody)
                     .build();
         }
 

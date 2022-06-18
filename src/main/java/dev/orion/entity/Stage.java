@@ -1,6 +1,6 @@
 package dev.orion.entity;
 
-import dev.orion.commom.enums.ActivityStages;
+import dev.orion.commom.constant.ActivityStages;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import lombok.*;
 

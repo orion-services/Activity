@@ -10,15 +10,21 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import java.util.List;
 
-@Path("/v1/users")
+@Path("/api/users")
 @ApplicationScoped
 @RegisterRestClient(configKey = "api.user-service.client")
 public interface UserClient {
-
     @GET
     @Path("/{externalId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Timeout(1000)
     UserClientResponse getUserByExternalId(@PathParam("externalId") String externalId);
+
+    @GET
+    @Path("/")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Timeout(1000)
+    List<UserClientResponse> getAllUsers();
 }

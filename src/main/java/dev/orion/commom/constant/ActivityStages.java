@@ -1,4 +1,4 @@
-package dev.orion.commom.enums;
+package dev.orion.commom.constant;
 
 public enum ActivityStages {
     PRE("pre"), DURING("during"), AFTER("after");

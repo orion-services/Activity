@@ -1,7 +1,7 @@
 package dev.orion.entity;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import dev.orion.commom.enums.ActivityStages;
+import dev.orion.commom.constant.ActivityStages;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -27,11 +27,7 @@ public class Activity extends PanacheEntityBase {
     @JsonManagedReference
     public List<GroupActivity> groupActivities = new ArrayList<>();
 
-//    REMOVE
-    @OneToOne
-    public User userRound;
-
-    @OneToMany(mappedBy = "activity", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "activity", cascade = CascadeType.PERSIST)
     @OrderColumn
     @JsonManagedReference
     public Set<User> userList = new LinkedHashSet<>();
@@ -39,8 +35,8 @@ public class Activity extends PanacheEntityBase {
     @ManyToOne(cascade = CascadeType.ALL, optional = false)
     public Workflow workflow;
 
-    @ManyToOne(optional = false)
-    public User createdBy;
+    @ManyToOne(optional = false, cascade = CascadeType.PERSIST)
+    public User creator;
 
     public ActivityStages actualStage = ActivityStages.PRE;
 
@@ -64,5 +60,28 @@ public class Activity extends PanacheEntityBase {
     public void addParticipant(User user) {
         user.setActivity(this);
         userList.add(user);
+    }
+
+    public void remove(User user) {
+        user.setActivity(null);
+        userList.remove(user);
+    }
+
+    public void addGroup(GroupActivity groupActivity) {
+        groupActivity.setActivityOwner(this);
+        this.groupActivities.add(groupActivity);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Activity activity = (Activity) o;
+        return uuid.equals(activity.uuid) && workflow.equals(activity.workflow) && isActive.equals(activity.isActive);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(uuid, workflow, isActive);
     }
 }

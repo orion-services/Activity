@@ -3,12 +3,12 @@
     datasource:
       db-kind: mysql
       username: root
-      password: 123
+      password: ""
       jdbc:
-        url: jdbc:mysql://localhost:3307/activity_db
+        url: jdbc:mysql://localhost:3306/activity_db
     hibernate-orm:
       database:
-        generation: update
+        generation: "drop-and-create"
     live-reload:
       instrumentation: true
   api:
@@ -17,11 +17,11 @@
     document-service:
       "client/mp-rest/url": "http://localhost:4000"
   rabbit:
-    username: ""
-    password: ""
-    virtualHost: ""
-    host: ""
-    port: 8883
+    username: "guest"
+    password: "guest"
+    virtualHost: "/"
+    host: "localhost"
+    port: 5672
     queue:
       consumer:
         document: "document-edit"

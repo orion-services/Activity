@@ -1,4 +1,4 @@
-package dev.orion.commom.exceptions;
+package dev.orion.commom.exception;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

@@ -54,7 +54,7 @@ public class DocumentServiceTest {
 
 //    Test document Creation
     @Test
-    @DisplayName("Should create document and assign to group")
+    @DisplayName("[createDocument] Should create document and assign to group")
     public void testDocumentCreation() {
         val user = UserFixture.generateUser();
         user.persist();
@@ -68,7 +68,7 @@ public class DocumentServiceTest {
     }
 
     @Test
-    @DisplayName("Should create document and have side effects")
+    @DisplayName("[createDocument] Should create document and have side effects")
     public void testDocumentCreationSideEffects() {
         val user = UserFixture.generateUser();
         user.persist();

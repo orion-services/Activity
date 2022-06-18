@@ -1,7 +1,7 @@
 package dev.orion.api.mappers;
 
-import dev.orion.api.endpoint.dto.DefaultErrorResponseDtoV1;
-import dev.orion.commom.exceptions.UserInvalidOperationException;
+import dev.orion.api.endpoint.body.DefaultErrorResponseBody;
+import dev.orion.commom.exception.UserInvalidOperationException;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
@@ -14,9 +14,9 @@ public class UserInvalidOperationMapper implements ExceptionMapper<UserInvalidOp
 
     @Override
     public Response toResponse(UserInvalidOperationException exception) {
-        var message = exception.getMessage();
+        final var message = exception.getMessage();
         LOGGER.warning(message);
-        DefaultErrorResponseDtoV1 errorDto = new DefaultErrorResponseDtoV1();
+        DefaultErrorResponseBody errorDto = new DefaultErrorResponseBody();
         errorDto.addError(message);
 
         return Response

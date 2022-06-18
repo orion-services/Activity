@@ -1,12 +1,13 @@
 package dev.orion.api.endpoint;
 
-import dev.orion.api.endpoint.dto.AddUserToActivityRequestDtoV1;
-import dev.orion.api.endpoint.dto.AddUserToActivityResponseDtoV1;
-import dev.orion.api.endpoint.dto.CreateActivityRequestDtoV1;
-import dev.orion.api.endpoint.dto.CreateActivityResponseV1;
+import dev.orion.api.endpoint.body.AddUserToActivityRequestBody;
+import dev.orion.api.endpoint.body.AddUserToActivityResponseBody;
+import dev.orion.api.endpoint.body.CreateActivityRequestBody;
+import dev.orion.api.endpoint.body.CreateActivityResponseBody;
 import dev.orion.entity.Activity;
 import dev.orion.services.interfaces.ActivityService;
-import dev.orion.commom.exceptions.UserInvalidOperationException;
+import dev.orion.commom.exception.UserInvalidOperationException;
+import lombok.val;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponseSchema;
 import org.jboss.resteasy.annotations.jaxrs.PathParam;
 
@@ -17,8 +18,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.text.MessageFormat;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
-@Path("/v1/activity")
+@Path("/v1/activities")
 public class ActivityEndpoint {
 
     @Inject
@@ -41,11 +43,14 @@ public class ActivityEndpoint {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @APIResponseSchema(CreateActivityResponseV1.class)
-    public Response createActivity(@Valid CreateActivityRequestDtoV1 createActivityRequestDtoV1) {
-        var activityUuid = activityService.createActivity(createActivityRequestDtoV1.getUserExternalId());
-        CreateActivityResponseV1 responseBody = new CreateActivityResponseV1();
+    @APIResponseSchema(CreateActivityResponseBody.class)
+    public Response createActivity(@Valid CreateActivityRequestBody createActivityRequestBody) {
+        val activityUuid = activityService.createActivity(createActivityRequestBody.getUserExternalId(), createActivityRequestBody.getWorkflowName());
+        val activity = (Activity) Activity.findById(activityUuid);
+
+        val responseBody = new CreateActivityResponseBody();
         responseBody.setUuid(activityUuid);
+        responseBody.setGroups(activity.getGroupActivities().stream().map(groupActivity -> groupActivity.getUuid()).collect(Collectors.toList()));
 
         return Response
                 .status(Response.Status.CREATED)
@@ -57,15 +62,21 @@ public class ActivityEndpoint {
     @Path("/{activityUuid}/addUser")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @APIResponseSchema(AddUserToActivityResponseDtoV1.class)
-    public Response addUserToActivity(@Valid AddUserToActivityRequestDtoV1 addUserToActivityRequestDtoV1, @PathParam String activityUuid) {
-        var activity = activityService.addUserInActivity(UUID.fromString(activityUuid), addUserToActivityRequestDtoV1.userExternalId);
-        var responseBody = new AddUserToActivityResponseDtoV1(activity);
+    @APIResponseSchema(AddUserToActivityResponseBody.class)
+    public Response addUserToActivity(@Valid AddUserToActivityRequestBody addUserToActivityRequestBody, @PathParam String activityUuid) {
+        var activity = activityService.addUserInActivity(UUID.fromString(activityUuid), addUserToActivityRequestBody.userExternalId);
+        var responseBody = new AddUserToActivityResponseBody(activity);
 
         return Response
                 .status(Response.Status.OK)
                 .entity(responseBody)
                 .build();
+    }
+
+    @PATCH
+    @Path("/{activityUuid}/start")
+    public Response startActivity(@PathParam String activityUuid) {
+        return Response.status(Response.Status.SERVICE_UNAVAILABLE).build();
     }
 
     @PATCH
