@@ -123,7 +123,7 @@ public class ActivityServiceImpl implements ActivityService {
 
     private void validateActivityToAddUser(Optional<Activity> optionalActivity, UserEnhancedWithExternalData user, UUID activityUuid) {
         if (optionalActivity.isEmpty()) {
-            throw new UserInvalidOperationException(MessageFormat.format("Activity with UUID {0} not found", activityUuid));
+                throw new UserInvalidOperationException(MessageFormat.format("Activity with UUID {0} not found", activityUuid));
         }
 
         val activity = optionalActivity.get();
