@@ -11,6 +11,7 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponseSchema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.jboss.resteasy.annotations.jaxrs.PathParam;
+import org.jboss.resteasy.reactive.ResponseStatus;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
@@ -31,6 +32,7 @@ public class ActivityEndpoint {
     @Path("/{activityUuid}")
     @Produces(MediaType.APPLICATION_JSON)
     @APIResponseSchema(Activity.class)
+    @ResponseStatus(200)
     public Response findActivity(@PathParam String activityUuid) {
         Activity activity = (Activity) Activity
                 .findByIdOptional(UUID.fromString(activityUuid))
@@ -44,7 +46,18 @@ public class ActivityEndpoint {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @APIResponseSchema(CreateActivityResponseBody.class)
+    @APIResponses({
+            @APIResponse(
+                    content = { @Content(schema = @Schema(implementation = CreateActivityResponseBody.class)) },
+                    description = "Create a new activity",
+                    responseCode = "201"
+            ),
+            @APIResponse(
+                    content = { @Content(schema = @Schema(implementation = DefaultErrorResponseBody.class)) },
+                    description = "List of errors of trying add a invalid user",
+                    responseCode = "400"
+            )
+    })
     public Response createActivity(@Valid CreateActivityRequestBody createActivityRequestBody) {
         val activityUuid = activityService.createActivity(createActivityRequestBody.getUserExternalId(), createActivityRequestBody.getWorkflowName());
         val activity = (Activity) Activity.findById(activityUuid);
