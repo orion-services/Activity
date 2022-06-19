@@ -149,7 +149,7 @@ public class ActivityServiceTest {
 
 //    Add user into activity
     @Test
-    @DisplayName("[addUserInActivity] Activity must let add users to participate")
+    @DisplayName("[addUserInActivity] It must let add users to participate")
     public void testAddUserIntoActivity() {
         val activityUuid = testingThis.createActivity(userCreatorUUID, workflow.getName());
         val userEnhancedWithExternalData = UserFixture.generateUserEnhancedWithExternalDataDto();
@@ -166,7 +166,7 @@ public class ActivityServiceTest {
     }
 
     @Test
-    @DisplayName("[addUserInActivity] Activity must validate if activity exists")
+    @DisplayName("[addUserInActivity] It must validate if activity exists")
     public void testAddUserValidateActivityExists() {
         val user = UserFixture.generateUserEnhancedWithExternalDataDto();
         val invalidActivityUUID = UUID.randomUUID();
@@ -179,7 +179,7 @@ public class ActivityServiceTest {
     }
 
     @Test
-    @DisplayName("[addUserInActivity] Activity must validate if user is in another activity before try add")
+    @DisplayName("[addUserInActivity] It must validate if user is in another activity before try add")
     public void testAddUserAlreadyInAnotherActivity() {
         val activityUuid = testingThis.createActivity(userCreatorUUID, workflow.getName());
         val userEnhancedWithExternalData = UserFixture.generateUserEnhancedWithExternalDataDto();
@@ -195,7 +195,7 @@ public class ActivityServiceTest {
     }
 
     @Test
-    @DisplayName("[addUserInActivity] Activity must validate if user is active before try add")
+    @DisplayName("[addUserInActivity] It must validate if USER is active before try add")
     public void testAddUserNotActive() {
         val activityUuid = testingThis.createActivity(userCreatorUUID, workflow.getName());
         val userEnhancedWithExternalData = UserFixture.generateUserEnhancedWithExternalDataDto();
@@ -211,19 +211,27 @@ public class ActivityServiceTest {
     }
 
     @Test
-    @DisplayName("[addUserInActivity] Activity must validate if user is AVAILABLE")
-    public void testAddUserNotAvailable() {
+    @DisplayName("[addUserInActivity] It must not change user status if it's with inactive activity")
+    public void testSetUserAsAvailableBeforeAddIntoActivity() {
         val activityUuid = testingThis.createActivity(userCreatorUUID, workflow.getName());
         val userEnhancedWithExternalData = UserFixture.generateUserEnhancedWithExternalDataDto();
-        userEnhancedWithExternalData.status = UserStatus.CONNECTED;
         mockEnhancedUser(userEnhancedWithExternalData);
 
-        val exceptionMessage = Assertions.assertThrows(UserInvalidOperationException.class, () -> {
-            testingThis.addUserInActivity(activityUuid, userEnhancedWithExternalData.uuid);
-        }).getMessage();
+        val anotherActivityId = testingThis.createActivity(userCreatorUUID, workflow.getName());
+        val anotherActivity = (Activity) Activity.findById(anotherActivityId);
+        anotherActivity.isActive = false;
 
-        val expectedExceptionMessage = MessageFormat.format("User {0} is not valid to join activity because: it is not AVAILABLE", userEnhancedWithExternalData.uuid);
-        Assertions.assertEquals(expectedExceptionMessage, exceptionMessage);
+        val userEntity = userEnhancedWithExternalData.getUserEntity();
+        userEntity.setActivity(anotherActivity);
+        userEntity.status = UserStatus.CONNECTED;
+        userEntity.persist();
+
+        val activity = testingThis.addUserInActivity(activityUuid, userEnhancedWithExternalData.uuid);
+
+        Assertions.assertEquals(1, activity.getUserList().size());
+        Assertions.assertEquals(activity, userEntity.activity);
+        Assertions.assertTrue(activity.getUserList().contains(userEntity));
+        Assertions.assertEquals(UserStatus.CONNECTED, userEntity.status);
     }
 
     @Test
@@ -241,7 +249,7 @@ public class ActivityServiceTest {
             testingThis.addUserInActivity(activityUuid, userEnhancedWithExternalData.uuid);
         }).getMessage();
 
-        val expectedExceptionMessage = MessageFormat.format("User {0} is not valid to join activity because: it is already in another activity, it is not AVAILABLE and it is not ACTIVE", userEnhancedWithExternalData.uuid);
+        val expectedExceptionMessage = MessageFormat.format("User {0} is not valid to join activity because: it is already in another activity and it is not ACTIVE", userEnhancedWithExternalData.uuid);
         Assertions.assertEquals(expectedExceptionMessage, exceptionMessage);
     }
 

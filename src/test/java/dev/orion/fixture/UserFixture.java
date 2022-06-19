@@ -21,10 +21,7 @@ import static org.mockito.BDDMockito.given;
 
 final public class UserFixture {
     static public User generateUser() {
-        User user = new User();
-        user.externalId = UUID.randomUUID().toString();
-        user.status = UserStatus.AVAILABLE;
-
+        User user = new User(UUID.randomUUID().toString());
         return user;
     }
 

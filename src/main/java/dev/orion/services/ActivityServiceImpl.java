@@ -101,7 +101,6 @@ public class ActivityServiceImpl implements ActivityService {
         var activity = optionalActivity.get();
 
         activity.addParticipant(user.userEntity);
-        user.getUserEntity().setStatus(UserStatus.DISCONNECTED);
 
         logger.info(MessageFormat.format("User ({0}) added to activity: ({1})", user.uuid, activity.uuid));
         activity.persist();
@@ -115,9 +114,8 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
     private void setUserToAvailableIfDroppedFromActivity(User user) {
-        if (user.activity != null && user.status == UserStatus.DISCONNECTED) {
+        if (user.activity != null && !user.activity.isActive) {
             user.activity.remove(user);
-            user.status = UserStatus.AVAILABLE;
         }
     }
 
@@ -143,11 +141,6 @@ public class ActivityServiceImpl implements ActivityService {
 
         if (Boolean.FALSE == Objects.isNull(user.getUserEntity().activity)) {
             String exceptionMessage = "it is already in another activity";
-            validationFails.add(exceptionMessage);
-        }
-
-        if (user.status != UserStatus.AVAILABLE) {
-            String exceptionMessage = MessageFormat.format("it is not {0}", UserStatus.AVAILABLE);
             validationFails.add(exceptionMessage);
         }
 
@@ -201,8 +194,9 @@ public class ActivityServiceImpl implements ActivityService {
         if (activityOptional.isPresent()) {
             var activity = activityOptional.get();
             activity.isActive = false;
+
 //            Make all users available to get in another activity
-            activity.userList.forEach(user -> user.status = UserStatus.AVAILABLE);
+            List.copyOf(activity.userList).forEach(user -> activity.remove(user));
 
             return activity;
         }

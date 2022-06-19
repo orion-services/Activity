@@ -49,7 +49,7 @@ public class User extends PanacheEntity {
 
     public User(String externalId) {
         this.externalId = externalId;
-        this.status = UserStatus.AVAILABLE;
+        this.status = UserStatus.DISCONNECTED;
     }
 
     public static Optional<User> findUserByExternalId(String externalId) {

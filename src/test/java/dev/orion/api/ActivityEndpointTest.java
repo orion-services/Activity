@@ -239,20 +239,6 @@ public class ActivityEndpointTest {
     }
 
     @Test
-    @DisplayName("[/{activityUuid}/addUser - POST] Activity must validate if user is AVAILABLE")
-    public void testAddUserNotAvailable() {
-        val activityUuid = activityService.createActivity(userUuid, WorkflowStarter.GENERIC_WORKFLOW_NAME);
-        val userEnhancedWithExternalData = UserFixture.generateUserEnhancedWithExternalDataDto();
-        userEnhancedWithExternalData.status = UserStatus.CONNECTED;
-        mockEnhancedUser(userEnhancedWithExternalData);
-
-        val response = requestAddUserInActivity(activityUuid, DefaultErrorResponseBody.class, Response.Status.BAD_REQUEST.getStatusCode());
-
-        val expectedExceptionMessage = MessageFormat.format("User {0} is not valid to join activity because: it is not AVAILABLE", userEnhancedWithExternalData.uuid);
-        Assertions.assertTrue(response.getErrors().contains(expectedExceptionMessage));
-    }
-
-    @Test
     @DisplayName("[/{activityUuid}/addUser - POST] Activity must format the exception message when validation catch something on add user ")
     public void testAddUserExceptionFormatWithMultipleErrors() {
         val activityUuid = activityService.createActivity(userUuid, WorkflowStarter.GENERIC_WORKFLOW_NAME);
@@ -265,7 +251,7 @@ public class ActivityEndpointTest {
 
         val response = requestAddUserInActivity(activityUuid, DefaultErrorResponseBody.class, Response.Status.BAD_REQUEST.getStatusCode());
 
-        val expectedExceptionMessage = MessageFormat.format("User {0} is not valid to join activity because: it is already in another activity, it is not AVAILABLE and it is not ACTIVE", userEnhancedWithExternalData.uuid);
+        val expectedExceptionMessage = MessageFormat.format("User {0} is not valid to join activity because: it is already in another activity and it is not ACTIVE", userEnhancedWithExternalData.uuid);
         Assertions.assertTrue(response.getErrors().contains(expectedExceptionMessage));
     }
 
