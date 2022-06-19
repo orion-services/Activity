@@ -70,6 +70,11 @@ public class ActivityEndpointTest {
         mockUserRequest(userClientResponse);
     }
 
+    private void mockUserRequest(UserClientResponse user) {
+        when(userClient.getUserByExternalId(userUuid))
+                .thenReturn(user);
+    }
+
     //    Activity creation
     @Test
     @DisplayName("[/ - POST] API must create Activity in good scenario")
@@ -314,11 +319,6 @@ public class ActivityEndpointTest {
                 .extract()
                 .body()
                 .as(responseClass);
-    }
-
-    private void mockUserRequest(UserClientResponse user) {
-        when(userClient.getUserByExternalId(userUuid))
-                .thenReturn(user);
     }
 
     private UserService mockEnhancedUser(UserEnhancedWithExternalData user) {

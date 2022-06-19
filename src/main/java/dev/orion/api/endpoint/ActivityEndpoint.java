@@ -1,14 +1,15 @@
 package dev.orion.api.endpoint;
 
-import dev.orion.api.endpoint.body.AddUserToActivityRequestBody;
-import dev.orion.api.endpoint.body.AddUserToActivityResponseBody;
-import dev.orion.api.endpoint.body.CreateActivityRequestBody;
-import dev.orion.api.endpoint.body.CreateActivityResponseBody;
+import dev.orion.api.endpoint.body.*;
 import dev.orion.entity.Activity;
 import dev.orion.services.interfaces.ActivityService;
 import dev.orion.commom.exception.UserInvalidOperationException;
 import lombok.val;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponseSchema;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.jboss.resteasy.annotations.jaxrs.PathParam;
 
 import javax.inject.Inject;
@@ -62,7 +63,19 @@ public class ActivityEndpoint {
     @Path("/{activityUuid}/addUser")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @APIResponseSchema(AddUserToActivityResponseBody.class)
+    @APIResponses({
+            @APIResponse(
+                    content = { @Content(schema = @Schema(implementation = AddUserToActivityResponseBody.class)) },
+                    description = "Add user into activity to participate.",
+                    responseCode = "200"
+            ),
+            @APIResponse(
+                    content = { @Content(schema = @Schema(implementation = DefaultErrorResponseBody.class)) },
+                    description = "List of errors of trying add a invalid user",
+                    responseCode = "400"
+            )
+    })
+
     public Response addUserToActivity(@Valid AddUserToActivityRequestBody addUserToActivityRequestBody, @PathParam String activityUuid) {
         var activity = activityService.addUserInActivity(UUID.fromString(activityUuid), addUserToActivityRequestBody.userExternalId);
         var responseBody = new AddUserToActivityResponseBody(activity);
