@@ -23,7 +23,6 @@ public class GroupActivity extends PanacheEntityBase {
     @GeneratedValue(strategy = GenerationType.AUTO)
     @GenericGenerator(name = "group_uuid", strategy = "uuid")
     @Column(columnDefinition = "BINARY(16)")
-    @Setter(AccessLevel.NONE)
     private UUID uuid;
 
     @OneToMany(mappedBy = "groupActivity", cascade = CascadeType.ALL)

@@ -86,9 +86,7 @@ public class ActivityServiceImpl implements ActivityService {
         exceptionOptional.ifPresentOrElse(e -> {
             logger.error(e.getMessage());
             throw e;
-        }, () -> {
-            logger.info(MessageFormat.format("User {0} is legit to create activity", user.uuid));
-        });
+        }, () -> logger.info(MessageFormat.format("User {0} is legit to create activity", user.uuid)));
     }
 
     @Override
@@ -196,7 +194,7 @@ public class ActivityServiceImpl implements ActivityService {
             activity.isActive = false;
 
 //            Make all users available to get in another activity
-            List.copyOf(activity.userList).forEach(user -> activity.remove(user));
+            List.copyOf(activity.userList).forEach(activity::remove);
 
             return activity;
         }
@@ -206,13 +204,17 @@ public class ActivityServiceImpl implements ActivityService {
 
     @Override
     public Activity startActivity(UUID activityUUID) {
-        val activity = (Activity) Activity.findById(activityUUID);
+        val activity = (Activity) Activity.findByIdOptional(activityUUID).orElseThrow(() -> {
+            throw new NotFoundException(MessageFormat.format("Activity {0} not found", activityUUID));
+        });
+
         validateActivityToStart(activity);
 
         workflowManageService.apply(activity, activity.getCreator());
         createGroupIfNotExists(activityUUID);
 
         activity.setActualStage(ActivityStages.DURING);
+        activity.persist();
         return activity;
     }
 
@@ -228,8 +230,13 @@ public class ActivityServiceImpl implements ActivityService {
         }
 
         if (Boolean.FALSE == notConnectedUsers.isEmpty()) {
-            val notConnectedUsersUUID = notConnectedUsers.stream().map(user -> user.getExternalId()).collect(Collectors.toList());
+            val notConnectedUsersUUID = notConnectedUsers.stream().map(User::getExternalId).collect(Collectors.toList());
             val exceptionMessage = MessageFormat.format("Activity {0} has the following users not connected: {1}", activity.uuid, notConnectedUsersUUID);
+            throw new InvalidActivityActionException(exceptionMessage);
+        }
+
+        if (activity.getUserList().isEmpty()) {
+            val exceptionMessage = MessageFormat.format("Activity {0} has no participants to start", activity.getUuid());
             throw new InvalidActivityActionException(exceptionMessage);
         }
     }
@@ -240,7 +247,7 @@ public class ActivityServiceImpl implements ActivityService {
             return;
         }
 
-        groupService.createGroup(activity);
+        groupService.createGroup(activity, activity.getUserList());
     }
 
     @Override

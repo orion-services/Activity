@@ -1,9 +1,9 @@
 package dev.orion.api.endpoint;
 
 import dev.orion.api.endpoint.body.*;
+import dev.orion.commom.exception.UserInvalidOperationException;
 import dev.orion.entity.Activity;
 import dev.orion.services.interfaces.ActivityService;
-import dev.orion.commom.exception.UserInvalidOperationException;
 import lombok.val;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
@@ -48,12 +48,12 @@ public class ActivityEndpoint {
     @Produces(MediaType.APPLICATION_JSON)
     @APIResponses({
             @APIResponse(
-                    content = { @Content(schema = @Schema(implementation = CreateActivityResponseBody.class)) },
+                    content = {@Content(schema = @Schema(implementation = CreateActivityResponseBody.class))},
                     description = "Create a new activity",
                     responseCode = "201"
             ),
             @APIResponse(
-                    content = { @Content(schema = @Schema(implementation = DefaultErrorResponseBody.class)) },
+                    content = {@Content(schema = @Schema(implementation = DefaultErrorResponseBody.class))},
                     description = "List of errors of trying add a invalid user",
                     responseCode = "400"
             )
@@ -78,12 +78,12 @@ public class ActivityEndpoint {
     @Produces(MediaType.APPLICATION_JSON)
     @APIResponses({
             @APIResponse(
-                    content = { @Content(schema = @Schema(implementation = AddUserToActivityResponseBody.class)) },
+                    content = {@Content(schema = @Schema(implementation = AddUserToActivityResponseBody.class))},
                     description = "Add user into activity to participate.",
                     responseCode = "200"
             ),
             @APIResponse(
-                    content = { @Content(schema = @Schema(implementation = DefaultErrorResponseBody.class)) },
+                    content = {@Content(schema = @Schema(implementation = DefaultErrorResponseBody.class))},
                     description = "List of errors of trying add a invalid user",
                     responseCode = "400"
             )
@@ -101,8 +101,17 @@ public class ActivityEndpoint {
 
     @PATCH
     @Path("/{activityUuid}/start")
+    @APIResponse(
+            responseCode = "200",
+            description = "Start a activity",
+            content = @Content(schema = @Schema(implementation = StartActivityResponseBody.class))
+    )
+    @Produces(MediaType.APPLICATION_JSON)
     public Response startActivity(@PathParam String activityUuid) {
-        return Response.status(Response.Status.SERVICE_UNAVAILABLE).build();
+        val activity = activityService.startActivity(UUID.fromString(activityUuid));
+        return Response
+                .ok(new StartActivityResponseBody(activity))
+                .build();
     }
 
     @PATCH

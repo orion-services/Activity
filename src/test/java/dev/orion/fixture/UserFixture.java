@@ -7,6 +7,7 @@ import dev.orion.commom.constant.UserStatus;
 import dev.orion.entity.Activity;
 import dev.orion.entity.User;
 import dev.orion.services.dto.UserEnhancedWithExternalData;
+import dev.orion.services.interfaces.UserService;
 import io.quarkus.panache.mock.PanacheMock;
 import lombok.val;
 import net.datafaker.Faker;
@@ -17,6 +18,7 @@ import java.util.LinkedList;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 
 final public class UserFixture {
@@ -46,6 +48,18 @@ final public class UserFixture {
         val userClientResponse = UserFixture.generateClientResponseDto();
         userClientResponse.uuid = commonUserExternalId;
         given(userClient.getUserByExternalId(commonUserExternalId)).willReturn(userClientResponse);
+
+        return userClientResponse;
+    }
+
+    static public UserEnhancedWithExternalData mockEnhancedUser(UserService userService, String commonUserExternalId) {
+        val userClientResponse = UserFixture.generateUserEnhancedWithExternalDataDto();
+
+        userClientResponse.uuid = commonUserExternalId;
+        userClientResponse.getUserEntity().setExternalId(commonUserExternalId);
+
+        given(userService.getCompleteUserData(anyString()))
+                .willReturn(userClientResponse);
 
         return userClientResponse;
     }
