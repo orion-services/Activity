@@ -19,6 +19,7 @@ import dev.orion.services.dto.UserEnhancedWithExternalData;
 import dev.orion.services.interfaces.ActivityService;
 import dev.orion.services.interfaces.GroupService;
 import dev.orion.services.interfaces.UserService;
+import dev.orion.services.interfaces.WorkflowManageService;
 import dev.orion.util.setup.WorkflowStarter;
 import io.quarkus.panache.mock.PanacheMock;
 import io.quarkus.test.common.http.TestHTTPEndpoint;
@@ -76,6 +77,9 @@ public class ActivityEndpointTest {
 
     @InjectMock
     UserService userService;
+
+    @InjectSpy
+    WorkflowManageService workflowManageService;
 
     private UserEnhancedWithExternalData userCreator;
 
@@ -335,6 +339,71 @@ public class ActivityEndpointTest {
         Assertions.assertTrue(responseBody.getGroups().get(groupActivity.getUuid()).contains(userEntity.externalId));
         then(documentClient).should().createDocument(any());
         then(groupService).should().createGroup(activity, activity.getUserList());
+        then(workflowManageService).should().apply(activity, activity.getCreator());
+    }
+
+    @Test
+    @DisplayName("[/{activityUuid}/start - PATCH] Should not start when has no users in activity")
+    public void testApplicationStartValidationOfEmptyActivity() {
+        mockHibernateSession();
+        val groupUUID = UUID.randomUUID();
+        val activity = mockActivityCreation();
+
+        User userEntity = userCreator.getUserEntity();
+        userEntity.setStatus(UserStatus.CONNECTED);
+
+        BDDMockito.doAnswer(injectIdIntoGroup(groupUUID)).when(session).persist(any(activity.getClass()));
+
+        val responseBody = requestStartActivity(activity.uuid, DefaultErrorResponseBody.class, Response.Status.BAD_REQUEST.getStatusCode());
+
+        val expectedMessage = MessageFormat.format("Activity {0} has no participants to start", activity.getUuid());
+        Assertions.assertTrue(responseBody.getErrors().contains(expectedMessage));
+        then(documentClient).should(never()).createDocument(any());
+        then(groupService).should(never()).createGroup(any(), any());
+    }
+
+    @Test
+    @DisplayName("[/{activityUuid}/start - PATCH] Should not start inactive activity")
+    public void testApplicationStartValidationOfInactiveActivity() {
+        mockHibernateSession();
+        val groupUUID = UUID.randomUUID();
+        val activity = mockActivityCreation();
+        activity.setIsActive(false);
+
+        User userEntity = userCreator.getUserEntity();
+        userEntity.setStatus(UserStatus.CONNECTED);
+
+        BDDMockito.doAnswer(injectIdIntoGroup(groupUUID)).when(session).persist(any(activity.getClass()));
+
+        val responseBody = requestStartActivity(activity.uuid, DefaultErrorResponseBody.class, Response.Status.BAD_REQUEST.getStatusCode());
+
+        val expectedMessage = MessageFormat.format("Activity {0} must be active", activity.uuid);
+        Assertions.assertTrue(responseBody.getErrors().contains(expectedMessage));
+        then(documentClient).should(never()).createDocument(any());
+        then(groupService).should(never()).createGroup(any(), any());
+    }
+    @Test
+    @DisplayName("[/{activityUuid}/start - PATCH] Should not start when has no connected user")
+    public void testApplicationStartValidationIfThereAreNotConnectedUser() {
+        mockHibernateSession();
+        val groupUUID = UUID.randomUUID();
+        val activity = mockActivityCreation();
+
+        val userEntity = userCreator.getUserEntity();
+        userEntity.setStatus(UserStatus.CONNECTED);
+        val notConnectedUser = UserFixture.generateUser();
+
+        activity.addParticipant(userEntity);
+        activity.addParticipant(notConnectedUser);
+
+        BDDMockito.doAnswer(injectIdIntoGroup(groupUUID)).when(session).persist(any(activity.getClass()));
+
+        val responseBody = requestStartActivity(activity.uuid, DefaultErrorResponseBody.class, Response.Status.BAD_REQUEST.getStatusCode());
+
+        val expectedMessage = MessageFormat.format("Activity {0} has the following users not connected: {1}", activity.uuid, List.of(notConnectedUser.getExternalId()));
+        Assertions.assertTrue(responseBody.getErrors().contains(expectedMessage));
+        then(documentClient).should(never()).createDocument(any());
+        then(groupService).should(never()).createGroup(any(), any());
     }
 
     @NotNull

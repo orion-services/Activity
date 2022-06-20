@@ -10,7 +10,7 @@ import java.util.logging.Logger;
 
 @Provider
 public class UserInvalidOperationMapper implements ExceptionMapper<UserInvalidOperationException> {
-    private static final Logger LOGGER = Logger.getLogger(UserInvalidOperationException.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(UserInvalidOperationMapper.class.getName());
 
     @Override
     public Response toResponse(UserInvalidOperationException exception) {

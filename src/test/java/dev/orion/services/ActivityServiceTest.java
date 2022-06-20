@@ -6,7 +6,6 @@ import dev.orion.commom.constant.ActivityStages;
 import dev.orion.commom.constant.UserRoles;
 import dev.orion.commom.constant.UserStatus;
 import dev.orion.commom.exception.InvalidActivityActionException;
-import dev.orion.commom.exception.NotValidActionException;
 import dev.orion.commom.exception.UserInvalidOperationException;
 import dev.orion.entity.Activity;
 import dev.orion.entity.Step;
@@ -36,7 +35,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.BDDMockito;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 
 import javax.inject.Inject;
 import javax.transaction.Transactional;
@@ -45,36 +43,27 @@ import java.text.MessageFormat;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import static org.mockito.ArgumentMatchers.*;
 
 @QuarkusTest
 @Transactional
 public class ActivityServiceTest {
+    private final String userCreatorUUID = UUID.randomUUID().toString();
     @Inject
     ActivityService testingThis;
-
     @InjectMock
     UserService userService;
-
     @InjectSpy
     GroupService groupService;
-
     @InjectMock
     @RestClient
     DocumentClient documentClient;
-
     Session session;
-
-    private String userCreatorUUID = UUID.randomUUID().toString();
-
-    private UserEnhancedWithExternalData userCreator;
-
     @InjectSpy
     WorkflowManageService workflowManageService;
     Workflow workflow;
-
+    private UserEnhancedWithExternalData userCreator;
 
     @BeforeEach
     public void setup() {
@@ -93,16 +82,11 @@ public class ActivityServiceTest {
         List<Step> circleOfWriters = List.of(new CircleOfWriters());
         val stage = WorkflowFixture.generateStage(ActivityStages.DURING, circleOfWriters);
         val generateWorkflow = WorkflowFixture.generateWorkflow(List.of(stage));
-        workflow = workflowManageService.createOrUpdateWorkflow(
-                generateWorkflow.getStages(),
-                generateWorkflow.getName(),
-                generateWorkflow.getDescription());
+        workflow = workflowManageService.createOrUpdateWorkflow(generateWorkflow.getStages(), generateWorkflow.getName(), generateWorkflow.getDescription());
     }
 
     private void mockEnhancedUser(UserEnhancedWithExternalData user) {
-        BDDMockito
-                .given(userService.getCompleteUserData(anyString()))
-                .willReturn(user);
+        BDDMockito.given(userService.getCompleteUserData(anyString())).willReturn(user);
     }
 
     @Test
@@ -118,22 +102,17 @@ public class ActivityServiceTest {
         Assertions.assertTrue(activity.getGroupActivities().isEmpty());
     }
 
-//    Activity creation user validations
+    //    Activity creation user validations
     @Test
     @DisplayName("[createActivity] Should throw when creator user is not active and try create activity")
     public void testNotActiveUserTryingToCreateActivity() {
         userCreator.isActive = false;
 
-        val exceptionMessage = Assertions.assertThrows(UserInvalidOperationException.class, () -> {
-            testingThis.createActivity(userCreatorUUID, workflow.getName());
-        }).getMessage();
+        val exceptionMessage = Assertions.assertThrows(UserInvalidOperationException.class, () -> testingThis.createActivity(userCreatorUUID, workflow.getName())).getMessage();
 
         BDDMockito.then(userService).should().getCompleteUserData(userCreatorUUID);
-        val expectedException = MessageFormat.format(
-                "The user {0} must be active to create an activity", userCreator.uuid);
-        Assertions.assertEquals(
-                expectedException,
-                exceptionMessage);
+        val expectedException = MessageFormat.format("The user {0} must be active to create an activity", userCreator.uuid);
+        Assertions.assertEquals(expectedException, exceptionMessage);
     }
 
     @Test
@@ -141,31 +120,21 @@ public class ActivityServiceTest {
     public void testNotInRoleUserTryingToCreateActivity() {
         userCreator.role.remove(UserRoles.CREATOR);
 
-        val exceptionMessage = Assertions.assertThrows(UserInvalidOperationException.class, () -> {
-            testingThis.createActivity(userCreatorUUID, workflow.getName());
-        }).getMessage();
+        val exceptionMessage = Assertions.assertThrows(UserInvalidOperationException.class, () -> testingThis.createActivity(userCreatorUUID, workflow.getName())).getMessage();
 
         BDDMockito.then(userService).should().getCompleteUserData(userCreatorUUID);
-        val expectedException = MessageFormat.format(
-                "The user {0} must have role {1} to create an activity", userCreator.uuid, UserRoles.CREATOR);
-        Assertions.assertEquals(
-                expectedException,
-                exceptionMessage);
+        val expectedException = MessageFormat.format("The user {0} must have role {1} to create an activity", userCreator.uuid, UserRoles.CREATOR);
+        Assertions.assertEquals(expectedException, exceptionMessage);
     }
 
     @Test
     @DisplayName("[createActivity] Activity must throw an exception on creation when a workflow is not found")
     public void testActivityWorkflowValidation() {
-        val invalidWorkflowName =  Faker.instance().aviation().aircraft();
-        val exceptionMessage = Assertions.assertThrows(NotFoundException.class, () -> {
-            testingThis.createActivity(userCreatorUUID, invalidWorkflowName);
-        }).getMessage();
+        val invalidWorkflowName = Faker.instance().aviation().aircraft();
+        val exceptionMessage = Assertions.assertThrows(NotFoundException.class, () -> testingThis.createActivity(userCreatorUUID, invalidWorkflowName)).getMessage();
 
-        val expectedExceptionMessage = MessageFormat.format(
-                "Workflow with name {0} not found", invalidWorkflowName);
-        Assertions.assertEquals(
-                expectedExceptionMessage,
-                exceptionMessage);
+        val expectedExceptionMessage = MessageFormat.format("Workflow with name {0} not found", invalidWorkflowName);
+        Assertions.assertEquals(expectedExceptionMessage, exceptionMessage);
     }
 
 
@@ -187,9 +156,7 @@ public class ActivityServiceTest {
     @DisplayName("[addUserInActivity] It must validate if activity exists")
     public void testAddUserValidateActivityExists() {
         val invalidActivityUUID = UUID.randomUUID();
-        val exceptionMessage = Assertions.assertThrows(UserInvalidOperationException.class, () -> {
-            testingThis.addUserInActivity(invalidActivityUUID, userCreator.uuid);
-        }).getMessage();
+        val exceptionMessage = Assertions.assertThrows(UserInvalidOperationException.class, () -> testingThis.addUserInActivity(invalidActivityUUID, userCreator.uuid)).getMessage();
         val expectedExceptionMessage = MessageFormat.format("Activity with UUID {0} not found", invalidActivityUUID);
         Assertions.assertEquals(expectedExceptionMessage, exceptionMessage);
     }
@@ -200,9 +167,7 @@ public class ActivityServiceTest {
         val activityUuid = testingThis.createActivity(userCreatorUUID, workflow.getName());
         userCreator.getUserEntity().activity = new Activity();
 
-        val exceptionMessage = Assertions.assertThrows(UserInvalidOperationException.class, () -> {
-            testingThis.addUserInActivity(activityUuid, userCreator.uuid);
-        }).getMessage();
+        val exceptionMessage = Assertions.assertThrows(UserInvalidOperationException.class, () -> testingThis.addUserInActivity(activityUuid, userCreator.uuid)).getMessage();
 
         val expectedExceptionMessage = MessageFormat.format("User {0} is not valid to join activity because: it is already in another activity", userCreator.uuid);
         Assertions.assertEquals(expectedExceptionMessage, exceptionMessage);
@@ -305,7 +270,7 @@ public class ActivityServiceTest {
 
         testingThis.startActivity(activityUuid);
 
-        Assertions.assertEquals(ActivityStages.DURING ,activity.getActualStage());
+        Assertions.assertEquals(ActivityStages.DURING, activity.getActualStage());
         BDDMockito.then(workflowManageService).should().apply(activity, activity.getCreator());
     }
 

@@ -1,5 +1,6 @@
 package dev.orion.services;
 
+import dev.orion.broker.producer.DocumentUpdateProducer;
 import dev.orion.client.DocumentClient;
 import dev.orion.client.dto.CreateDocumentRequest;
 import dev.orion.entity.Document;
@@ -9,12 +10,16 @@ import lombok.val;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import java.util.*;
 
 @ApplicationScoped
 public class DocumentServiceImpl implements DocumentService {
     @RestClient
     DocumentClient documentClient;
+
+    @Inject
+    DocumentUpdateProducer documentUpdateProducer;
 
     @Override
     public Optional<Document> editContent(String content, UUID activityUuid, String externalUserId) {
