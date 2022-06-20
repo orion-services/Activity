@@ -12,6 +12,7 @@ import dev.orion.commom.constant.CircularStepFlowDirectionTypes;
 import dev.orion.commom.constant.UserStatus;
 import dev.orion.entity.*;
 import dev.orion.entity.step_type.CircleOfWriters;
+import dev.orion.fixture.ActivityFixture;
 import dev.orion.fixture.UserFixture;
 import dev.orion.fixture.WorkflowFixture;
 import dev.orion.services.dto.UserEnhancedWithExternalData;
@@ -31,12 +32,14 @@ import net.datafaker.Faker;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.hamcrest.Matchers;
 import org.hibernate.Session;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.BDDMockito;
 import org.mockito.Mockito;
+import org.mockito.stubbing.Answer;
 
 import javax.transaction.Transactional;
 import javax.ws.rs.core.MediaType;
@@ -322,11 +325,7 @@ public class ActivityEndpointTest {
         userEntity.setStatus(UserStatus.CONNECTED);
         activity.addParticipant(userEntity);
 
-        BDDMockito.doAnswer(invocation -> {
-            val activityParam = (Activity) invocation.getArgument(0);
-            activityParam.getGroupActivities().get(0).setUuid(groupUUID);
-            return null;
-        }).when(session).persist(any(activity.getClass()));
+        BDDMockito.doAnswer(injectIdIntoGroup(groupUUID)).when(session).persist(any(activity.getClass()));
 
         val responseBody = requestStartActivity(activity.uuid, StartActivityResponseBody.class, Response.Status.OK.getStatusCode());
         GroupActivity groupActivity = activity.getGroupActivities().get(0);
@@ -336,6 +335,29 @@ public class ActivityEndpointTest {
         Assertions.assertTrue(responseBody.getGroups().get(groupActivity.getUuid()).contains(userEntity.externalId));
         then(documentClient).should().createDocument(any());
         then(groupService).should().createGroup(activity, activity.getUserList());
+    }
+
+    @NotNull
+    private Answer injectIdIntoGroup(UUID groupUUID) {
+        return invocation -> {
+            val activityParam = (Activity) invocation.getArgument(0);
+            activityParam.getGroupActivities().get(0).setUuid(groupUUID);
+            return null;
+        };
+    }
+
+    @Test
+    @DisplayName("[/{activityUuid}/start - PATCH] Should validate if activity exists")
+    public void testApplicationStartNotFoundActivity() {
+        val activityUUID = UUID.randomUUID();
+
+        val responseBody = requestStartActivity(activityUUID, DefaultErrorResponseBody.class, Response.Status.BAD_REQUEST.getStatusCode());
+
+        val expectedMessage = MessageFormat.format("Activity {0} not found", activityUUID);
+
+        Assertions.assertTrue(responseBody.getErrors().contains(expectedMessage));
+        then(documentClient).should(never()).createDocument(any());
+        then(groupService).should(never()).createGroup(any(), any());
     }
 
     private <T> T requestStartActivity(UUID activityUuid, Class<T> responseClass, int expectedStatusCode) {
@@ -358,17 +380,7 @@ public class ActivityEndpointTest {
         BDDMockito.doNothing().when(session).persist(any());
     }
     private Activity mockActivityCreation() {
-        val activityUuid = UUID.randomUUID();
-        Activity activity = new Activity();
-        activity.uuid = activityUuid;
-        activity.isActive = true;
-        activity.setCreator(userCreator.getUserEntity());
-
-        val stepList = List.of(new Step[]{new CircleOfWriters(CircularStepFlowDirectionTypes.FROM_BEGIN_TO_END)});
-        val stage = WorkflowFixture.generateStage(ActivityStages.DURING, stepList);
-        val workflow = WorkflowFixture.generateWorkflow(List.of(stage));
-        workflow.setName(WorkflowStarter.GENERIC_WORKFLOW_NAME);
-        activity.setWorkflow(workflow);
+        Activity activity = ActivityFixture.generateActivity(userCreator.getUserEntity());
 
         PanacheMock.mock(Activity.class);
         when(Activity.findByIdOptional(any())).thenReturn(Optional.of(activity));

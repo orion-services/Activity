@@ -1,5 +1,7 @@
 package dev.orion.services;
 
+import dev.orion.client.DocumentClient;
+import dev.orion.client.dto.CreateDocumentResponse;
 import dev.orion.commom.constant.ActivityStages;
 import dev.orion.commom.constant.UserRoles;
 import dev.orion.commom.constant.UserStatus;
@@ -11,17 +13,23 @@ import dev.orion.entity.Step;
 import dev.orion.entity.User;
 import dev.orion.entity.Workflow;
 import dev.orion.entity.step_type.CircleOfWriters;
+import dev.orion.fixture.ActivityFixture;
 import dev.orion.fixture.UserFixture;
 import dev.orion.fixture.WorkflowFixture;
 import dev.orion.services.dto.UserEnhancedWithExternalData;
 import dev.orion.services.interfaces.ActivityService;
+import dev.orion.services.interfaces.GroupService;
 import dev.orion.services.interfaces.UserService;
 import dev.orion.services.interfaces.WorkflowManageService;
+import io.quarkus.panache.mock.PanacheMock;
+import io.quarkus.test.junit.QuarkusMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
 import io.quarkus.test.junit.mockito.InjectSpy;
 import lombok.val;
 import net.datafaker.Faker;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
+import org.hibernate.Session;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -35,11 +43,11 @@ import javax.transaction.Transactional;
 import javax.ws.rs.NotFoundException;
 import java.text.MessageFormat;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 
 @QuarkusTest
 @Transactional
@@ -49,6 +57,15 @@ public class ActivityServiceTest {
 
     @InjectMock
     UserService userService;
+
+    @InjectSpy
+    GroupService groupService;
+
+    @InjectMock
+    @RestClient
+    DocumentClient documentClient;
+
+    Session session;
 
     private String userCreatorUUID = UUID.randomUUID().toString();
 
@@ -64,6 +81,10 @@ public class ActivityServiceTest {
         userCreator = UserFixture.generateUserEnhancedWithExternalDataDto();
         userCreator.uuid = userCreatorUUID;
         mockEnhancedUser(userCreator);
+
+        val createDocumentResponse = new CreateDocumentResponse();
+        createDocumentResponse.setId(UUID.randomUUID().toString());
+        BDDMockito.given(documentClient.createDocument(any())).willReturn(createDocumentResponse);
 
         setWorkflow();
     }
@@ -355,15 +376,26 @@ public class ActivityServiceTest {
     @Test
     @DisplayName("[startActivity] Should create group if not exists")
     public void testGroupCreationIfNotExistsWhenStartActivity() {
-        val activityUuid = testingThis.createActivity(userCreatorUUID, workflow.getName());
-        val activity = (Activity) Activity.findById(activityUuid);
+        mockHibernateSession();
+        val activity = ActivityFixture.generateActivity(userCreator.getUserEntity());
         val user = userCreator.getUserEntity();
 
         user.status = UserStatus.CONNECTED;
         activity.addParticipant(user);
 
-        testingThis.startActivity(activityUuid);
+        PanacheMock.mock(Activity.class);
+        BDDMockito.given(Activity.findByIdOptional(any())).willReturn(Optional.of(activity));
+        BDDMockito.given(Activity.findById(any())).willReturn(activity);
+
+        testingThis.startActivity(activity.getUuid());
         Assertions.assertFalse(activity.getGroupActivities().isEmpty());
+        BDDMockito.then(groupService).should().createGroup(eq(activity), anySet());
         BDDMockito.then(workflowManageService).should().apply(activity, activity.getCreator());
+    }
+
+    private void mockHibernateSession() {
+        session = Mockito.mock(Session.class);
+        QuarkusMock.installMockForType(session, Session.class);
+        BDDMockito.doNothing().when(session).persist(any());
     }
 }
