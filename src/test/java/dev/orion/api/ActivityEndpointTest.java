@@ -33,7 +33,6 @@ import net.datafaker.Faker;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.hamcrest.Matchers;
 import org.hibernate.Session;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -406,7 +405,6 @@ public class ActivityEndpointTest {
         then(groupService).should(never()).createGroup(any(), any());
     }
 
-    @NotNull
     private Answer injectIdIntoGroup(UUID groupUUID) {
         return invocation -> {
             val activityParam = (Activity) invocation.getArgument(0);

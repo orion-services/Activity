@@ -7,11 +7,11 @@ import dev.orion.services.interfaces.ActivityService;
 import lombok.val;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponseSchema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.jboss.resteasy.annotations.jaxrs.PathParam;
-import org.jboss.resteasy.reactive.ResponseStatus;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
@@ -32,8 +32,7 @@ public class ActivityEndpoint {
     @Path("/{activityUuid}")
     @Produces(MediaType.APPLICATION_JSON)
     @APIResponseSchema(Activity.class)
-    @ResponseStatus(200)
-    public Response findActivity(@PathParam String activityUuid) {
+    public Response findActivity(@Parameter(description = "UUID of activity to be started", example = "372bf2a5-0da3-47bd-8c94-4a09d25d362a") @PathParam String activityUuid) {
         Activity activity = (Activity) Activity
                 .findByIdOptional(UUID.fromString(activityUuid))
                 .orElseThrow(() -> new UserInvalidOperationException(
@@ -89,7 +88,9 @@ public class ActivityEndpoint {
             )
     })
 
-    public Response addUserToActivity(@Valid AddUserToActivityRequestBody addUserToActivityRequestBody, @PathParam String activityUuid) {
+    public Response addUserToActivity(
+            @Valid AddUserToActivityRequestBody addUserToActivityRequestBody,
+            @Parameter(description = "UUID of activity to be started", example = "372bf2a5-0da3-47bd-8c94-4a09d25d362a") @PathParam String activityUuid) {
         var activity = activityService.addUserInActivity(UUID.fromString(activityUuid), addUserToActivityRequestBody.userExternalId);
         var responseBody = new AddUserToActivityResponseBody(activity);
 
@@ -107,7 +108,7 @@ public class ActivityEndpoint {
             content = @Content(schema = @Schema(implementation = StartActivityResponseBody.class))
     )
     @Produces(MediaType.APPLICATION_JSON)
-    public Response startActivity(@PathParam String activityUuid) {
+    public Response startActivity(@Parameter(description = "UUID of activity to be started", example = "372bf2a5-0da3-47bd-8c94-4a09d25d362a") @PathParam String activityUuid) {
         val activity = activityService.startActivity(UUID.fromString(activityUuid));
         return Response
                 .ok(new StartActivityResponseBody(activity))
