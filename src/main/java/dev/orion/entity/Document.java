@@ -53,4 +53,13 @@ public class Document extends PanacheEntity {
         return find("groupActivity_id", uuid).list();
     }
 
+    public static Optional<Document> findByUserIdAndGroup(String externalId, UUID groupId) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("groupId", groupId);
+        params.put("externalId", externalId);
+        return find("from Document as doc " +
+                "JOIN doc.participantsAssigned as pa " +
+                "WHERE doc.groupActivity.uuid = :groupId AND pa.externalId = :externalId", params)
+                .firstResultOptional();
+    }
 }
