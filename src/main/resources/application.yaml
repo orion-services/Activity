@@ -39,9 +39,11 @@
       dialect: org.hibernate.dialect.H2Dialect
       database:
         generation: drop-and-create
-    api:
-      user-service:
-        "client/mp-rest/url": "http://localhost:8090"
+  api:
+    user-service:
+      "client/mp-rest/url": "http://localhost:3000"
+    document-service:
+      "client/mp-rest/url": "http://localhost:4000"
   rabbit:
     username: ""
     password: ""

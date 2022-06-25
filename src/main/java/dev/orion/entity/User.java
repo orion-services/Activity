@@ -23,6 +23,7 @@ public class User extends PanacheEntity {
     public String externalId;
 
     @Column(name = "user_status", nullable = false)
+    @Enumerated(EnumType.STRING)
     public UserStatus status;
 
     @ManyToOne(cascade = CascadeType.ALL)
