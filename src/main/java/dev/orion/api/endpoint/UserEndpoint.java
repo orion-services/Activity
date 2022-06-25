@@ -3,6 +3,7 @@ package dev.orion.api.endpoint;
 import dev.orion.api.endpoint.body.ConnectUserResponseBody;
 import dev.orion.services.interfaces.UserService;
 import lombok.val;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponseSchema;
 import org.jboss.resteasy.annotations.jaxrs.PathParam;
 
@@ -23,7 +24,7 @@ public class UserEndpoint {
     @PATCH
     @Produces(MediaType.APPLICATION_JSON)
     @APIResponseSchema(ConnectUserResponseBody.class)
-    public Response connectUser(@PathParam String externalId) {
+    public Response connectUser(@Parameter(description = "Id of user to connect", example = "372bf2a5-0da3-47bd-8c94-4a09d25d362a") @PathParam String externalId) {
         userService.connectUser(externalId);
         return Response
                 .status(Response.Status.OK)

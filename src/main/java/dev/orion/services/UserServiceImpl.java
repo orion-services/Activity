@@ -7,8 +7,10 @@ import dev.orion.commom.exception.UserInvalidOperationException;
 import dev.orion.entity.User;
 import dev.orion.services.dto.UserEnhancedWithExternalData;
 import dev.orion.services.interfaces.UserService;
+import io.quarkus.arc.log.LoggerName;
 import lombok.val;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
+import org.jboss.logging.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -22,6 +24,10 @@ public class UserServiceImpl implements UserService {
     @Inject
     @RestClient
     UserClient userClient;
+
+    @LoggerName("UserServiceImpl")
+    Logger logger;
+
 
     @Override
     public UserEnhancedWithExternalData getCompleteUserData(String userExternalId) {
@@ -48,6 +54,7 @@ public class UserServiceImpl implements UserService {
         }
 
         user.setStatus(UserStatus.CONNECTED);
+        logger.info(MessageFormat.format("User {0} is connected", userExternalId));
         user.persist();
         return user.id;
     }

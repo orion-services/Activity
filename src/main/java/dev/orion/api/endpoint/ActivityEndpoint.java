@@ -1,17 +1,17 @@
 package dev.orion.api.endpoint;
 
 import dev.orion.api.endpoint.body.*;
+import dev.orion.commom.exception.UserInvalidOperationException;
 import dev.orion.entity.Activity;
 import dev.orion.services.interfaces.ActivityService;
-import dev.orion.commom.exception.UserInvalidOperationException;
 import lombok.val;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponseSchema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.jboss.resteasy.annotations.jaxrs.PathParam;
-import org.jboss.resteasy.reactive.ResponseStatus;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
@@ -32,8 +32,7 @@ public class ActivityEndpoint {
     @Path("/{activityUuid}")
     @Produces(MediaType.APPLICATION_JSON)
     @APIResponseSchema(Activity.class)
-    @ResponseStatus(200)
-    public Response findActivity(@PathParam String activityUuid) {
+    public Response findActivity(@Parameter(description = "UUID of activity to be started", example = "372bf2a5-0da3-47bd-8c94-4a09d25d362a") @PathParam String activityUuid) {
         Activity activity = (Activity) Activity
                 .findByIdOptional(UUID.fromString(activityUuid))
                 .orElseThrow(() -> new UserInvalidOperationException(
@@ -48,12 +47,12 @@ public class ActivityEndpoint {
     @Produces(MediaType.APPLICATION_JSON)
     @APIResponses({
             @APIResponse(
-                    content = { @Content(schema = @Schema(implementation = CreateActivityResponseBody.class)) },
+                    content = {@Content(schema = @Schema(implementation = CreateActivityResponseBody.class))},
                     description = "Create a new activity",
                     responseCode = "201"
             ),
             @APIResponse(
-                    content = { @Content(schema = @Schema(implementation = DefaultErrorResponseBody.class)) },
+                    content = {@Content(schema = @Schema(implementation = DefaultErrorResponseBody.class))},
                     description = "List of errors of trying add a invalid user",
                     responseCode = "400"
             )
@@ -78,18 +77,20 @@ public class ActivityEndpoint {
     @Produces(MediaType.APPLICATION_JSON)
     @APIResponses({
             @APIResponse(
-                    content = { @Content(schema = @Schema(implementation = AddUserToActivityResponseBody.class)) },
+                    content = {@Content(schema = @Schema(implementation = AddUserToActivityResponseBody.class))},
                     description = "Add user into activity to participate.",
                     responseCode = "200"
             ),
             @APIResponse(
-                    content = { @Content(schema = @Schema(implementation = DefaultErrorResponseBody.class)) },
+                    content = {@Content(schema = @Schema(implementation = DefaultErrorResponseBody.class))},
                     description = "List of errors of trying add a invalid user",
                     responseCode = "400"
             )
     })
 
-    public Response addUserToActivity(@Valid AddUserToActivityRequestBody addUserToActivityRequestBody, @PathParam String activityUuid) {
+    public Response addUserToActivity(
+            @Valid AddUserToActivityRequestBody addUserToActivityRequestBody,
+            @Parameter(description = "UUID of activity to be started", example = "372bf2a5-0da3-47bd-8c94-4a09d25d362a") @PathParam String activityUuid) {
         var activity = activityService.addUserInActivity(UUID.fromString(activityUuid), addUserToActivityRequestBody.userExternalId);
         var responseBody = new AddUserToActivityResponseBody(activity);
 
@@ -101,8 +102,17 @@ public class ActivityEndpoint {
 
     @PATCH
     @Path("/{activityUuid}/start")
-    public Response startActivity(@PathParam String activityUuid) {
-        return Response.status(Response.Status.SERVICE_UNAVAILABLE).build();
+    @APIResponse(
+            responseCode = "200",
+            description = "Start a activity",
+            content = @Content(schema = @Schema(implementation = StartActivityResponseBody.class))
+    )
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response startActivity(@Parameter(description = "UUID of activity to be started", example = "372bf2a5-0da3-47bd-8c94-4a09d25d362a") @PathParam String activityUuid) {
+        val activity = activityService.startActivity(UUID.fromString(activityUuid));
+        return Response
+                .ok(new StartActivityResponseBody(activity))
+                .build();
     }
 
     @PATCH

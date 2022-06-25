@@ -209,7 +209,7 @@ public class WorkflowManageServiceTest {
         val expectedId = workflow.id;
         val workflowName = workflow.getName();
 
-        val newWorkflow = testThis.createOrUpdateWorkflow(stages, workflowName, Faker.instance().science().element());
+        val newWorkflow = testThis.createOrUpdateWorkflow(stages, workflowName, Faker.instance().science().scientist());
 
         newWorkflow.setName(Faker.instance().rickAndMorty().character());
         Assertions.assertNotNull(newWorkflow);

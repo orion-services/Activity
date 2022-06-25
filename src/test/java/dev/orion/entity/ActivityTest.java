@@ -44,8 +44,7 @@ public class ActivityTest {
         List<User> userList = new ArrayList<>();
         do {
             User user = UserFixture.generateUser();
-//            clean value to be inserted by Panache
-            user.id = null;
+//            clean value to be inserted by Panache\
             user.status = UserStatus.CONNECTED;
             user.persist();
             userList.add(user);
