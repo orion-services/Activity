@@ -36,6 +36,10 @@ public class Document extends PanacheEntity {
     @JoinColumn(name = "groupActivity_id")
     private GroupActivity groupActivity;
 
+    @ManyToOne()
+    @JoinColumn(name = "user_creator_id")
+    private User userCreator;
+
     public void addParticipant(User user) {
         participantsAssigned.add(user);
     }

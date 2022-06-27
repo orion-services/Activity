@@ -45,11 +45,6 @@
     document-service:
       "client/mp-rest/url": "http://localhost:4000"
   rabbit:
-    username: ""
-    password: ""
-    virtualHost: ""
-    host: ""
-    port: 8883
     queue:
       consumer:
         document: "document-edit"

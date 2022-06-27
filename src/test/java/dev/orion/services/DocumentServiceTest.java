@@ -46,8 +46,7 @@ public class DocumentServiceTest {
 
         val createDocumentResponse = new CreateDocumentResponse(
                 defaultIdResponse,
-                Faker.instance().backToTheFuture().quote(),
-                UUID.randomUUID().toString());
+                Faker.instance().backToTheFuture().quote());
 
         BDDMockito.given(documentClient.createDocument(any())).willReturn(createDocumentResponse);
     }

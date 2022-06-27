@@ -12,5 +12,4 @@ import lombok.RequiredArgsConstructor;
 public class CreateDocumentResponse {
     private String id;
     private String content;
-    private String lastUserEdit;
 }

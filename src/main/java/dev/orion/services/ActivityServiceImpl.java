@@ -311,8 +311,6 @@ public class ActivityServiceImpl implements ActivityService {
         }
     }
 
-
-
     private boolean activityHasOnlineParticipants(Activity activity) {
         return activity.userList.stream().anyMatch(user -> user.status == UserStatus.CONNECTED);
     }

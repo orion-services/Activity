@@ -10,16 +10,21 @@ import javax.persistence.Entity;
 
 @Entity
 @Getter
+@Setter
 @DiscriminatorValue("CIRCULAR")
 @NoArgsConstructor
 @RequiredArgsConstructor
 public class CircleOfWriters extends Step {
     @Column(updatable = false)
-    public String type = "CIRCULAR";
-    public String description = "Following the Circle of Learners, this step should create a circular activity";
+    final public String type = "CIRCULAR";
 
-    @Setter
+    @Column(updatable = false)
+    final public String description = "Following the Circle of Learners, this step should create a circular activity";
+
     @NonNull
     private CircularStepFlowDirectionTypes flowDirection;
+
+
+    private boolean isSingleDocumentByUser = false;
 
 }
