@@ -25,7 +25,7 @@ public class DocumentTest {
         createDocument();
 
         val optionalDocument = Document.findByUserIdAndGroup(userExternalId, groupUUID);
-        Assertions.assertTrue(optionalDocument.isPresent());
+        Assertions.assertFalse(optionalDocument.isEmpty());
     }
 
     @Test

@@ -37,8 +37,8 @@ public class Document extends PanacheEntity {
     private GroupActivity groupActivity;
 
     @ManyToOne()
-    @JoinColumn(name = "user_creator_id")
-    private User userCreator;
+    @JoinColumn(name = "user_starter_id")
+    private User userStarter;
 
     public void addParticipant(User user) {
         participantsAssigned.add(user);
@@ -57,13 +57,13 @@ public class Document extends PanacheEntity {
         return find("groupActivity_id", uuid).list();
     }
 
-    public static Optional<Document> findByUserIdAndGroup(String externalId, UUID groupId) {
+    public static List<Document> findByUserIdAndGroup(String externalId, UUID groupId) {
         Map<String, Object> params = new HashMap<>();
         params.put("groupId", groupId);
         params.put("externalId", externalId);
         return find("from Document as doc " +
                 "JOIN doc.participantsAssigned as pa " +
                 "WHERE doc.groupActivity.uuid = :groupId AND pa.externalId = :externalId", params)
-                .firstResultOptional();
+                .list();
     }
 }
