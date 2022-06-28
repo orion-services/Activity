@@ -8,6 +8,8 @@ import dev.orion.entity.Document;
 import dev.orion.entity.GroupActivity;
 import dev.orion.entity.User;
 import dev.orion.entity.step_type.CircleOfWriters;
+import dev.orion.entity.step_type.OrderedCircleOfWriter;
+import dev.orion.fixture.DocumentFixture;
 import dev.orion.services.interfaces.GroupService;
 import io.quarkus.panache.mock.PanacheMock;
 import io.quarkus.test.junit.QuarkusTest;
@@ -16,17 +18,14 @@ import io.quarkus.test.junit.mockito.InjectSpy;
 import lombok.val;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.hibernate.Session;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.mockito.BDDMockito;
+import org.junit.jupiter.api.*;
 import org.mockito.MockitoAnnotations;
 
 import javax.inject.Inject;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static dev.orion.fixture.ActivityFixture.generateActivity;
 import static dev.orion.fixture.UserFixture.generateUser;
@@ -35,7 +34,8 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 
 @QuarkusTest
-public class CircleStepExecutorTest {
+@Disabled
+public class OrderedCircleOfWriterTest {
     @Inject
     CircleStepExecutor testThis;
 
@@ -77,24 +77,7 @@ public class CircleStepExecutorTest {
 
         usingGroup = groupService.createGroup(usingActivity, usingParticipants);
         usingDocuments = usingGroup.getDocuments();
-        mockFindByUserIdAndGroup();
-    }
-
-    private void mockFindByUserIdAndGroup() {
-        given(Document.findByUserIdAndGroup(anyString(), any(UUID.class))).will(invocation -> {
-            val externalId = (String) invocation.getArgument(0);
-            val groupId = (UUID) invocation.getArgument(1);
-
-            val userGroup = usingActivity.getGroupActivities().stream().filter(groupActivity -> groupActivity.getUuid().equals(groupId)).findFirst().orElseThrow();
-            val userDocument = userGroup.getDocuments().stream().filter(document -> {
-                return document
-                        .getParticipantsAssigned()
-                        .stream()
-                        .anyMatch(user -> user.getExternalId().equals(externalId));
-            }).findFirst();
-
-            return userDocument;
-        });
+        DocumentFixture.mockFindByUserIdAndGroup(usingActivity);
     }
 
     private LinkedHashSet<User> createParticipants(Activity activity) {
@@ -121,6 +104,6 @@ public class CircleStepExecutorTest {
     @Test
     @DisplayName("[validate] - (single document) Should validate if is user turn")
     public void testValidationOfUserTurn() {
-        testThis.validate(usingActivity, usingParticipants.stream().findFirst().orElseThrow());
+        testThis.validate(usingActivity, usingParticipants.stream().findFirst().orElseThrow(), new OrderedCircleOfWriter());
     }
 }

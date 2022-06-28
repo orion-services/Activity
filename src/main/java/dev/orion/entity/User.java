@@ -4,12 +4,14 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import dev.orion.commom.constant.UserStatus;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.Optional;
 
 @Entity
@@ -18,7 +20,6 @@ import java.util.Optional;
 @NoArgsConstructor
 @JsonIgnoreProperties(value = {"id"})
 public class User extends PanacheEntity {
-
     @Column(nullable = false, unique = true)
     public String externalId;
 
@@ -55,5 +56,18 @@ public class User extends PanacheEntity {
 
     public static Optional<User> findUserByExternalId(String externalId) {
         return User.find("externalId", externalId).firstResultOptional();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        User user = (User) o;
+        return getExternalId().equals(user.getExternalId());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getExternalId());
     }
 }

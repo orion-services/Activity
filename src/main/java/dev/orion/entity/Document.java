@@ -1,6 +1,7 @@
 package dev.orion.entity;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -40,6 +41,8 @@ public class Document extends PanacheEntity {
     @JoinColumn(name = "user_starter_id")
     private User userStarter;
 
+    private Integer rounds = 1;
+
     public void addParticipant(User user) {
         participantsAssigned.add(user);
     }
@@ -57,7 +60,7 @@ public class Document extends PanacheEntity {
         return find("groupActivity_id", uuid).list();
     }
 
-    public static List<Document> findByUserIdAndGroup(String externalId, UUID groupId) {
+    public static List<Document> findAllByUserIdAndGroup(String externalId, UUID groupId) {
         Map<String, Object> params = new HashMap<>();
         params.put("groupId", groupId);
         params.put("externalId", externalId);
@@ -65,5 +68,22 @@ public class Document extends PanacheEntity {
                 "JOIN doc.participantsAssigned as pa " +
                 "WHERE doc.groupActivity.uuid = :groupId AND pa.externalId = :externalId", params)
                 .list();
+    }
+
+    public static Optional<Document> findByExternalId(String externalId) {
+        return find("externalId", externalId).firstResultOptional();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Document document = (Document) o;
+        return getExternalId().equals(document.getExternalId());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getExternalId());
     }
 }

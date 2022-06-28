@@ -9,6 +9,7 @@ import dev.orion.util.AggregateException;
 import dev.orion.workflowExecutor.CircleStepExecutor;
 import dev.orion.workflowExecutor.ReverseSnowBallStepExecutor;
 import dev.orion.workflowExecutor.StepExecutor;
+import dev.orion.workflowExecutor.UnorderedCircleOfWriterStepExecutor;
 import io.quarkus.arc.log.LoggerName;
 import lombok.val;
 import org.jboss.logging.Logger;
@@ -30,12 +31,16 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
     @Inject
     ReverseSnowBallStepExecutor reverseSnowBallStepExecutor;
 
+    @Inject
+    UnorderedCircleOfWriterStepExecutor unorderedCircleOfWriterStepExecutor;
+
     @LoggerName("WorkflowManageServiceImpl")
     Logger logger;
 
     private void setupExecutorsMap() {
         stepExecutorsMap.put(circleStepExecutor.getStepRepresentation(), circleStepExecutor);
         stepExecutorsMap.put(reverseSnowBallStepExecutor.getStepRepresentation(), reverseSnowBallStepExecutor);
+        stepExecutorsMap.put(unorderedCircleOfWriterStepExecutor.getStepRepresentation(), unorderedCircleOfWriterStepExecutor);
     }
 
     @Override
@@ -82,11 +87,11 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
         Queue<Runnable> executionQueue = new LinkedList<>();
         List<RuntimeException> exceptionList = new ArrayList<>();
 
-        steps.stream().filter(step -> Objects.nonNull(stepExecutorsMap.get(step.getType()))).forEach(step -> {
+        steps.stream().filter(this::hasExecutorForStep).forEach(step -> {
             val stepExecutor = stepExecutorsMap.get(step.getType());
             try {
-                stepExecutor.validate(activity, performer);
-                executionQueue.add(() -> stepExecutor.execute(activity, performer));
+                stepExecutor.validate(activity, performer, step);
+                executionQueue.add(() -> stepExecutor.execute(activity, performer, step));
             } catch (NotValidActionException notValidActionException) {
                 logger.warn("Step: '" + notValidActionException.getStepName() + "' validation throw when trying to apply to activity: " + activity.uuid);
                 exceptionList.add(notValidActionException);
@@ -108,5 +113,9 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
             logger.info(MessageFormat.format("There is no {0} stage on activity {1}", activity.actualStage, activity.uuid));
         }
         return actualStage;
+    }
+
+    private boolean hasExecutorForStep(Step step) {
+        return stepExecutorsMap.containsKey(step.getType());
     }
 }

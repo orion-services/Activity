@@ -1,6 +1,7 @@
 package dev.orion.workflowExecutor;
 
 import dev.orion.entity.Activity;
+import dev.orion.entity.Step;
 import dev.orion.entity.User;
 import dev.orion.entity.step_type.ReverseSnowball;
 
@@ -9,12 +10,12 @@ import javax.enterprise.context.ApplicationScoped;
 @ApplicationScoped
 public class ReverseSnowBallStepExecutor implements StepExecutor {
     @Override
-    public void execute(Activity activity, User user) {
+    public void execute(Activity activity, User user, Step step) {
         throw new RuntimeException("Should implement it");
     }
 
     @Override
-    public void validate(Activity activity, User user) {
+    public void validate(Activity activity, User user, Step step) {
         throw new RuntimeException("Should implement it");
     }
 

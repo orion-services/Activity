@@ -10,6 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import javax.transaction.Transactional;
+import java.util.LinkedHashSet;
 import java.util.UUID;
 
 @QuarkusTest
@@ -19,13 +20,31 @@ public class DocumentTest {
 
     private String userExternalId;
 
+    private Document originalDocument;
+
     @Test
     @DisplayName("[findByUserIdAndGroup] - Find document by user and group")
     public void testFindByUserIdAndGroup() {
         createDocument();
 
-        val optionalDocument = Document.findByUserIdAndGroup(userExternalId, groupUUID);
-        Assertions.assertFalse(optionalDocument.isEmpty());
+        val optionalDocument = Document.findAllByUserIdAndGroup(userExternalId, groupUUID);
+        Assertions.assertEquals(1, optionalDocument.size());
+    }
+
+    @Test
+    @DisplayName("[findByUserIdAndGroup] - Find multiple documents by user and group")
+    public void testFindByUserIdAndGroupList() {
+        createDocument();
+
+        val secondDocument = new Document();
+        secondDocument.setParticipantsAssigned(new LinkedHashSet<>(originalDocument.getParticipantsAssigned()));
+        secondDocument.setGroupActivity(originalDocument.getGroupActivity());
+        secondDocument.setGroupActivity(originalDocument.getGroupActivity());
+        secondDocument.setExternalId(UUID.randomUUID().toString());
+        secondDocument.persist();
+
+        val originalDocument = Document.findAllByUserIdAndGroup(userExternalId, groupUUID);
+        Assertions.assertEquals(2, originalDocument.size());
     }
 
     @Test
@@ -33,16 +52,18 @@ public class DocumentTest {
     public void testFindByUserIdAndGroupGetEmpty() {
         createDocument();
 
-        var optionalDocument = Document.findByUserIdAndGroup(userExternalId, UUID.randomUUID());
+        var optionalDocument = Document.findAllByUserIdAndGroup(userExternalId, UUID.randomUUID());
         Assertions.assertTrue(optionalDocument.isEmpty());
-        optionalDocument = Document.findByUserIdAndGroup(Faker.instance().idNumber().toString(), groupUUID);
+        optionalDocument = Document.findAllByUserIdAndGroup(Faker.instance().idNumber().toString(), groupUUID);
         Assertions.assertTrue(optionalDocument.isEmpty());
     }
 
 
     private void createDocument() {
         val user = UserFixture.generateUser();
+        val user2 = UserFixture.generateUser();
         user.persist();
+        user2.persist();
         val activity = ActivityFixture.generateActivity(user);
         activity.uuid = null;
 
@@ -51,13 +72,14 @@ public class DocumentTest {
         activity.persist();
         groupActivity.persist();
 
-        val document = new Document();
+        originalDocument = new Document();
         val documentExternalId = UUID.randomUUID().toString();
-        document.setExternalId(documentExternalId);
-        document.setGroupActivity(groupActivity);
+        originalDocument.setExternalId(documentExternalId);
+        originalDocument.setGroupActivity(groupActivity);
 
-        document.addParticipant(user);
-        document.persist();
+        originalDocument.addParticipant(user);
+        originalDocument.addParticipant(user2);
+        originalDocument.persist();
         groupUUID = groupActivity.getUuid();
         userExternalId = user.externalId;
     }

@@ -13,10 +13,7 @@ import lombok.val;
 import net.datafaker.Faker;
 import org.mockito.BDDMockito;
 
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
@@ -52,7 +49,7 @@ final public class UserFixture {
         return userClientResponse;
     }
 
-    static public UserEnhancedWithExternalData mockEnhancedUser(UserService userService, String commonUserExternalId) {
+    static public UserEnhancedWithExternalData mockEnhancedUser(UserService userService, final String commonUserExternalId) {
         val userClientResponse = UserFixture.generateUserEnhancedWithExternalDataDto();
 
         userClientResponse.uuid = commonUserExternalId;
@@ -64,12 +61,24 @@ final public class UserFixture {
         return userClientResponse;
     }
 
-    public static User mockFindUserByExternalId(String commonUserExternalId) {
+    public static User mockFindUserByExternalId(final String commonUserExternalId) {
         val user = UserFixture.generateUser();
         user.activity = new Activity();
         PanacheMock.mock(User.class);
         BDDMockito.given(User.findUserByExternalId(commonUserExternalId)).willReturn(Optional.of(user));
 
         return user;
+    }
+
+    public static LinkedHashSet<User> createParticipants(Activity activity, final Integer quantity) {
+        val participants = new LinkedHashSet<User>();
+
+        for (int i = 0; i < quantity; i++) {
+            val user = generateUser();
+            activity.addParticipant(user);
+            participants.add(user);
+        }
+
+        return participants;
     }
 }

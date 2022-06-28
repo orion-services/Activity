@@ -6,13 +6,12 @@ import dev.orion.commom.exception.IncompleteWorkflowException;
 import dev.orion.commom.exception.NotValidActionException;
 import dev.orion.entity.*;
 import dev.orion.entity.step_type.CircleOfWriters;
-import dev.orion.entity.step_type.ReverseSnowball;
+import dev.orion.entity.step_type.UnorderedCircleOfWriters;
 import dev.orion.fixture.UserFixture;
 import dev.orion.fixture.WorkflowFixture;
 import dev.orion.util.AggregateException;
 import dev.orion.workflowExecutor.CircleStepExecutor;
-import dev.orion.workflowExecutor.CircleStepExecutorTest;
-import dev.orion.workflowExecutor.ReverseSnowBallStepExecutor;
+import dev.orion.workflowExecutor.UnorderedCircleOfWriterStepExecutor;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
 import lombok.val;
@@ -43,13 +42,13 @@ public class WorkflowManageServiceTest {
     CircleStepExecutor circleStepExecutor;
 
     @InjectMock
-    ReverseSnowBallStepExecutor reverseSnowBallStepExecutor;
+    UnorderedCircleOfWriterStepExecutor unorderedCircleOfWriterStepExecutor;
 
     @BeforeEach
     public void setup() {
         MockitoAnnotations.openMocks(this);
         when(circleStepExecutor.getStepRepresentation()).thenCallRealMethod();
-        when(reverseSnowBallStepExecutor.getStepRepresentation()).thenCallRealMethod();
+        when(unorderedCircleOfWriterStepExecutor.getStepRepresentation()).thenCallRealMethod();
     }
 
     @Test
@@ -67,13 +66,13 @@ public class WorkflowManageServiceTest {
         Activity persistedActivity = Activity.findById(activity.uuid);
 
         testThis.apply(persistedActivity, user);
-        BDDMockito.then(circleStepExecutor).should().execute(any(), any());
-        BDDMockito.then(reverseSnowBallStepExecutor).should(times(0)).execute(any(), any());
+        BDDMockito.then(circleStepExecutor).should().execute(any(), any(), any());
+        BDDMockito.then(unorderedCircleOfWriterStepExecutor).should(times(0)).execute(any(), any(), any());
 
         persistedActivity.actualStage = ActivityStages.DURING;
         testThis.apply(persistedActivity, user);
-        BDDMockito.then(circleStepExecutor).should(times(1)).execute(any(), any());
-        BDDMockito.then(reverseSnowBallStepExecutor).should().execute(any(), any());
+        BDDMockito.then(circleStepExecutor).should(times(1)).execute(any(), any(), any());
+        BDDMockito.then(unorderedCircleOfWriterStepExecutor).should().execute(any(), any(), any());
     }
 
     @Test
@@ -95,21 +94,21 @@ public class WorkflowManageServiceTest {
         testThis.apply(persistedActivity, user);
         persistedActivity.actualStage = ActivityStages.DURING;
         testThis.apply(persistedActivity, user);
-        BDDMockito.then(circleStepExecutor).should(atLeastOnce()).validate(any(), any());
-        BDDMockito.then(reverseSnowBallStepExecutor).should(atLeastOnce()).validate(any(), any());
+        BDDMockito.then(circleStepExecutor).should(atLeastOnce()).validate(any(), any(), any());
+        BDDMockito.then(unorderedCircleOfWriterStepExecutor).should(atLeastOnce()).validate(any(), any(), any());
     }
 
     @Test
     @DisplayName("[apply] Should throw error when a stage do not validate")
     public void testStageThrowValidation() {
         BDDMockito
-                .willThrow(new NotValidActionException("reverseSnowBallStepExecutor", "error"))
-                .given(reverseSnowBallStepExecutor)
-                .validate(any(), any());
+                .willThrow(new NotValidActionException("unorderedCircleOfWriterStepExecutor", "error"))
+                .given(unorderedCircleOfWriterStepExecutor)
+                .validate(any(), any(), any());
         BDDMockito
-                .willThrow(new NotValidActionException("reverseSnowBallStepExecutor", "error"))
+                .willThrow(new NotValidActionException("circleStepExecutor", "error"))
                 .given(circleStepExecutor)
-                .validate(any(), any());
+                .validate(any(), any(), any());
 
         User user = UserFixture.generateUser();
         user.persist();
@@ -119,7 +118,7 @@ public class WorkflowManageServiceTest {
         activity.workflow = generateWorkflow();
         activity.workflow.getStages().forEach(stage -> {
             if (stage.getStage().equals(ActivityStages.PRE)) {
-                stage.addStep(new ReverseSnowball());
+                stage.addStep(new UnorderedCircleOfWriters());
             }
         });
 
@@ -128,10 +127,10 @@ public class WorkflowManageServiceTest {
         val aggregateException = Assertions.assertThrows(AggregateException.class, () -> testThis.apply(activity, user));
 
         Assertions.assertEquals(2, aggregateException.getExceptions().size());
-        BDDMockito.then(circleStepExecutor).should(never()).execute(any(), any());
-        BDDMockito.then(reverseSnowBallStepExecutor).should(never()).execute(any(), any());
-        BDDMockito.then(circleStepExecutor).should().validate(any(), any());
-        BDDMockito.then(reverseSnowBallStepExecutor).should().validate(any(), any());
+        BDDMockito.then(circleStepExecutor).should(never()).execute(any(), any(), any());
+        BDDMockito.then(unorderedCircleOfWriterStepExecutor).should(never()).execute(any(), any(), any());
+        BDDMockito.then(circleStepExecutor).should().validate(any(), any(), any());
+        BDDMockito.then(unorderedCircleOfWriterStepExecutor).should().validate(any(), any(), any());
     }
 
     @Test
@@ -144,8 +143,8 @@ public class WorkflowManageServiceTest {
         activity.setActualStage(ActivityStages.AFTER);
 
         testThis.apply(activity, activity.getCreator());
-        BDDMockito.then(circleStepExecutor).should(never()).execute(any(), any());
-        BDDMockito.then(reverseSnowBallStepExecutor).should(never()).execute(any(), any());
+        BDDMockito.then(circleStepExecutor).should(never()).execute(any(), any(), any());
+        BDDMockito.then(unorderedCircleOfWriterStepExecutor).should(never()).execute(any(), any(), any());
     }
 
     @Test
@@ -165,8 +164,8 @@ public class WorkflowManageServiceTest {
         activity.workflow = workflow;
 
         Assertions.assertThrows(IncompleteWorkflowException.class, () -> testThis.apply(activity, user));
-        BDDMockito.then(reverseSnowBallStepExecutor).should(never()).execute(any(), any());
-        BDDMockito.then(circleStepExecutor).should(never()).execute(any(), any());
+        BDDMockito.then(unorderedCircleOfWriterStepExecutor).should(never()).execute(any(), any(), any());
+        BDDMockito.then(circleStepExecutor).should(never()).execute(any(), any(), any());
     }
 
 //   Workflow creation with createWorkflow
@@ -236,7 +235,7 @@ public class WorkflowManageServiceTest {
             stage.addStep(new CircleOfWriters(CircularStepFlowDirectionTypes.FROM_BEGIN_TO_END));
             return stage;
         }
-        stage.addStep(new ReverseSnowball());
+        stage.addStep(new UnorderedCircleOfWriters());
         return stage;
     }
 }
