@@ -25,7 +25,6 @@ import org.mockito.MockitoAnnotations;
 
 import javax.inject.Inject;
 import javax.transaction.Transactional;
-
 import java.util.List;
 import java.util.Set;
 
@@ -65,12 +64,12 @@ public class WorkflowManageServiceTest {
         //  Test incoming from database
         Activity persistedActivity = Activity.findById(activity.uuid);
 
-        testThis.apply(persistedActivity, user);
+        testThis.apply(persistedActivity, user, new Document());
         BDDMockito.then(circleStepExecutor).should().execute(any(), any(), any());
         BDDMockito.then(unorderedCircleOfWriterStepExecutor).should(times(0)).execute(any(), any(), any());
 
         persistedActivity.actualStage = ActivityStages.DURING;
-        testThis.apply(persistedActivity, user);
+        testThis.apply(persistedActivity, user, new Document());
         BDDMockito.then(circleStepExecutor).should(times(1)).execute(any(), any(), any());
         BDDMockito.then(unorderedCircleOfWriterStepExecutor).should().execute(any(), any(), any());
     }
@@ -91,9 +90,9 @@ public class WorkflowManageServiceTest {
 
         Activity persistedActivity = Activity.findById(activity.uuid);
 
-        testThis.apply(persistedActivity, user);
+        testThis.apply(persistedActivity, user, new Document());
         persistedActivity.actualStage = ActivityStages.DURING;
-        testThis.apply(persistedActivity, user);
+        testThis.apply(persistedActivity, user, new Document());
         BDDMockito.then(circleStepExecutor).should(atLeastOnce()).validate(any(), any(), any());
         BDDMockito.then(unorderedCircleOfWriterStepExecutor).should(atLeastOnce()).validate(any(), any(), any());
     }
@@ -124,7 +123,7 @@ public class WorkflowManageServiceTest {
 
         activity.persist();
 
-        val aggregateException = Assertions.assertThrows(AggregateException.class, () -> testThis.apply(activity, user));
+        val aggregateException = Assertions.assertThrows(AggregateException.class, () -> testThis.apply(activity, user, null));
 
         Assertions.assertEquals(2, aggregateException.getExceptions().size());
         BDDMockito.then(circleStepExecutor).should(never()).execute(any(), any(), any());
@@ -142,7 +141,7 @@ public class WorkflowManageServiceTest {
 
         activity.setActualStage(ActivityStages.AFTER);
 
-        testThis.apply(activity, activity.getCreator());
+        testThis.apply(activity, activity.getCreator(), new Document());
         BDDMockito.then(circleStepExecutor).should(never()).execute(any(), any(), any());
         BDDMockito.then(unorderedCircleOfWriterStepExecutor).should(never()).execute(any(), any(), any());
     }
@@ -163,7 +162,7 @@ public class WorkflowManageServiceTest {
         activity.creator = user;
         activity.workflow = workflow;
 
-        Assertions.assertThrows(IncompleteWorkflowException.class, () -> testThis.apply(activity, user));
+        Assertions.assertThrows(IncompleteWorkflowException.class, () -> testThis.apply(activity, user, new Document()));
         BDDMockito.then(unorderedCircleOfWriterStepExecutor).should(never()).execute(any(), any(), any());
         BDDMockito.then(circleStepExecutor).should(never()).execute(any(), any(), any());
     }

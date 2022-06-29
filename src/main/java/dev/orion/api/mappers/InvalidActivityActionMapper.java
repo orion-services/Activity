@@ -2,9 +2,7 @@ package dev.orion.api.mappers;
 
 import dev.orion.api.endpoint.body.DefaultErrorResponseBody;
 import dev.orion.commom.exception.InvalidActivityActionException;
-import dev.orion.commom.exception.UserInvalidOperationException;
 
-import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;

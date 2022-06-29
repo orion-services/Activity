@@ -3,7 +3,6 @@ package dev.orion.fixture;
 import dev.orion.client.UserClient;
 import dev.orion.client.dto.UserClientResponse;
 import dev.orion.commom.constant.UserRoles;
-import dev.orion.commom.constant.UserStatus;
 import dev.orion.entity.Activity;
 import dev.orion.entity.User;
 import dev.orion.services.dto.UserEnhancedWithExternalData;

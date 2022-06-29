@@ -1,6 +1,10 @@
 package dev.orion.workflowExecutor;
 
-import dev.orion.entity.*;
+import dev.orion.commom.exception.NotValidActionException;
+import dev.orion.entity.Document;
+import dev.orion.entity.GroupActivity;
+import dev.orion.entity.Step;
+import dev.orion.entity.User;
 import dev.orion.entity.step_type.UnorderedCircleOfWriters;
 import dev.orion.services.interfaces.DocumentService;
 import io.quarkus.arc.log.LoggerName;
@@ -9,6 +13,8 @@ import org.jboss.logging.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import java.text.MessageFormat;
+import java.util.Objects;
 
 @ApplicationScoped
 public class UnorderedCircleOfWriterStepExecutor implements StepExecutor {
@@ -18,19 +24,22 @@ public class UnorderedCircleOfWriterStepExecutor implements StepExecutor {
     private DocumentService documentService;
 
     @Override
-    public void execute(Activity activity, User user, Step step) {
+    public void execute(Document document, User user, Step step) {
+        val isDocumentNull = Objects.isNull(document);
+        if (isDocumentNull) {
+            throw new NotValidActionException(getStepRepresentation(), "document must not be null");
+        }
+
         val unorderedCircleOfWriter = (UnorderedCircleOfWriters) step;
 
         val groupActivity = user.getGroupActivity();
-        val documentList = Document.findAllByUserIdAndGroup(user.externalId, groupActivity.getUuid());
-        if (documentList.isEmpty()) {
-            logger.warnv("User {0} is not found in group {1}", user.getExternalId(), groupActivity.getUuid());
+        if (!document.getParticipantsAssigned().contains(user)) {
+            logger.warnv("User {0} is not a participant in document {1}", user.getExternalId(), document.getExternalId());
             return;
         }
-        val document = documentList.get(0);
 
         documentService.moveParticipantToEditedList(document, user);
-        advanceDocumentRoundAndResetForNextRound(document, groupActivity,   unorderedCircleOfWriter);
+        advanceDocumentRoundAndResetForNextRound(document, groupActivity, unorderedCircleOfWriter);
     }
 
     private void advanceDocumentRoundAndResetForNextRound(Document document, GroupActivity groupActivity, UnorderedCircleOfWriters unorderedCircleOfWriters) {
@@ -56,9 +65,21 @@ public class UnorderedCircleOfWriterStepExecutor implements StepExecutor {
     }
 
     @Override
-    public void validate(Activity activity, User user, Step step) {
-        val unorderedCircleOfWriter = (UnorderedCircleOfWriters) step;
-        throw new RuntimeException("Should implement it");
+    public void validate(Document document, User user, Step step) {
+        if (Objects.isNull(document)) {
+            val exceptionMessage = "the document can't be null";
+            throw new NotValidActionException(step.getType(), exceptionMessage);
+        }
+
+        if (!document.getParticipantsAssigned().contains(user)) {
+            val exceptionMessage = MessageFormat.format("User {0} is not a participant in document {1}", user.getExternalId(), document.getExternalId());
+            throw new NotValidActionException(step.getType(), exceptionMessage);
+        }
+    }
+
+    @Override
+    public <T extends Step> boolean isFinished(Document document, User user, T step) throws NotValidActionException {
+        return false;
     }
 
     @Override

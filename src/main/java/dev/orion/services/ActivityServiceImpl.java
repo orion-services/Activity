@@ -210,7 +210,7 @@ public class ActivityServiceImpl implements ActivityService {
 
         validateActivityToStart(activity);
 
-        workflowManageService.apply(activity, activity.getCreator());
+        workflowManageService.apply(activity, activity.getCreator(), null);
         createGroupIfNotExists(activityUUID);
 
         activity.setActualStage(ActivityStages.DURING);

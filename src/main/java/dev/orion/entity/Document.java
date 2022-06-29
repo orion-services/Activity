@@ -1,7 +1,6 @@
 package dev.orion.entity;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 

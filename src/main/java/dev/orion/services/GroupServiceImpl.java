@@ -1,6 +1,5 @@
 package dev.orion.services;
 
-import com.mysql.cj.protocol.Message;
 import dev.orion.commom.exception.UserInvalidOperationException;
 import dev.orion.entity.Activity;
 import dev.orion.entity.Document;

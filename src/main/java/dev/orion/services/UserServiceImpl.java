@@ -15,7 +15,6 @@ import org.jboss.logging.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.swing.text.html.Option;
 import javax.transaction.Transactional;
 import javax.ws.rs.NotFoundException;
 import java.text.MessageFormat;

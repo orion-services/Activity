@@ -5,7 +5,6 @@ import dev.orion.entity.Document;
 import dev.orion.entity.GroupActivity;
 import dev.orion.entity.User;
 
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 

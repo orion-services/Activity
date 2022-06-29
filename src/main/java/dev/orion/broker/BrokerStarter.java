@@ -2,14 +2,12 @@ package dev.orion.broker;
 
 import dev.orion.broker.consumer.DocumentEditorConsumer;
 import io.quarkus.runtime.StartupEvent;
+import io.quarkus.runtime.configuration.ProfileManager;
+import org.jboss.logging.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
-
-import io.quarkus.runtime.configuration.ProfileManager;
-import org.jboss.logging.Logger;
-
 import java.io.IOException;
 
 

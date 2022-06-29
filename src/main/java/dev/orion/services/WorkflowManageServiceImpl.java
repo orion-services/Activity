@@ -44,7 +44,7 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
     }
 
     @Override
-    public void apply(Activity activity, User performer) throws IncompleteWorkflowException {
+    public void apply(Activity activity, User performer, Document document) throws IncompleteWorkflowException {
         setupExecutorsMap();
 
         val actualStageOpt = extractActualStage(activity);
@@ -59,7 +59,7 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
             throw new IncompleteWorkflowException(errorMessage);
         }
 
-        var executionQueue = createExecutionQueue(actualStage.getSteps(), activity, performer);
+        var executionQueue = createExecutionQueue(actualStage.getSteps(), activity, performer, document);
 
         while (!executionQueue.isEmpty()) {
             executionQueue.poll().run();
@@ -83,15 +83,15 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
     }
 
 
-    private Queue<Runnable> createExecutionQueue(List<Step> steps, Activity activity, User performer) {
+    private Queue<Runnable> createExecutionQueue(List<Step> steps, Activity activity, User performer, Document document) {
         Queue<Runnable> executionQueue = new LinkedList<>();
         List<RuntimeException> exceptionList = new ArrayList<>();
 
         steps.stream().filter(this::hasExecutorForStep).forEach(step -> {
             val stepExecutor = stepExecutorsMap.get(step.getType());
             try {
-                stepExecutor.validate(activity, performer, step);
-                executionQueue.add(() -> stepExecutor.execute(activity, performer, step));
+                stepExecutor.validate(document, performer, step);
+                executionQueue.add(() -> stepExecutor.execute(document, performer, step));
             } catch (NotValidActionException notValidActionException) {
                 logger.warn("Step: '" + notValidActionException.getStepName() + "' validation throw when trying to apply to activity: " + activity.uuid);
                 exceptionList.add(notValidActionException);

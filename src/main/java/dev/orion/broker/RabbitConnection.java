@@ -3,7 +3,6 @@ package dev.orion.broker;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
-
 import io.quarkus.runtime.configuration.ProfileManager;
 import lombok.val;
 import org.eclipse.microprofile.config.ConfigProvider;

@@ -8,13 +8,12 @@ import dev.orion.client.UserClient;
 import dev.orion.client.dto.CreateDocumentResponse;
 import dev.orion.client.dto.UserClientResponse;
 import dev.orion.commom.constant.ActivityStages;
-import dev.orion.commom.constant.CircularStepFlowDirectionTypes;
 import dev.orion.commom.constant.UserStatus;
-import dev.orion.entity.*;
-import dev.orion.entity.step_type.CircleOfWriters;
+import dev.orion.entity.Activity;
+import dev.orion.entity.GroupActivity;
+import dev.orion.entity.User;
 import dev.orion.fixture.ActivityFixture;
 import dev.orion.fixture.UserFixture;
-import dev.orion.fixture.WorkflowFixture;
 import dev.orion.services.dto.UserEnhancedWithExternalData;
 import dev.orion.services.interfaces.ActivityService;
 import dev.orion.services.interfaces.GroupService;
@@ -338,7 +337,7 @@ public class ActivityEndpointTest {
         Assertions.assertTrue(responseBody.getGroups().get(groupActivity.getUuid()).contains(userEntity.externalId));
         then(documentClient).should().createDocument(any());
         then(groupService).should().createGroup(activity, activity.getUserList());
-        then(workflowManageService).should().apply(activity, activity.getCreator());
+        then(workflowManageService).should().apply(activity, activity.getCreator(), null);
     }
 
     @Test

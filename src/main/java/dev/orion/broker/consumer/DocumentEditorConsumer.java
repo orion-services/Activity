@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.DeliverCallback;
 import dev.orion.broker.RabbitConnection;
 import dev.orion.broker.dto.DocumentEditDto;
-import dev.orion.broker.dto.DocumentUpdateDto;
 import dev.orion.broker.producer.DocumentUpdateProducer;
 import dev.orion.services.interfaces.DocumentService;
 import io.quarkus.arc.log.LoggerName;

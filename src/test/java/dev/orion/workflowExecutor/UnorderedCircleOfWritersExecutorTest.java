@@ -3,7 +3,11 @@ package dev.orion.workflowExecutor;
 import dev.orion.broker.producer.DocumentUpdateProducer;
 import dev.orion.client.DocumentClient;
 import dev.orion.client.dto.CreateDocumentResponse;
-import dev.orion.entity.*;
+import dev.orion.commom.exception.NotValidActionException;
+import dev.orion.entity.Activity;
+import dev.orion.entity.Document;
+import dev.orion.entity.GroupActivity;
+import dev.orion.entity.User;
 import dev.orion.entity.step_type.UnorderedCircleOfWriters;
 import dev.orion.fixture.DocumentFixture;
 import dev.orion.services.interfaces.DocumentService;
@@ -15,11 +19,18 @@ import io.quarkus.test.junit.mockito.InjectSpy;
 import lombok.val;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.hibernate.Session;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.mockito.MockitoAnnotations;
 
 import javax.inject.Inject;
-import java.util.*;
+import java.text.MessageFormat;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Optional;
+import java.util.UUID;
 
 import static dev.orion.fixture.ActivityFixture.generateActivity;
 import static dev.orion.fixture.UserFixture.createParticipants;
@@ -27,7 +38,8 @@ import static dev.orion.fixture.UserFixture.generateUser;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 
 @QuarkusTest
 public class UnorderedCircleOfWritersExecutorTest {
@@ -58,7 +70,7 @@ public class UnorderedCircleOfWritersExecutorTest {
 
     private LinkedHashSet<User> usingParticipants;
 
-    private List<Document> usingDocuments;
+    private Document usingDocument;
 
     private UnorderedCircleOfWriters usingStep;
 
@@ -78,10 +90,9 @@ public class UnorderedCircleOfWritersExecutorTest {
 
         usingGroup = groupService.createGroup(usingActivity, usingParticipants);
         usingGroup.setUuid(UUID.randomUUID());
-        usingDocuments = usingGroup.getDocuments();
-        val document = usingDocuments.get(0);
-        given(Document.findByExternalId(document.getExternalId())).willReturn(Optional.of(document));
+        usingDocument = usingGroup.getDocuments().get(0);
         DocumentFixture.mockFindByUserIdAndGroup(usingActivity);
+        given(Document.findByExternalId(usingDocument.getExternalId())).willReturn(Optional.of(usingDocument));
     }
 
     @Test
@@ -95,24 +106,37 @@ public class UnorderedCircleOfWritersExecutorTest {
     @Test
     @DisplayName("[executor] - (Single document) Should put the user that edited from participant to has edited")
     public void testMoveTheUserExecutorFromAssignedToEdited() {
-        val document = usingDocuments.get(0);
         val userExecutor = usingParticipants.stream().findFirst().orElseThrow();
-        testThis.execute(usingActivity, userExecutor, new UnorderedCircleOfWriters());
+        testThis.execute(usingDocument, userExecutor, new UnorderedCircleOfWriters());
 
         then(documentService).should().moveParticipantToEditedList(any(Document.class), any(User.class));
-        Assertions.assertTrue(document.getParticipantsThatEdited().contains(userExecutor));
-        Assertions.assertFalse(document.getParticipantsAssigned().contains(userExecutor));
+        Assertions.assertTrue(usingDocument.getParticipantsThatEdited().contains(userExecutor));
+        Assertions.assertFalse(usingDocument.getParticipantsAssigned().contains(userExecutor));
     }
 
     @Test
     @DisplayName("[executor] - (Single document) Should not call method when not find document with participant")
     public void testValidationOfNotFindDocumentWithParticipantMoveTheUserExecutorFromAssignedToEdited() {
-        val document = usingDocuments.get(0);
         val userExecutor = usingParticipants.stream().findFirst().orElseThrow();
-        document.removeParticipant(userExecutor);
+        usingDocument.removeParticipant(userExecutor);
 
-        testThis.execute(usingActivity, userExecutor, new UnorderedCircleOfWriters());
+        testThis.execute(usingDocument, userExecutor, new UnorderedCircleOfWriters());
 
+        then(documentService).should(never()).moveParticipantToEditedList(any(Document.class), any(User.class));
+    }
+
+    @Test
+    @DisplayName("[executor] - (Single document) Should throw when document is null")
+    public void testNullValidationOfExecutor() {
+        val userExecutor = usingParticipants.stream().findFirst().orElseThrow();
+        usingDocument.removeParticipant(userExecutor);
+
+        val exceptionMessage = Assertions.assertThrows(NotValidActionException.class, () -> {
+            testThis.execute(null, userExecutor, new UnorderedCircleOfWriters());
+        }).toString();
+        val expectedMessage = MessageFormat.format("Step name: {0} has error: document must not be null", testThis.getStepRepresentation());
+
+        Assertions.assertEquals(expectedMessage, exceptionMessage);
         then(documentService).should(never()).moveParticipantToEditedList(any(Document.class), any(User.class));
     }
 
@@ -120,61 +144,84 @@ public class UnorderedCircleOfWritersExecutorTest {
     @Test
     @DisplayName("[executor] - (Single document) Should increase round of document if every participant is in edited list")
     public void testIncreaseOfDocumentVersionIfFlowIsComplete() {
-        val document = usingDocuments.get(0);
         val userExecutor = usingParticipants.stream().findFirst().orElseThrow();
-        val participantsToEdit = new HashSet<>(document.getParticipantsAssigned());
+        val participantsToEdit = new HashSet<>(usingDocument.getParticipantsAssigned());
 
         participantsToEdit.removeIf(user -> user.equals(userExecutor));
-        document.getParticipantsAssigned().removeIf(user -> !user.equals(userExecutor));
-        document.setParticipantsThatEdited(participantsToEdit);
+        usingDocument.getParticipantsAssigned().removeIf(user -> !user.equals(userExecutor));
+        usingDocument.setParticipantsThatEdited(participantsToEdit);
 
         val expectedRounds = 2;
         usingStep.setRounds(expectedRounds);
 
-        testThis.execute(usingActivity, userExecutor, usingStep);
+        testThis.execute(usingDocument, userExecutor, usingStep);
         then(documentService).should().moveParticipantToEditedList(any(Document.class), any(User.class));
-        Assertions.assertEquals(expectedRounds, document.getRounds());
+        Assertions.assertEquals(expectedRounds, usingDocument.getRounds());
     }
 
     @Test
     @DisplayName("[executor] - (Single document) Should let every participant perform document edition and add version at end")
     public void testAllParticipantsEditionAndIfAddNextRoundToDocument() {
-        val document = usingDocuments.get(0);
         val expectedRounds = 2;
         usingStep.setRounds(expectedRounds);
 
         usingParticipants.forEach(user -> {
-            testThis.execute(usingActivity, user, usingStep);
+            testThis.execute(usingDocument, user, usingStep);
         });
 
         then(documentService).should(times(usingParticipants.size())).moveParticipantToEditedList(any(Document.class), any(User.class));
-        Assertions.assertEquals(expectedRounds, document.getRounds());
+        Assertions.assertEquals(expectedRounds, usingDocument.getRounds());
     }
 
     @Test
     @DisplayName("[executor] - (Single document) Should reset the list after run every rounds")
     public void testRoundResetAfterLimitOfRoundIdAccepted() {
-        val document = usingDocuments.get(0);
         val expectedRounds = 2;
         usingStep.setRounds(expectedRounds);
 
         usingParticipants.forEach(user -> {
-            testThis.execute(usingActivity, user, usingStep);
+            testThis.execute(usingDocument, user, usingStep);
         });
         usingParticipants.forEach(user -> {
-            testThis.execute(usingActivity, user, usingStep);
+            testThis.execute(usingDocument, user, usingStep);
         });
 
         val expectedExecutions = usingParticipants.size() * 2;
         then(documentService).should(times(expectedExecutions)).moveParticipantToEditedList(any(Document.class), any(User.class));
-        then(documentService).should().moveAllUsersFromEditedToParticipantList(document.getExternalId());
-        Assertions.assertEquals(expectedRounds, document.getRounds());
+        then(documentService).should().moveAllUsersFromEditedToParticipantList(usingDocument.getExternalId());
+        Assertions.assertEquals(expectedRounds, usingDocument.getRounds());
     }
 
     @Test
-    @DisplayName("[validate] - (single document) Should validate if is user turn")
-    @Disabled
+    @DisplayName("[validate] - Should validate if user can execute activity")
     public void testValidationOfUserTurn() {
-        testThis.validate(usingActivity, usingParticipants.stream().findFirst().orElseThrow(), new UnorderedCircleOfWriters());
+        testThis.validate(usingDocument, usingParticipants.stream().findFirst().orElseThrow(),usingStep);
+    }
+
+    @Test
+    @DisplayName("[validate] - Should not let user edit document more than one time")
+    public void testValidationOfUserThatHasAlreadyEditedDocument() {
+        val executor = usingParticipants.stream().findFirst().orElseThrow();
+        documentService.moveParticipantToEditedList(usingDocument, executor);
+        val exceptionString = Assertions.assertThrows(NotValidActionException.class, () -> {
+            testThis.validate(usingDocument, executor, usingStep);
+        }).toString();
+
+        val expectedMessage = MessageFormat.format("Step name: {0} has error: User {1} is not a participant in document {2}",
+                testThis.getStepRepresentation(), executor.getExternalId(), usingDocument.getExternalId());
+        Assertions.assertEquals(expectedMessage, exceptionString);
+    }
+
+    @Test
+    @DisplayName("[validate] - Should verify if document is null")
+    public void testValidationIfDocumentIsNull() {
+        val executor = usingParticipants.stream().findFirst().orElseThrow();
+        val exceptionString = Assertions.assertThrows(NotValidActionException.class, () -> {
+            testThis.validate(null, executor, usingStep);
+        }).toString();
+
+        val expectedMessage = MessageFormat.format("Step name: {0} has error: the document can''t be null",
+                testThis.getStepRepresentation());
+        Assertions.assertEquals(expectedMessage, exceptionString);
     }
 }

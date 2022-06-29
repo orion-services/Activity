@@ -28,7 +28,6 @@ import java.util.UUID;
 import static dev.orion.fixture.ActivityFixture.generateActivity;
 import static dev.orion.fixture.UserFixture.generateUser;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 
 @QuarkusTest
@@ -102,6 +101,6 @@ public class CircleStepExecutorTest {
     @Test
     @DisplayName("[validate] - (single document) Should validate if is user turn")
     public void testValidationOfUserTurn() {
-        testThis.validate(usingActivity, usingParticipants.stream().findFirst().orElseThrow(), new CircleOfWriters());
+        testThis.validate(usingDocuments.get(0), usingParticipants.stream().findFirst().orElseThrow(), new CircleOfWriters());
     }
 }

@@ -13,8 +13,14 @@ import lombok.val;
 import net.datafaker.Faker;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.hibernate.Session;
-import org.junit.jupiter.api.*;
-import org.mockito.*;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.BDDMockito;
+import org.mockito.Captor;
+import org.mockito.MockitoAnnotations;
 
 import javax.inject.Inject;
 import javax.transaction.Transactional;
@@ -26,7 +32,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
 
 @QuarkusTest
 @Transactional
