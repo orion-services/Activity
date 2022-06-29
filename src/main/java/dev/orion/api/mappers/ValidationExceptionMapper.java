@@ -19,19 +19,17 @@ public class ValidationExceptionMapper implements ExceptionMapper<ConstraintViol
         var constraintViolations = exception.getConstraintViolations();
         DefaultErrorResponseBody defaultErrorResponseBody = new DefaultErrorResponseBody();
 
-        if (constraintViolations != null) {
-            constraintViolations.forEach(constraint -> defaultErrorResponseBody.addError(constraint.getMessageTemplate()));
-            var errors = defaultErrorResponseBody.getErrors();
+        constraintViolations.forEach(constraint -> defaultErrorResponseBody.addError(constraint.getMessageTemplate()));
+        var errors = defaultErrorResponseBody.getErrors();
 
-            var message = MessageFormat.format("Invalid body request with the following errors: {0}", errors);
-            LOGGER.warning(message);
+        var message = MessageFormat.format("Invalid body request with the following errors: {0}", errors);
+        LOGGER.warning(message);
 
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(defaultErrorResponseBody)
-                    .build();
-        }
+        return Response.status(Response.Status.BAD_REQUEST)
+                .entity(defaultErrorResponseBody)
+                .build();
 
-        return null;
+
     }
 
 }

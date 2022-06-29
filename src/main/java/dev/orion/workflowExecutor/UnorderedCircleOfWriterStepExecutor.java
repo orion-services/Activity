@@ -19,9 +19,9 @@ import java.util.Objects;
 @ApplicationScoped
 public class UnorderedCircleOfWriterStepExecutor implements StepExecutor {
     @LoggerName("UnorderedCircleOfWriterStepExecutor")
-    private Logger logger;
+    Logger logger;
     @Inject
-    private DocumentService documentService;
+    DocumentService documentService;
 
     @Override
     public void execute(Document document, User user, Step step) {

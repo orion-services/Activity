@@ -1,3 +1,15 @@
+quarkus:
+  jacoco:
+    excludes:
+      - "dev/orion/entity/**/*"
+      - "**/*dto/**/*"
+      - "dev/orion/broker/**/*"
+      - "dev/orion/repository/**/*"
+      - "dev/orion/api/endpoint/body/**/*"
+      - "dev/orion/commom/exception/**/*"
+    title: "Orion-services: Activity service"
+
+
 "%dev":
   quarkus:
     datasource:
