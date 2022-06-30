@@ -1,14 +1,18 @@
 package dev.orion.workflowExecutor;
 
+import dev.orion.commom.exception.IncompleteWorkflowException;
 import dev.orion.commom.exception.NotValidActionException;
 import dev.orion.entity.*;
+import lombok.val;
 
 public interface StepExecutor {
-    <T extends Step> void execute(Document document, User user, T step);
+     void execute(Document document, User user, Step step);
 
-    <T extends Step> void validate(Document document, User user, T step) throws NotValidActionException;
+    void validate(Document document, User user, Step step) throws NotValidActionException;
 
-    <T extends Step> boolean isFinished(Activity activity, T step) throws NotValidActionException;
+    boolean isFinished(Activity activity, Step step) throws NotValidActionException;
+
+    void validateConfig(Stage stage);
 
     String getStepRepresentation();
 }

@@ -1,18 +1,20 @@
 package dev.orion.services;
 
-import dev.orion.commom.constant.ActivityStages;
+import dev.orion.commom.constant.ActivityStage;
 import dev.orion.commom.constant.CircularStepFlowDirectionTypes;
 import dev.orion.commom.exception.IncompleteWorkflowException;
 import dev.orion.commom.exception.InvalidActivityActionException;
 import dev.orion.commom.exception.NotValidActionException;
 import dev.orion.entity.*;
 import dev.orion.entity.step_type.CircleOfWriters;
+import dev.orion.entity.step_type.SendEmail;
 import dev.orion.entity.step_type.UnorderedCircleOfWriters;
 import dev.orion.fixture.UserFixture;
 import dev.orion.fixture.WorkflowFixture;
 import dev.orion.util.AggregateException;
-import dev.orion.workflowExecutor.CircleStepExecutor;
-import dev.orion.workflowExecutor.UnorderedCircleOfWritersStepExecutor;
+import dev.orion.workflowExecutor.impl.CircleStepExecutor;
+import dev.orion.workflowExecutor.impl.SendEmailStepExecutor;
+import dev.orion.workflowExecutor.impl.UnorderedCircleOfWritersStepExecutor;
 import io.quarkus.panache.mock.PanacheMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
@@ -46,6 +48,9 @@ public class WorkflowManageServiceTest {
     UnorderedCircleOfWritersStepExecutor unorderedCircleOfWritersStepExecutor;
 
     @InjectMock
+    SendEmailStepExecutor sendEmailStepExecutor;
+
+    @InjectMock
     Session session;
 
     private UnorderedCircleOfWriters unorderedCircleOfWriters = new UnorderedCircleOfWriters();
@@ -53,14 +58,19 @@ public class WorkflowManageServiceTest {
     @BeforeEach
     public void setup() {
         MockitoAnnotations.openMocks(this);
-        when(circleStepExecutor.getStepRepresentation()).thenCallRealMethod();
-        when(unorderedCircleOfWritersStepExecutor.getStepRepresentation()).thenCallRealMethod();
+        given(circleStepExecutor.getStepRepresentation()).willCallRealMethod();
+        given(unorderedCircleOfWritersStepExecutor.getStepRepresentation()).willCallRealMethod();
+        given(sendEmailStepExecutor.getStepRepresentation()).willCallRealMethod();
         PanacheMock.mock(Workflow.class);
     }
 
     @Test
     @DisplayName("[apply] Should call the right step by activity phase")
     public void testShouldCallTheRightStepByActivityPhase() {
+        val sendEmail = new SendEmail();
+        val allowedStages = sendEmail.getAllowedStages();
+        Assertions.assertEquals(2, allowedStages.size());
+
         User user = UserFixture.generateUser();
 
         Activity activity = new Activity();
@@ -69,12 +79,13 @@ public class WorkflowManageServiceTest {
 
         testThis.apply(activity, user, new Document());
         BDDMockito.then(circleStepExecutor).should().execute(any(), any(), any());
-        BDDMockito.then(unorderedCircleOfWritersStepExecutor).should(times(0)).execute(any(), any(), any());
+        BDDMockito.then(unorderedCircleOfWritersStepExecutor).should(never()).execute(any(), any(), any());
 
-        activity.actualStage = ActivityStages.DURING;
+        activity.actualStage = ActivityStage.DURING;
         testThis.apply(activity, user, new Document());
-        BDDMockito.then(circleStepExecutor).should(times(1)).execute(any(), any(), any());
+        BDDMockito.then(circleStepExecutor).should().execute(any(), any(), any());
         BDDMockito.then(unorderedCircleOfWritersStepExecutor).should().execute(any(), any(), any());
+        BDDMockito.then(sendEmailStepExecutor).should(never()).execute(any(), any(), any());
     }
 
     @Test
@@ -86,12 +97,11 @@ public class WorkflowManageServiceTest {
         activity.creator = user;
         activity.workflow = generateWorkflow();
 
-
         testThis.apply(activity, user, new Document());
-        activity.actualStage = ActivityStages.DURING;
+        activity.actualStage = ActivityStage.DURING;
         testThis.apply(activity, user, new Document());
-        BDDMockito.then(circleStepExecutor).should(atLeastOnce()).validate(any(), any(), any());
-        BDDMockito.then(unorderedCircleOfWritersStepExecutor).should(atLeastOnce()).validate(any(), any(), any());
+        BDDMockito.then(circleStepExecutor).should().validate(any(), any(), any(CircleOfWriters.class));
+        BDDMockito.then(unorderedCircleOfWritersStepExecutor).should().validate(any(), any(), any(UnorderedCircleOfWriters.class));
     }
 
     @Test
@@ -113,7 +123,7 @@ public class WorkflowManageServiceTest {
         activity.creator = user;
         activity.workflow = generateWorkflow();
         activity.workflow.getStages().forEach(stage -> {
-            if (stage.getActivityStage().equals(ActivityStages.PRE)) {
+            if (stage.getActivityStage().equals(ActivityStage.PRE)) {
                 stage.addStep(new UnorderedCircleOfWriters());
             }
         });
@@ -136,7 +146,7 @@ public class WorkflowManageServiceTest {
         activity.creator = UserFixture.generateUser();
         activity.workflow = generateWorkflow();
 
-        activity.setActualStage(ActivityStages.POS);
+        activity.setActualStage(ActivityStage.POS);
 
         testThis.apply(activity, activity.getCreator(), new Document());
         BDDMockito.then(circleStepExecutor).should(never()).execute(any(), any(), any());
@@ -148,7 +158,7 @@ public class WorkflowManageServiceTest {
     public void testShouldThrowErrorWhenWorkflowHasNoStep() {
         Workflow workflow = new Workflow();
         Stage emptyStage = new Stage();
-        emptyStage.setActivityStage(ActivityStages.PRE);
+        emptyStage.setActivityStage(ActivityStage.PRE);
 
         workflow.setName(Faker.instance().rickAndMorty().character());
         workflow.setDescription(Faker.instance().science().element());
@@ -177,7 +187,7 @@ public class WorkflowManageServiceTest {
         val name = Faker.instance().rickAndMorty().character();
         val description = Faker.instance().science().element();
         val stepList = List.of(new Step[]{new CircleOfWriters(CircularStepFlowDirectionTypes.FROM_BEGIN_TO_END)});
-        val stages = Set.of(WorkflowFixture.generateStage(ActivityStages.DURING, stepList));
+        val stages = Set.of(WorkflowFixture.generateStage(ActivityStage.DURING, stepList));
 
         val workflow = testThis.createOrUpdateWorkflow(stages, name, description);
 
@@ -195,7 +205,7 @@ public class WorkflowManageServiceTest {
         val name = Faker.instance().rickAndMorty().character();
         val description = Faker.instance().science().element();
         val stepList = List.of(new Step[]{new CircleOfWriters(CircularStepFlowDirectionTypes.FROM_BEGIN_TO_END)});
-        val stages = Set.of(WorkflowFixture.generateStage(ActivityStages.PRE, stepList));
+        val stages = Set.of(WorkflowFixture.generateStage(ActivityStage.PRE, stepList));
 
         Assertions.assertThrows(IncompleteWorkflowException.class, () -> testThis.createOrUpdateWorkflow(stages, name, description));
     }
@@ -205,7 +215,7 @@ public class WorkflowManageServiceTest {
     public void testWorkflowUpdate() {
         val description = Faker.instance().science().element();
         val stepList = List.of(new Step[]{new CircleOfWriters(CircularStepFlowDirectionTypes.FROM_BEGIN_TO_END)});
-        val stages = Arrays.asList(WorkflowFixture.generateStage(ActivityStages.DURING, stepList));
+        val stages = Arrays.asList(WorkflowFixture.generateStage(ActivityStage.DURING, stepList));
         val workflow = WorkflowFixture.generateWorkflow(stages);
         workflow.id = 1L;
 
@@ -225,11 +235,11 @@ public class WorkflowManageServiceTest {
     @DisplayName("[isFinished] - Should return true when all stages are finished")
     public void testWorkflowFinished() {
         Workflow workflow = generateWorkflow();
-        val stage = workflow.getStages().stream().filter(testStage -> testStage.getActivityStage().equals(ActivityStages.DURING)).findFirst().get();
+        val stage = workflow.getStages().stream().filter(testStage -> testStage.getActivityStage().equals(ActivityStage.DURING)).findFirst().get();
         stage.addStep(new CircleOfWriters());
 
         Activity activity = new Activity();
-        activity.setActualStage(ActivityStages.DURING);
+        activity.setActualStage(ActivityStage.DURING);
         activity.workflow = workflow;
         given(unorderedCircleOfWritersStepExecutor.isFinished(activity, unorderedCircleOfWriters)).willReturn(true);
         given(circleStepExecutor.isFinished(eq(activity), any(CircleOfWriters.class))).willReturn(true);
@@ -246,11 +256,11 @@ public class WorkflowManageServiceTest {
     @DisplayName("[isFinished] - Should return true when all stages are finished")
     public void testWorkflowFinishedIfSomeStageIsNotFinished() {
         Workflow workflow = generateWorkflow();
-        val stage = workflow.getStages().stream().filter(testStage -> testStage.getActivityStage().equals(ActivityStages.DURING)).findFirst().get();
+        val stage = workflow.getStages().stream().filter(testStage -> testStage.getActivityStage().equals(ActivityStage.DURING)).findFirst().get();
         stage.addStep(new CircleOfWriters());
 
         Activity activity = new Activity();
-        activity.setActualStage(ActivityStages.DURING);
+        activity.setActualStage(ActivityStage.DURING);
         activity.workflow = workflow;
         given(unorderedCircleOfWritersStepExecutor.isFinished(activity, unorderedCircleOfWriters)).willReturn(true);
         given(circleStepExecutor.isFinished(eq(activity), any(CircleOfWriters.class))).willReturn(false);
@@ -279,17 +289,17 @@ public class WorkflowManageServiceTest {
         val workflow = new Workflow();
         workflow.setName(Faker.instance().rickAndMorty().character());
         workflow.setDescription(Faker.instance().science().element());
-        workflow.addStepStage(generateStage(ActivityStages.PRE));
-        workflow.addStepStage(generateStage(ActivityStages.DURING));
+        workflow.addStepStage(generateStage(ActivityStage.PRE));
+        workflow.addStepStage(generateStage(ActivityStage.DURING));
         workflow.persist();
 
         return workflow;
     }
 
-    private Stage generateStage(ActivityStages activityStages) {
+    private Stage generateStage(ActivityStage activityStage) {
         val stage = new Stage();
-        stage.setActivityStage(activityStages);
-        if (activityStages.equals(ActivityStages.PRE)) {
+        stage.setActivityStage(activityStage);
+        if (activityStage.equals(ActivityStage.PRE)) {
             stage.addStep(new CircleOfWriters(CircularStepFlowDirectionTypes.FROM_BEGIN_TO_END));
             return stage;
         }

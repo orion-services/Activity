@@ -2,7 +2,7 @@ package dev.orion.services;
 
 import dev.orion.broker.dto.ActivityUpdateMessageDto;
 import dev.orion.broker.producer.ActivityUpdateProducer;
-import dev.orion.commom.constant.ActivityStages;
+import dev.orion.commom.constant.ActivityStage;
 import dev.orion.commom.constant.UserRoles;
 import dev.orion.commom.constant.UserStatus;
 import dev.orion.commom.exception.InvalidActivityActionException;
@@ -123,7 +123,7 @@ public class ActivityServiceImpl implements ActivityService {
         }
 
         val activity = optionalActivity.get();
-        if (activity.actualStage != ActivityStages.PRE) {
+        if (activity.actualStage != ActivityStage.PRE) {
             String exceptionMessage = MessageFormat.format("Cannot add user {0} to Activity {1} because it has already start", user.uuid, activity.uuid);
             throw new UserInvalidOperationException(exceptionMessage);
         }
@@ -213,7 +213,7 @@ public class ActivityServiceImpl implements ActivityService {
         workflowManageService.apply(activity, activity.getCreator(), null);
         createGroupIfNotExists(activityUUID);
 
-        activity.setActualStage(ActivityStages.DURING);
+        activity.setActualStage(ActivityStage.DURING);
         activity.persist();
         return activity;
     }

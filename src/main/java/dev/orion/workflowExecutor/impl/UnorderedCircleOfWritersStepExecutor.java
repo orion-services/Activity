@@ -1,9 +1,10 @@
-package dev.orion.workflowExecutor;
+package dev.orion.workflowExecutor.impl;
 
 import dev.orion.commom.exception.NotValidActionException;
 import dev.orion.entity.*;
 import dev.orion.entity.step_type.UnorderedCircleOfWriters;
 import dev.orion.services.interfaces.DocumentService;
+import dev.orion.workflowExecutor.StepExecutor;
 import io.quarkus.arc.log.LoggerName;
 import lombok.val;
 import org.jboss.logging.Logger;
@@ -69,13 +70,18 @@ public class UnorderedCircleOfWritersStepExecutor implements StepExecutor {
     }
 
     @Override
-    public <T extends Step> boolean isFinished(Activity activity, T step) throws NotValidActionException {
+    public boolean isFinished(Activity activity, Step step) throws NotValidActionException {
         val documents = Document.findAllByGroupActivity(activity.uuid);
         if (documents.isEmpty()) {
             throw new NotValidActionException(getStepRepresentation(), "document must not be null");
         }
         val document = documents.get(0);
         return doesAllParticipantsHaveParticipated(document) && isFinalRound(document, (UnorderedCircleOfWriters) step);
+
+    }
+
+    @Override
+    public void validateConfig(Stage stage) {
 
     }
 

@@ -1,6 +1,6 @@
 package dev.orion.entity;
 
-import dev.orion.commom.constant.ActivityStages;
+import dev.orion.commom.constant.ActivityStage;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import lombok.*;
 
@@ -18,7 +18,7 @@ public class Stage extends PanacheEntity {
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     @NonNull
-    private ActivityStages activityStage;
+    private ActivityStage activityStage;
 
     @ManyToMany(cascade = CascadeType.ALL)
     @OrderColumn

@@ -12,8 +12,4 @@ import javax.persistence.Entity;
 public class ReverseSnowball extends Step {
     private static final String TYPE = "REVERSE SNOWBALL";
     private static final String DESCRIPTION = "Another skill";
-
-    public ReverseSnowball() {
-        super(TYPE, DESCRIPTION);
-    }
 }

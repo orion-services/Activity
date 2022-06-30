@@ -1,8 +1,9 @@
-package dev.orion.workflowExecutor;
+package dev.orion.workflowExecutor.impl;
 
 import dev.orion.commom.exception.NotValidActionException;
 import dev.orion.entity.*;
 import dev.orion.entity.step_type.ReverseSnowball;
+import dev.orion.workflowExecutor.StepExecutor;
 
 import javax.enterprise.context.ApplicationScoped;
 
@@ -19,8 +20,13 @@ public class ReverseSnowBallStepExecutor implements StepExecutor {
     }
 
     @Override
-    public <T extends Step> boolean isFinished(Activity activity, T step) throws NotValidActionException {
+    public boolean isFinished(Activity activity, Step step) throws NotValidActionException {
         return false;
+    }
+
+    @Override
+    public void validateConfig(Stage stage) {
+
     }
 
     @Override

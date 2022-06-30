@@ -11,6 +11,7 @@ import dev.orion.entity.step_type.CircleOfWriters;
 import dev.orion.entity.step_type.OrderedCircleOfWriter;
 import dev.orion.fixture.DocumentFixture;
 import dev.orion.services.interfaces.GroupService;
+import dev.orion.workflowExecutor.impl.CircleStepExecutor;
 import io.quarkus.panache.mock.PanacheMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;

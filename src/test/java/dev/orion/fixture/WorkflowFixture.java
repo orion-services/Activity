@@ -1,6 +1,6 @@
 package dev.orion.fixture;
 
-import dev.orion.commom.constant.ActivityStages;
+import dev.orion.commom.constant.ActivityStage;
 import dev.orion.entity.Stage;
 import dev.orion.entity.Step;
 import dev.orion.entity.Workflow;
@@ -10,9 +10,9 @@ import net.datafaker.Faker;
 import java.util.List;
 
 public class WorkflowFixture {
-    public static Stage generateStage(ActivityStages activityStages, List<Step> steps) {
+    public static Stage generateStage(ActivityStage activityStage, List<Step> steps) {
         val stage = new Stage();
-        stage.setActivityStage(activityStages);
+        stage.setActivityStage(activityStage);
         steps.forEach(step -> {
             stage.addStep(step);
         });

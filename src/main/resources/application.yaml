@@ -28,6 +28,8 @@ quarkus:
       "client/mp-rest/url": "http://localhost:3000"
     document-service:
       "client/mp-rest/url": "http://localhost:4000"
+    email-service:
+      "client/mp-rest/url": "http://localhost:5000"
   rabbit:
     username: "guest"
     password: "guest"

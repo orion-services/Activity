@@ -1,16 +1,17 @@
 package dev.orion.services;
 
-import dev.orion.commom.constant.ActivityStages;
+import dev.orion.commom.constant.ActivityStage;
 import dev.orion.commom.exception.IncompleteWorkflowException;
 import dev.orion.commom.exception.InvalidActivityActionException;
 import dev.orion.commom.exception.NotValidActionException;
 import dev.orion.entity.*;
 import dev.orion.services.interfaces.WorkflowManageService;
 import dev.orion.util.AggregateException;
-import dev.orion.workflowExecutor.CircleStepExecutor;
-import dev.orion.workflowExecutor.ReverseSnowBallStepExecutor;
+import dev.orion.workflowExecutor.impl.CircleStepExecutor;
+import dev.orion.workflowExecutor.impl.ReverseSnowBallStepExecutor;
 import dev.orion.workflowExecutor.StepExecutor;
-import dev.orion.workflowExecutor.UnorderedCircleOfWritersStepExecutor;
+import dev.orion.workflowExecutor.impl.SendEmailStepExecutor;
+import dev.orion.workflowExecutor.impl.UnorderedCircleOfWritersStepExecutor;
 import io.quarkus.arc.log.LoggerName;
 import lombok.val;
 import org.jboss.logging.Logger;
@@ -21,7 +22,6 @@ import javax.inject.Inject;
 import javax.transaction.Transactional;
 import java.text.MessageFormat;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @ApplicationScoped
 @Transactional
@@ -37,6 +37,9 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
     @Inject
     UnorderedCircleOfWritersStepExecutor unorderedCircleOfWritersStepExecutor;
 
+    @Inject
+    SendEmailStepExecutor sendEmailStepExecutor;
+
     @LoggerName("WorkflowManageServiceImpl")
     Logger logger;
 
@@ -45,6 +48,7 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
         stepExecutorsMap.put(circleStepExecutor.getStepRepresentation(), circleStepExecutor);
         stepExecutorsMap.put(reverseSnowBallStepExecutor.getStepRepresentation(), reverseSnowBallStepExecutor);
         stepExecutorsMap.put(unorderedCircleOfWritersStepExecutor.getStepRepresentation(), unorderedCircleOfWritersStepExecutor);
+        stepExecutorsMap.put(sendEmailStepExecutor.getStepRepresentation(), sendEmailStepExecutor);
     }
 
     @Override
@@ -70,7 +74,7 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
 
     @Override
     public Workflow createOrUpdateWorkflow(Set<Stage> stages, String name, String description) {
-        if (stages.stream().noneMatch(stage -> stage.getActivityStage().equals(ActivityStages.DURING))) {
+        if (stages.stream().noneMatch(stage -> stage.getActivityStage().equals(ActivityStage.DURING))) {
             throw new IncompleteWorkflowException("Cannot create workflow without have a DURING phase stage");
         }
 
@@ -87,8 +91,8 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
     @Override
     public boolean isFinished(Activity activity) {
         val stage = extractActualStage(activity).orElseThrow();
-        if (Boolean.FALSE == activity.getActualStage().equals(ActivityStages.DURING)) {
-            val exceptionMessage = MessageFormat.format("To check if workflow is finished activity should be in stage {0}", ActivityStages.DURING);
+        if (Boolean.FALSE == activity.getActualStage().equals(ActivityStage.DURING)) {
+            val exceptionMessage = MessageFormat.format("To check if workflow is finished activity should be in stage {0}", ActivityStage.DURING);
             logger.error(exceptionMessage);
             throw new InvalidActivityActionException(exceptionMessage);
         }

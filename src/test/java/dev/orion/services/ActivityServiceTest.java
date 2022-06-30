@@ -2,7 +2,7 @@ package dev.orion.services;
 
 import dev.orion.client.DocumentClient;
 import dev.orion.client.dto.CreateDocumentResponse;
-import dev.orion.commom.constant.ActivityStages;
+import dev.orion.commom.constant.ActivityStage;
 import dev.orion.commom.constant.UserRoles;
 import dev.orion.commom.constant.UserStatus;
 import dev.orion.commom.exception.InvalidActivityActionException;
@@ -80,7 +80,7 @@ public class ActivityServiceTest {
 
     private void setWorkflow() {
         List<Step> circleOfWriters = List.of(new CircleOfWriters());
-        val stage = WorkflowFixture.generateStage(ActivityStages.DURING, circleOfWriters);
+        val stage = WorkflowFixture.generateStage(ActivityStage.DURING, circleOfWriters);
         val generateWorkflow = WorkflowFixture.generateWorkflow(List.of(stage));
         workflow = workflowManageService.createOrUpdateWorkflow(generateWorkflow.getStages(), generateWorkflow.getName(), generateWorkflow.getDescription());
     }
@@ -248,7 +248,7 @@ public class ActivityServiceTest {
         val activityUuid = testingThis.createActivity(userCreatorUUID, workflow.getName());
 
         Activity activity = Activity.findById(activityUuid);
-        activity.setActualStage(ActivityStages.DURING);
+        activity.setActualStage(ActivityStage.DURING);
 
         val exceptionMessage = Assertions.assertThrows(UserInvalidOperationException.class, () -> {
             testingThis.addUserInActivity(activityUuid, userCreator.uuid);
@@ -270,7 +270,7 @@ public class ActivityServiceTest {
 
         testingThis.startActivity(activityUuid);
 
-        Assertions.assertEquals(ActivityStages.DURING, activity.getActualStage());
+        Assertions.assertEquals(ActivityStage.DURING, activity.getActualStage());
         BDDMockito.then(workflowManageService).should().apply(activity, activity.getCreator(), null);
     }
 

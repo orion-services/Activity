@@ -23,7 +23,6 @@ public interface UserClient {
     UserClientResponse getUserByExternalId(@PathParam("externalId") String externalId);
 
     @GET
-    @Path("/")
     @Produces(MediaType.APPLICATION_JSON)
     @Timeout(1000)
     List<UserClientResponse> getAllUsers();

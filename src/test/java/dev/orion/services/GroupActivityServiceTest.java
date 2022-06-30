@@ -2,7 +2,7 @@ package dev.orion.services;
 
 import dev.orion.client.DocumentClient;
 import dev.orion.client.dto.CreateDocumentResponse;
-import dev.orion.commom.constant.ActivityStages;
+import dev.orion.commom.constant.ActivityStage;
 import dev.orion.commom.exception.UserInvalidOperationException;
 import dev.orion.entity.Activity;
 import dev.orion.entity.Document;
@@ -448,7 +448,7 @@ public class GroupActivityServiceTest {
     private void injectWorkflowInActivity(Activity activity) {
         val workflow = WorkflowFixture.generateWorkflow(
                 List.of(WorkflowFixture.generateStage(
-                        ActivityStages.PRE, List.of(new CircleOfWriters()))));
+                        ActivityStage.PRE, List.of(new CircleOfWriters()))));
 
         activity.setWorkflow(workflow);
     }

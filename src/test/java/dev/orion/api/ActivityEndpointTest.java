@@ -7,7 +7,7 @@ import dev.orion.client.DocumentClient;
 import dev.orion.client.UserClient;
 import dev.orion.client.dto.CreateDocumentResponse;
 import dev.orion.client.dto.UserClientResponse;
-import dev.orion.commom.constant.ActivityStages;
+import dev.orion.commom.constant.ActivityStage;
 import dev.orion.commom.constant.UserStatus;
 import dev.orion.entity.Activity;
 import dev.orion.entity.GroupActivity;
@@ -291,7 +291,7 @@ public class ActivityEndpointTest {
     public void testAddUserValidateActivityHasNotStarted() {
         val activityUuid = activityService.createActivity(userUuid, WorkflowStarter.GENERIC_WORKFLOW_NAME);
         Activity activity = Activity.findById(activityUuid);
-        activity.setActualStage(ActivityStages.DURING);
+        activity.setActualStage(ActivityStage.DURING);
 
         PanacheMock.mock(Activity.class);
         when(Activity.findByIdOptional(any())).thenReturn(Optional.of(activity));
