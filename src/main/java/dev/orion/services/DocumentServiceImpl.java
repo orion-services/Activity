@@ -71,7 +71,7 @@ public class DocumentServiceImpl implements DocumentService {
 
         document.setParticipantsAssigned(participantsThatEdited);
         document.setParticipantsThatEdited(new HashSet<>());
-        logger.infov("Users has been moved from edited list to participant list in document {1}", document.getExternalId());
+        logger.infov("Users has been moved from edited list to participant list in document {0}", document.getExternalId());
 
     }
 }

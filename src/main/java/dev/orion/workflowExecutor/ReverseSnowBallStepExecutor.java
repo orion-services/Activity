@@ -19,7 +19,7 @@ public class ReverseSnowBallStepExecutor implements StepExecutor {
     }
 
     @Override
-    public <T extends Step> boolean isFinished(Activity activity, Document document, T step) throws NotValidActionException {
+    public <T extends Step> boolean isFinished(Activity activity, T step) throws NotValidActionException {
         return false;
     }
 

@@ -1,6 +1,7 @@
 package dev.orion.entity.step_type;
 
 import dev.orion.entity.Step;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -14,6 +15,7 @@ import javax.persistence.Entity;
 @DiscriminatorValue("UNORDERED_CIRCLE_OF_WRITES")
 @NoArgsConstructor
 public class UnorderedCircleOfWriters extends Step {
+    @Getter(AccessLevel.NONE)
     final private String type = "UNORDERED_CIRCLE_OF_WRITES";
     final private String description = "Following the Circle of Learners, this step ir circular but with flexible order";
 

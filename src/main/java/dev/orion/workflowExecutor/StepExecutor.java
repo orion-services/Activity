@@ -8,7 +8,7 @@ public interface StepExecutor {
 
     <T extends Step> void validate(Document document, User user, T step) throws NotValidActionException;
 
-    <T extends Step> boolean isFinished(Activity activity, Document document, T step) throws NotValidActionException;
+    <T extends Step> boolean isFinished(Activity activity, T step) throws NotValidActionException;
 
     String getStepRepresentation();
 }

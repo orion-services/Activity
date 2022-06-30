@@ -27,9 +27,9 @@ public class WorkflowTest {
         testingThis.addStepStage(generateStepStage(ActivityStages.POS));
 
         Assertions.assertEquals(testingThis.getStages().size(), EXPECTED_STEP_STAGES_QTD);
-        Assertions.assertEquals(testingThis.getStages().stream().filter(stage1 -> stage1.getStage() == ActivityStages.PRE).findFirst().orElseThrow().getSteps().size(), EXPECTED_STEPS_QTD);
-        Assertions.assertEquals(testingThis.getStages().stream().filter(stage1 -> stage1.getStage() == ActivityStages.DURING).findFirst().orElseThrow().getSteps().size(), EXPECTED_STEPS_QTD);
-        Assertions.assertEquals(testingThis.getStages().stream().filter(stage1 -> stage1.getStage() == ActivityStages.POS).findFirst().orElseThrow().getSteps().size(), EXPECTED_STEPS_QTD);
+        Assertions.assertEquals(testingThis.getStages().stream().filter(stage1 -> stage1.getActivityStage() == ActivityStages.PRE).findFirst().orElseThrow().getSteps().size(), EXPECTED_STEPS_QTD);
+        Assertions.assertEquals(testingThis.getStages().stream().filter(stage1 -> stage1.getActivityStage() == ActivityStages.DURING).findFirst().orElseThrow().getSteps().size(), EXPECTED_STEPS_QTD);
+        Assertions.assertEquals(testingThis.getStages().stream().filter(stage1 -> stage1.getActivityStage() == ActivityStages.POS).findFirst().orElseThrow().getSteps().size(), EXPECTED_STEPS_QTD);
     }
 
     private void generateWorkflow(Stage stage) {
@@ -41,7 +41,7 @@ public class WorkflowTest {
 
     private Stage generateStepStage(ActivityStages activityStages) {
         Stage stage = new Stage();
-        stage.setStage(activityStages);
+        stage.setActivityStage(activityStages);
 
         CircleOfWriters circleOfWriters = new CircleOfWriters();
         circleOfWriters.setFlowDirection(CircularStepFlowDirectionTypes.FROM_BEGIN_TO_END);

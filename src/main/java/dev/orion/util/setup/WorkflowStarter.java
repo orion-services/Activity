@@ -2,7 +2,7 @@ package dev.orion.util.setup;
 
 import dev.orion.commom.constant.ActivityStages;
 import dev.orion.entity.Stage;
-import dev.orion.entity.step_type.CircleOfWriters;
+import dev.orion.entity.step_type.UnorderedCircleOfWriters;
 import dev.orion.services.interfaces.WorkflowManageService;
 import io.quarkus.arc.log.LoggerName;
 import io.quarkus.runtime.StartupEvent;
@@ -24,7 +24,7 @@ public class WorkflowStarter {
     @Inject
     WorkflowManageService manageService;
 
-    public static final String GENERIC_WORKFLOW_NAME =  "Workflow_test";
+    public static final String GENERIC_WORKFLOW_NAME =  "simple_workflow";
 
     void onStart(@Observes StartupEvent ev) {
         LOGGER.info("Creating or updating workflows");
@@ -40,8 +40,8 @@ public class WorkflowStarter {
 
     private Set<Stage> generateMockStages() {
         val stage = new Stage();
-        stage.setStage(ActivityStages.DURING);
-        stage.addStep(new CircleOfWriters());
+        stage.setActivityStage(ActivityStages.DURING);
+        stage.addStep(new UnorderedCircleOfWriters());
 
         return Set.of(stage);
     }

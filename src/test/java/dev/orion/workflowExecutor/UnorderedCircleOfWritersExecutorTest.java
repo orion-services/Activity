@@ -23,14 +23,13 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.mockito.Spy;
 
 import javax.inject.Inject;
 import java.text.MessageFormat;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static dev.orion.fixture.ActivityFixture.generateActivity;
 import static dev.orion.fixture.UserFixture.createParticipants;
@@ -227,32 +226,52 @@ public class UnorderedCircleOfWritersExecutorTest {
     @Test
     @DisplayName("[isFinished] - Should return true when task is finished")
     public void testFinishedStepReturn() {
-        val documentSpy = spy(usingDocument);
+        val spyDocument = spy(usingDocument);
         usingParticipants.forEach(user -> {
             testThis.execute(usingDocument, user, usingStep);
         });
 
-        val stepFinished = testThis.isFinished(usingActivity, documentSpy, usingStep);
-        then(documentSpy).should().getParticipantsAssigned();
-        then(documentSpy).should().getRounds();
+        given(Document.findAllByGroupActivity(usingActivity.uuid)).willReturn(Arrays.asList(spyDocument));
+        val stepFinished = testThis.isFinished(usingActivity, usingStep);
+        then(spyDocument).should().getParticipantsAssigned();
+        then(spyDocument).should().getRounds();
         Assertions.assertTrue(stepFinished);
+    }
+
+    @Test
+    @DisplayName("[isFinished] - Should return true when task is finished")
+    public void testFinishedStepListValidation() {
+        val spyDocument = spy(usingDocument);
+        usingParticipants.forEach(user -> {
+            testThis.execute(usingDocument, user, usingStep);
+        });
+
+        given(Document.findAllByGroupActivity(UUID.randomUUID())).willReturn(Arrays.asList(spyDocument));
+        val exceptionMessage = Assertions.assertThrows(NotValidActionException.class, () -> testThis.isFinished(usingActivity, usingStep)).toString();
+
+        val expectedMessage = MessageFormat.format("Step name: {0} has error: document must not be null", usingStep.getStepType());
+        Assertions.assertEquals(expectedMessage, exceptionMessage);
+        then(spyDocument).should(never()).getParticipantsAssigned();
+        then(spyDocument).should(never()).getRounds();
     }
 
     @Test
     @DisplayName("[isFinished] - Should return false when there is participants that has no edited")
     public void testFinishedStepReturnWhenThereIsUserToParticipate() {
-        val documentSpy = spy(usingDocument);
+        val spyDocument = spy(usingDocument);
+        given(Document.findAllByGroupActivity(usingActivity.uuid)).willReturn(Arrays.asList(spyDocument));
 
-        val stepFinished = testThis.isFinished(usingActivity, documentSpy, usingStep);
-        then(documentSpy).should().getParticipantsAssigned();
-        then(documentSpy).should(never()).getRounds();
+        val stepFinished = testThis.isFinished(usingActivity, usingStep);
+
+        then(spyDocument).should().getParticipantsAssigned();
+        then(spyDocument).should(never()).getRounds();
         Assertions.assertFalse(stepFinished);
     }
 
     @Test
-    @DisplayName("[isFinished] - Should return false when document round is not the less")
+    @DisplayName("[isFinished] - Should return false when document round is less then configured in step")
     public void testFinishedStepReturnWhenThereIsMoreRoundsTo() {
-        val documentSpy = spy(usingDocument);
+        val spyDocument = spy(usingDocument);
         val expectedRounds = 2;
         usingStep.setRounds(expectedRounds);
 
@@ -260,9 +279,10 @@ public class UnorderedCircleOfWritersExecutorTest {
             testThis.execute(usingDocument, user, usingStep);
         });
 
-        val stepFinished = testThis.isFinished(usingActivity, documentSpy, usingStep);
-        then(documentSpy).should().getParticipantsAssigned();
-        then(documentSpy).should().getRounds();
+        given(Document.findAllByGroupActivity(usingActivity.uuid)).willReturn(Arrays.asList(spyDocument));
+        val stepFinished = testThis.isFinished(usingActivity, usingStep);
+        then(spyDocument).should().getParticipantsAssigned();
+        then(spyDocument).should().getRounds();
         Assertions.assertFalse(stepFinished);
     }
 }

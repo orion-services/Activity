@@ -3,6 +3,7 @@ package dev.orion.services;
 import dev.orion.commom.constant.ActivityStages;
 import dev.orion.commom.constant.CircularStepFlowDirectionTypes;
 import dev.orion.commom.exception.IncompleteWorkflowException;
+import dev.orion.commom.exception.InvalidActivityActionException;
 import dev.orion.commom.exception.NotValidActionException;
 import dev.orion.entity.*;
 import dev.orion.entity.step_type.CircleOfWriters;
@@ -34,7 +35,7 @@ import static org.mockito.BDDMockito.*;
 @QuarkusTest
 @Transactional
 public class WorkflowManageServiceTest {
-    
+
     @Inject
     WorkflowManageServiceImpl testThis;
 
@@ -46,6 +47,8 @@ public class WorkflowManageServiceTest {
 
     @InjectMock
     Session session;
+
+    private UnorderedCircleOfWriters unorderedCircleOfWriters = new UnorderedCircleOfWriters();
 
     @BeforeEach
     public void setup() {
@@ -110,7 +113,7 @@ public class WorkflowManageServiceTest {
         activity.creator = user;
         activity.workflow = generateWorkflow();
         activity.workflow.getStages().forEach(stage -> {
-            if (stage.getStage().equals(ActivityStages.PRE)) {
+            if (stage.getActivityStage().equals(ActivityStages.PRE)) {
                 stage.addStep(new UnorderedCircleOfWriters());
             }
         });
@@ -145,7 +148,7 @@ public class WorkflowManageServiceTest {
     public void testShouldThrowErrorWhenWorkflowHasNoStep() {
         Workflow workflow = new Workflow();
         Stage emptyStage = new Stage();
-        emptyStage.setStage(ActivityStages.PRE);
+        emptyStage.setActivityStage(ActivityStages.PRE);
 
         workflow.setName(Faker.instance().rickAndMorty().character());
         workflow.setDescription(Faker.instance().science().element());
@@ -219,9 +222,57 @@ public class WorkflowManageServiceTest {
     }
 
     @Test
-    @DisplayName("[isFinished] - ")
-    public void test() {
+    @DisplayName("[isFinished] - Should return true when all stages are finished")
+    public void testWorkflowFinished() {
+        Workflow workflow = generateWorkflow();
+        val stage = workflow.getStages().stream().filter(testStage -> testStage.getActivityStage().equals(ActivityStages.DURING)).findFirst().get();
+        stage.addStep(new CircleOfWriters());
 
+        Activity activity = new Activity();
+        activity.setActualStage(ActivityStages.DURING);
+        activity.workflow = workflow;
+        given(unorderedCircleOfWritersStepExecutor.isFinished(activity, unorderedCircleOfWriters)).willReturn(true);
+        given(circleStepExecutor.isFinished(eq(activity), any(CircleOfWriters.class))).willReturn(true);
+
+
+        val finished = testThis.isFinished(activity);
+
+        Assertions.assertTrue(finished);
+        then(unorderedCircleOfWritersStepExecutor).should().isFinished(activity, unorderedCircleOfWriters);
+        then(circleStepExecutor).should().isFinished(eq(activity), any(CircleOfWriters.class));
+    }
+
+    @Test
+    @DisplayName("[isFinished] - Should return true when all stages are finished")
+    public void testWorkflowFinishedIfSomeStageIsNotFinished() {
+        Workflow workflow = generateWorkflow();
+        val stage = workflow.getStages().stream().filter(testStage -> testStage.getActivityStage().equals(ActivityStages.DURING)).findFirst().get();
+        stage.addStep(new CircleOfWriters());
+
+        Activity activity = new Activity();
+        activity.setActualStage(ActivityStages.DURING);
+        activity.workflow = workflow;
+        given(unorderedCircleOfWritersStepExecutor.isFinished(activity, unorderedCircleOfWriters)).willReturn(true);
+        given(circleStepExecutor.isFinished(eq(activity), any(CircleOfWriters.class))).willReturn(false);
+
+
+        val finished = testThis.isFinished(activity);
+
+        Assertions.assertFalse(finished);
+        then(unorderedCircleOfWritersStepExecutor).should().isFinished(activity, unorderedCircleOfWriters);
+        then(circleStepExecutor).should().isFinished(eq(activity), any(CircleOfWriters.class));
+    }
+
+    @Test
+    @DisplayName("[isFinished] - Should validate if stage of is activity DURING")
+    public void testWorkflowStageValidationInIsFinished() {
+        Workflow workflow = generateWorkflow();
+        Activity activity = new Activity();
+        activity.workflow = workflow;
+
+        Assertions.assertThrows(InvalidActivityActionException.class, () -> testThis.isFinished(activity));
+
+        then(unorderedCircleOfWritersStepExecutor).should(never()).isFinished(any(Activity.class), any());
     }
 
     private Workflow generateWorkflow() {
@@ -237,12 +288,12 @@ public class WorkflowManageServiceTest {
 
     private Stage generateStage(ActivityStages activityStages) {
         val stage = new Stage();
-        stage.setStage(activityStages);
+        stage.setActivityStage(activityStages);
         if (activityStages.equals(ActivityStages.PRE)) {
             stage.addStep(new CircleOfWriters(CircularStepFlowDirectionTypes.FROM_BEGIN_TO_END));
             return stage;
         }
-        stage.addStep(new UnorderedCircleOfWriters());
+        stage.addStep(unorderedCircleOfWriters);
         return stage;
     }
 }
