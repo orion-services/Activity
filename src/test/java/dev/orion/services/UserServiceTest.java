@@ -4,21 +4,23 @@ import dev.orion.client.UserClient;
 import dev.orion.client.dto.UserClientResponse;
 import dev.orion.commom.constant.UserStatus;
 import dev.orion.commom.exception.UserInvalidOperationException;
-import dev.orion.entity.Activity;
 import dev.orion.entity.User;
 import dev.orion.fixture.UserFixture;
 import dev.orion.services.interfaces.UserService;
-import io.quarkus.panache.mock.PanacheMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
 import lombok.val;
+import org.eclipse.microprofile.config.ConfigProvider;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.hibernate.Session;
-import org.junit.jupiter.api.*;
-import org.mockito.BDDMockito;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import javax.inject.Inject;
+import javax.ws.rs.NotFoundException;
 import java.text.MessageFormat;
 import java.util.Optional;
 import java.util.UUID;
@@ -70,4 +72,38 @@ public class UserServiceTest {
         then(session).should(never()).persist(any());
     }
 
+    @Test
+    @DisplayName("[getCompleteUserData] Should throw when client comes null")
+    public void testUserNotFoundOnClientWhenGetCompleteUserData() {
+        given(User.findUserByExternalId(any())).willReturn(Optional.empty());
+        val completeUserData = testThis.getCompleteUserData(commonUserExternalId);
+
+        then(session).should().persist(any(User.class));
+        Assertions.assertNotNull(completeUserData);
+        Assertions.assertEquals(commonUserExternalId, completeUserData.uuid);
+    }
+
+    @Test
+    @DisplayName("[getCompleteUserData] Should not persist a entity a user that already exists")
+    public void testIfUserIsAlreadyInDatabaseGetCompleteUserData() {
+        val completeUserData = testThis.getCompleteUserData(commonUserExternalId);
+
+        Assertions.assertNotNull(completeUserData);
+        then(session).should(never()).persist(any(User.class));
+    }
+
+    @Test
+    @DisplayName("[getCompleteUserData] throw when client returns null")
+    public void testGetCompleteUserData() {
+        given(userClient.getUserByExternalId(commonUserExternalId)).willReturn(null);
+
+        val exceptionMessage = Assertions.assertThrows(NotFoundException.class, () -> {
+            testThis.getCompleteUserData(commonUserExternalId);
+        }).getMessage();
+        val userClientURL = ConfigProvider.getConfig().getValue("api.user-service.client/mp-rest/url", String.class);
+        val expectedMessage = MessageFormat.format("User {0} not found in user service in {1}", commonUserExternalId, userClientURL);
+
+        then(session).should(never()).persist(any(User.class));
+        Assertions.assertEquals(expectedMessage, exceptionMessage);
+    }
 }

@@ -12,7 +12,7 @@ import java.util.List;
 public class WorkflowFixture {
     public static Stage generateStage(ActivityStages activityStages, List<Step> steps) {
         val stage = new Stage();
-        stage.setStage(activityStages);
+        stage.setActivityStage(activityStages);
         steps.forEach(step -> {
             stage.addStep(step);
         });

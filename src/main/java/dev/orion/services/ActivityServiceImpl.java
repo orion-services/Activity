@@ -210,7 +210,7 @@ public class ActivityServiceImpl implements ActivityService {
 
         validateActivityToStart(activity);
 
-        workflowManageService.apply(activity, activity.getCreator());
+        workflowManageService.apply(activity, activity.getCreator(), null);
         createGroupIfNotExists(activityUUID);
 
         activity.setActualStage(ActivityStages.DURING);
@@ -310,8 +310,6 @@ public class ActivityServiceImpl implements ActivityService {
             }
         }
     }
-
-
 
     private boolean activityHasOnlineParticipants(Activity activity) {
         return activity.userList.stream().anyMatch(user -> user.status == UserStatus.CONNECTED);

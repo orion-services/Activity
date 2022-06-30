@@ -271,7 +271,7 @@ public class ActivityServiceTest {
         testingThis.startActivity(activityUuid);
 
         Assertions.assertEquals(ActivityStages.DURING, activity.getActualStage());
-        BDDMockito.then(workflowManageService).should().apply(activity, activity.getCreator());
+        BDDMockito.then(workflowManageService).should().apply(activity, activity.getCreator(), null);
     }
 
     @Test
@@ -288,7 +288,7 @@ public class ActivityServiceTest {
         val expectedMessage = MessageFormat.format("Activity {0} must be active", activity.uuid);
 
         Assertions.assertEquals(expectedMessage, exceptionMessage);
-        BDDMockito.then(workflowManageService).should(BDDMockito.never()).apply(activity, activity.getCreator());
+        BDDMockito.then(workflowManageService).should(BDDMockito.never()).apply(activity, activity.getCreator(), null);
     }
 
     @Test
@@ -307,7 +307,7 @@ public class ActivityServiceTest {
         val expectedMessage = MessageFormat.format("Activity {0} has the following users not connected: {1}", activity.uuid, List.of(user.getExternalId()));
 
         Assertions.assertEquals(expectedMessage, exceptionMessage);
-        BDDMockito.then(workflowManageService).should(BDDMockito.never()).apply(any(Activity.class), any(User.class));
+        BDDMockito.then(workflowManageService).should(BDDMockito.never()).apply(any(Activity.class), any(User.class), eq(null));
     }
 
     @Test
@@ -321,7 +321,7 @@ public class ActivityServiceTest {
         val expectedMessage = MessageFormat.format("Activity {0} has no participants to start", activityUuid);
 
         Assertions.assertEquals(expectedMessage, exceptionMessage);
-        BDDMockito.then(workflowManageService).should(BDDMockito.never()).apply(any(Activity.class), any(User.class));
+        BDDMockito.then(workflowManageService).should(BDDMockito.never()).apply(any(Activity.class), any(User.class), any());
     }
 
     @Test
@@ -335,7 +335,7 @@ public class ActivityServiceTest {
         val expectedMessage = MessageFormat.format("Activity {0} not found", activityUuid);
 
         Assertions.assertEquals(expectedMessage, exceptionMessage);
-        BDDMockito.then(workflowManageService).should(BDDMockito.never()).apply(any(Activity.class), any(User.class));
+        BDDMockito.then(workflowManageService).should(BDDMockito.never()).apply(any(Activity.class), any(User.class), any());
     }
 
     @Test
@@ -355,7 +355,7 @@ public class ActivityServiceTest {
         testingThis.startActivity(activity.getUuid());
         Assertions.assertFalse(activity.getGroupActivities().isEmpty());
         BDDMockito.then(groupService).should().createGroup(eq(activity), anySet());
-        BDDMockito.then(workflowManageService).should().apply(activity, activity.getCreator());
+        BDDMockito.then(workflowManageService).should().apply(activity, activity.getCreator(), null);
     }
 
     private void mockHibernateSession() {

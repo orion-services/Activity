@@ -9,12 +9,14 @@ import dev.orion.services.dto.UserEnhancedWithExternalData;
 import dev.orion.services.interfaces.UserService;
 import io.quarkus.arc.log.LoggerName;
 import lombok.val;
+import org.eclipse.microprofile.config.ConfigProvider;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.logging.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.transaction.Transactional;
+import javax.ws.rs.NotFoundException;
 import java.text.MessageFormat;
 import java.util.Optional;
 
@@ -33,7 +35,11 @@ public class UserServiceImpl implements UserService {
     public UserEnhancedWithExternalData getCompleteUserData(String userExternalId) {
         Optional<User> optUserEntity = User.findUserByExternalId(userExternalId);
 
-        UserClientResponse userClientResponse = userClient.getUserByExternalId(userExternalId);
+        UserClientResponse userClientResponse = Optional.ofNullable(userClient.getUserByExternalId(userExternalId)).orElseThrow(() -> {
+            val userClientURL = ConfigProvider.getConfig().getValue("api.user-service.client/mp-rest/url", String.class);
+            val errorMessage = MessageFormat.format("User {0} not found in user service in {1}", userExternalId, userClientURL);
+            throw new NotFoundException(errorMessage);
+        });
         User userEntity = optUserEntity.orElse(null);
 
         if(optUserEntity.isEmpty()) {

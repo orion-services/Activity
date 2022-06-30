@@ -4,7 +4,6 @@ import dev.orion.api.endpoint.UserEndpoint;
 import dev.orion.api.endpoint.body.ConnectUserResponseBody;
 import dev.orion.api.endpoint.body.DefaultErrorResponseBody;
 import dev.orion.client.UserClient;
-import dev.orion.client.dto.UserClientResponse;
 import dev.orion.entity.User;
 import dev.orion.fixture.UserFixture;
 import dev.orion.services.interfaces.UserService;
@@ -23,7 +22,6 @@ import org.mockito.BDDMockito;
 import org.mockito.Mockito;
 
 import javax.inject.Inject;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.text.MessageFormat;
 import java.util.UUID;

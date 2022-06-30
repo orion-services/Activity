@@ -1,3 +1,15 @@
+quarkus:
+  jacoco:
+    excludes:
+      - "dev/orion/entity/**/*"
+      - "**/*dto/**/*"
+      - "dev/orion/broker/**/*"
+      - "dev/orion/repository/**/*"
+      - "dev/orion/api/endpoint/body/**/*"
+      - "dev/orion/commom/exception/**/*"
+    title: "Orion-services: Activity service"
+
+
 "%dev":
   quarkus:
     datasource:
@@ -39,15 +51,12 @@
       dialect: org.hibernate.dialect.H2Dialect
       database:
         generation: drop-and-create
-    api:
-      user-service:
-        "client/mp-rest/url": "http://localhost:8090"
+  api:
+    user-service:
+      "client/mp-rest/url": "http://localhost:3000"
+    document-service:
+      "client/mp-rest/url": "http://localhost:4000"
   rabbit:
-    username: ""
-    password: ""
-    virtualHost: ""
-    host: ""
-    port: 8883
     queue:
       consumer:
         document: "document-edit"

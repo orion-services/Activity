@@ -55,8 +55,7 @@ public class GroupActivityServiceTest {
         MockitoAnnotations.openMocks(this);
         val createDocumentResponse = new CreateDocumentResponse(
                 UUID.randomUUID().toString(),
-                Faker.instance().backToTheFuture().quote(),
-                UUID.randomUUID().toString());
+                Faker.instance().backToTheFuture().quote());
 
         BDDMockito.given(documentClient.createDocument(any())).willReturn(createDocumentResponse);
     }

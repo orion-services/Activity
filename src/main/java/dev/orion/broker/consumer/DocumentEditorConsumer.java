@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.DeliverCallback;
 import dev.orion.broker.RabbitConnection;
 import dev.orion.broker.dto.DocumentEditDto;
-import dev.orion.broker.dto.DocumentUpdateDto;
 import dev.orion.broker.producer.DocumentUpdateProducer;
 import dev.orion.services.interfaces.DocumentService;
 import io.quarkus.arc.log.LoggerName;
@@ -50,15 +49,15 @@ public class DocumentEditorConsumer extends RabbitConnection {
         var message = objectMapper.readValue(delivery.getBody(), DocumentEditDto.class);
         logger.info(MessageFormat.format("Message received with {0}", message.toString()));
 
-        var newDocumentOption = documentService.editContent(message.documentContent, message.uuid, message.externalUserId);
-        if (newDocumentOption.isPresent()) {
-            var newDocument = newDocumentOption.get();
-            var updatedDocumentDto = new DocumentUpdateDto();
-
-            documentUpdateProducer.sendMessage(updatedDocumentDto);
-
-            logger.info(MessageFormat.format("Document id({0}) sent to broker", newDocument.id));
-        }
+//        var newDocumentOption = documentService.editContent(message.documentContent, message.uuid, message.externalUserId);
+//        if (newDocumentOption.isPresent()) {
+//            var newDocument = newDocumentOption.get();
+//            var updatedDocumentDto = new DocumentUpdateDto();
+//
+//            documentUpdateProducer.sendMessage(updatedDocumentDto);
+//
+//            logger.info(MessageFormat.format("Document id({0}) sent to broker", newDocument.id));
+//        }
     };
 
     @PostConstruct

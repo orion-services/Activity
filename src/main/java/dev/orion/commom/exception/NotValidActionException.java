@@ -11,6 +11,8 @@ public class NotValidActionException extends RuntimeException {
 
     @Override
     public String toString() {
-        return "Step name: " + stepName + "has error: " + message;
+        return "Step name: " + stepName + " has error: " + message;
     }
+
+
 }

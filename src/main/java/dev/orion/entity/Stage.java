@@ -18,7 +18,7 @@ public class Stage extends PanacheEntity {
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     @NonNull
-    private ActivityStages stage;
+    private ActivityStages activityStage;
 
     @ManyToMany(cascade = CascadeType.ALL)
     @OrderColumn
@@ -33,11 +33,11 @@ public class Stage extends PanacheEntity {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Stage stage1 = (Stage) o;
-        return stage == stage1.stage;
+        return activityStage == stage1.activityStage;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(stage);
+        return Objects.hash(activityStage);
     }
 }

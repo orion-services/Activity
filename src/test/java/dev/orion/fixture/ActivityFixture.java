@@ -5,6 +5,7 @@ import dev.orion.commom.constant.CircularStepFlowDirectionTypes;
 import dev.orion.entity.Activity;
 import dev.orion.entity.Step;
 import dev.orion.entity.User;
+import dev.orion.entity.Workflow;
 import dev.orion.entity.step_type.CircleOfWriters;
 import dev.orion.util.setup.WorkflowStarter;
 import lombok.val;
@@ -24,6 +25,17 @@ public class ActivityFixture {
         val stage = WorkflowFixture.generateStage(ActivityStages.DURING, stepList);
         val workflow = WorkflowFixture.generateWorkflow(List.of(stage));
         workflow.setName(WorkflowStarter.GENERIC_WORKFLOW_NAME);
+        activity.setWorkflow(workflow);
+
+        return activity;
+    }
+
+    public static Activity generateActivity(User user, Workflow workflow) {
+        val activityUuid = UUID.randomUUID();
+        Activity activity = new Activity();
+        activity.uuid = activityUuid;
+        activity.isActive = true;
+        activity.setCreator(user);
         activity.setWorkflow(workflow);
 
         return activity;

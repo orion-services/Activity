@@ -2,6 +2,7 @@ package dev.orion.services;
 
 import dev.orion.commom.constant.ActivityStages;
 import dev.orion.commom.exception.IncompleteWorkflowException;
+import dev.orion.commom.exception.InvalidActivityActionException;
 import dev.orion.commom.exception.NotValidActionException;
 import dev.orion.entity.*;
 import dev.orion.services.interfaces.WorkflowManageService;
@@ -9,15 +10,18 @@ import dev.orion.util.AggregateException;
 import dev.orion.workflowExecutor.CircleStepExecutor;
 import dev.orion.workflowExecutor.ReverseSnowBallStepExecutor;
 import dev.orion.workflowExecutor.StepExecutor;
+import dev.orion.workflowExecutor.UnorderedCircleOfWritersStepExecutor;
 import io.quarkus.arc.log.LoggerName;
 import lombok.val;
 import org.jboss.logging.Logger;
 
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.transaction.Transactional;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 @Transactional
@@ -30,18 +34,21 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
     @Inject
     ReverseSnowBallStepExecutor reverseSnowBallStepExecutor;
 
+    @Inject
+    UnorderedCircleOfWritersStepExecutor unorderedCircleOfWritersStepExecutor;
+
     @LoggerName("WorkflowManageServiceImpl")
     Logger logger;
 
+    @PostConstruct
     private void setupExecutorsMap() {
         stepExecutorsMap.put(circleStepExecutor.getStepRepresentation(), circleStepExecutor);
         stepExecutorsMap.put(reverseSnowBallStepExecutor.getStepRepresentation(), reverseSnowBallStepExecutor);
+        stepExecutorsMap.put(unorderedCircleOfWritersStepExecutor.getStepRepresentation(), unorderedCircleOfWritersStepExecutor);
     }
 
     @Override
-    public void apply(Activity activity, User performer) throws IncompleteWorkflowException {
-        setupExecutorsMap();
-
+    public void apply(Activity activity, User performer, Document document) throws IncompleteWorkflowException {
         val actualStageOpt = extractActualStage(activity);
         if (actualStageOpt.isEmpty()) {
             return;
@@ -49,12 +56,12 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
 
         val actualStage = actualStageOpt.get();
         if (actualStage.getSteps().isEmpty()) {
-            String errorMessage = MessageFormat.format("There is no steps on workflow \"{0}\" in stage {1}", activity.workflow.getName(), actualStageOpt.get().getStage());
+            String errorMessage = MessageFormat.format("There is no steps on workflow \"{0}\" in stage {1}", activity.workflow.getName(), actualStageOpt.get().getActivityStage());
             logger.error(errorMessage);
             throw new IncompleteWorkflowException(errorMessage);
         }
 
-        var executionQueue = createExecutionQueue(actualStage.getSteps(), activity, performer);
+        var executionQueue = createExecutionQueue(actualStage.getSteps(), activity, performer, document);
 
         while (!executionQueue.isEmpty()) {
             executionQueue.poll().run();
@@ -63,11 +70,11 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
 
     @Override
     public Workflow createOrUpdateWorkflow(Set<Stage> stages, String name, String description) {
-        if (stages.stream().noneMatch(stage -> stage.getStage().equals(ActivityStages.DURING))) {
+        if (stages.stream().noneMatch(stage -> stage.getActivityStage().equals(ActivityStages.DURING))) {
             throw new IncompleteWorkflowException("Cannot create workflow without have a DURING phase stage");
         }
 
-        val workflow = (Workflow) Workflow.find("name", name).firstResultOptional().orElse(new Workflow());
+        val workflow = (Workflow) Workflow.findByName(name).orElse(new Workflow());
         workflow.setName(name);
         workflow.setDescription(description);
         workflow.setStages(stages);
@@ -77,16 +84,30 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
         return workflow;
     }
 
+    @Override
+    public boolean isFinished(Activity activity) {
+        val stage = extractActualStage(activity).orElseThrow();
+        if (Boolean.FALSE == activity.getActualStage().equals(ActivityStages.DURING)) {
+            val exceptionMessage = MessageFormat.format("To check if workflow is finished activity should be in stage {0}", ActivityStages.DURING);
+            logger.error(exceptionMessage);
+            throw new InvalidActivityActionException(exceptionMessage);
+        }
+        val steps = stage.getSteps();
+        val stepStream = steps.stream().filter(this::hasExecutorForStep);
 
-    private Queue<Runnable> createExecutionQueue(List<Step> steps, Activity activity, User performer) {
+        return stepStream.allMatch(step -> stepExecutorsMap.get(step.getType()).isFinished(activity, step));
+    }
+
+
+    private Queue<Runnable> createExecutionQueue(List<Step> steps, Activity activity, User performer, Document document) {
         Queue<Runnable> executionQueue = new LinkedList<>();
         List<RuntimeException> exceptionList = new ArrayList<>();
 
-        steps.stream().filter(step -> Objects.nonNull(stepExecutorsMap.get(step.getType()))).forEach(step -> {
+        steps.stream().filter(this::hasExecutorForStep).forEach(step -> {
             val stepExecutor = stepExecutorsMap.get(step.getType());
             try {
-                stepExecutor.validate(activity, performer);
-                executionQueue.add(() -> stepExecutor.execute(activity, performer));
+                stepExecutor.validate(document, performer, step);
+                executionQueue.add(() -> stepExecutor.execute(document, performer, step));
             } catch (NotValidActionException notValidActionException) {
                 logger.warn("Step: '" + notValidActionException.getStepName() + "' validation throw when trying to apply to activity: " + activity.uuid);
                 exceptionList.add(notValidActionException);
@@ -102,11 +123,16 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
     }
 
     private Optional<Stage> extractActualStage(Activity activity) {
-        val actualStage = activity.workflow.getStages().stream().filter(stage -> stage.getStage().equals(activity.actualStage)).findFirst();
+        val actualStage = activity.workflow.getStages().stream().filter(stage -> stage.getActivityStage().equals(activity.actualStage)).findFirst();
 
         if (actualStage.isEmpty()) {
             logger.info(MessageFormat.format("There is no {0} stage on activity {1}", activity.actualStage, activity.uuid));
         }
         return actualStage;
+    }
+
+
+    private boolean hasExecutorForStep(Step step) {
+        return stepExecutorsMap.containsKey(step.getType());
     }
 }

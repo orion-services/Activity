@@ -3,7 +3,6 @@ package dev.orion.entity;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
@@ -17,12 +16,14 @@ import java.util.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonIgnoreProperties(value = {"id"})
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class GroupActivity extends PanacheEntityBase {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @GenericGenerator(name = "group_uuid", strategy = "uuid")
     @Column(columnDefinition = "BINARY(16)")
+    @EqualsAndHashCode.Include
     private UUID uuid;
 
     @OneToMany(mappedBy = "groupActivity", cascade = CascadeType.ALL)

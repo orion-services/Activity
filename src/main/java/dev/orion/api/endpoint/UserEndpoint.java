@@ -2,7 +2,6 @@ package dev.orion.api.endpoint;
 
 import dev.orion.api.endpoint.body.ConnectUserResponseBody;
 import dev.orion.services.interfaces.UserService;
-import lombok.val;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponseSchema;
 import org.jboss.resteasy.annotations.jaxrs.PathParam;

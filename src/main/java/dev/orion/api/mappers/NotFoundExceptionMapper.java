@@ -9,8 +9,8 @@ import javax.ws.rs.ext.Provider;
 import java.util.logging.Logger;
 
 @Provider
-public class NotFoundInvalidOperationMapper implements ExceptionMapper<NotFoundException> {
-    private static final Logger LOGGER = Logger.getLogger(NotFoundInvalidOperationMapper.class.getName());
+public class NotFoundExceptionMapper implements ExceptionMapper<NotFoundException> {
+    private static final Logger LOGGER = Logger.getLogger(NotFoundExceptionMapper.class.getName());
 
     @Override
     public Response toResponse(NotFoundException exception) {
