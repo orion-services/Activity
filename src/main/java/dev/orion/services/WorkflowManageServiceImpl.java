@@ -9,7 +9,7 @@ import dev.orion.util.AggregateException;
 import dev.orion.workflowExecutor.CircleStepExecutor;
 import dev.orion.workflowExecutor.ReverseSnowBallStepExecutor;
 import dev.orion.workflowExecutor.StepExecutor;
-import dev.orion.workflowExecutor.UnorderedCircleOfWriterStepExecutor;
+import dev.orion.workflowExecutor.UnorderedCircleOfWritersStepExecutor;
 import io.quarkus.arc.log.LoggerName;
 import lombok.val;
 import org.jboss.logging.Logger;
@@ -33,7 +33,7 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
     ReverseSnowBallStepExecutor reverseSnowBallStepExecutor;
 
     @Inject
-    UnorderedCircleOfWriterStepExecutor unorderedCircleOfWriterStepExecutor;
+    UnorderedCircleOfWritersStepExecutor unorderedCircleOfWritersStepExecutor;
 
     @LoggerName("WorkflowManageServiceImpl")
     Logger logger;
@@ -42,7 +42,7 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
     private void setupExecutorsMap() {
         stepExecutorsMap.put(circleStepExecutor.getStepRepresentation(), circleStepExecutor);
         stepExecutorsMap.put(reverseSnowBallStepExecutor.getStepRepresentation(), reverseSnowBallStepExecutor);
-        stepExecutorsMap.put(unorderedCircleOfWriterStepExecutor.getStepRepresentation(), unorderedCircleOfWriterStepExecutor);
+        stepExecutorsMap.put(unorderedCircleOfWritersStepExecutor.getStepRepresentation(), unorderedCircleOfWritersStepExecutor);
     }
 
     @Override

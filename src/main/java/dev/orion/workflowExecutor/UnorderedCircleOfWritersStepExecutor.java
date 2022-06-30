@@ -14,7 +14,7 @@ import java.text.MessageFormat;
 import java.util.Objects;
 
 @ApplicationScoped
-public class UnorderedCircleOfWriterStepExecutor implements StepExecutor {
+public class UnorderedCircleOfWritersStepExecutor implements StepExecutor {
     @LoggerName("UnorderedCircleOfWriterStepExecutor")
     Logger logger;
     @Inject

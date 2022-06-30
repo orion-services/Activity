@@ -11,7 +11,7 @@ import dev.orion.fixture.UserFixture;
 import dev.orion.fixture.WorkflowFixture;
 import dev.orion.util.AggregateException;
 import dev.orion.workflowExecutor.CircleStepExecutor;
-import dev.orion.workflowExecutor.UnorderedCircleOfWriterStepExecutor;
+import dev.orion.workflowExecutor.UnorderedCircleOfWritersStepExecutor;
 import io.quarkus.panache.mock.PanacheMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
@@ -42,7 +42,7 @@ public class WorkflowManageServiceTest {
     CircleStepExecutor circleStepExecutor;
 
     @InjectMock
-    UnorderedCircleOfWriterStepExecutor unorderedCircleOfWriterStepExecutor;
+    UnorderedCircleOfWritersStepExecutor unorderedCircleOfWritersStepExecutor;
 
     @InjectMock
     Session session;
@@ -51,7 +51,7 @@ public class WorkflowManageServiceTest {
     public void setup() {
         MockitoAnnotations.openMocks(this);
         when(circleStepExecutor.getStepRepresentation()).thenCallRealMethod();
-        when(unorderedCircleOfWriterStepExecutor.getStepRepresentation()).thenCallRealMethod();
+        when(unorderedCircleOfWritersStepExecutor.getStepRepresentation()).thenCallRealMethod();
         PanacheMock.mock(Workflow.class);
     }
 
@@ -66,12 +66,12 @@ public class WorkflowManageServiceTest {
 
         testThis.apply(activity, user, new Document());
         BDDMockito.then(circleStepExecutor).should().execute(any(), any(), any());
-        BDDMockito.then(unorderedCircleOfWriterStepExecutor).should(times(0)).execute(any(), any(), any());
+        BDDMockito.then(unorderedCircleOfWritersStepExecutor).should(times(0)).execute(any(), any(), any());
 
         activity.actualStage = ActivityStages.DURING;
         testThis.apply(activity, user, new Document());
         BDDMockito.then(circleStepExecutor).should(times(1)).execute(any(), any(), any());
-        BDDMockito.then(unorderedCircleOfWriterStepExecutor).should().execute(any(), any(), any());
+        BDDMockito.then(unorderedCircleOfWritersStepExecutor).should().execute(any(), any(), any());
     }
 
     @Test
@@ -88,7 +88,7 @@ public class WorkflowManageServiceTest {
         activity.actualStage = ActivityStages.DURING;
         testThis.apply(activity, user, new Document());
         BDDMockito.then(circleStepExecutor).should(atLeastOnce()).validate(any(), any(), any());
-        BDDMockito.then(unorderedCircleOfWriterStepExecutor).should(atLeastOnce()).validate(any(), any(), any());
+        BDDMockito.then(unorderedCircleOfWritersStepExecutor).should(atLeastOnce()).validate(any(), any(), any());
     }
 
     @Test
@@ -96,7 +96,7 @@ public class WorkflowManageServiceTest {
     public void testStageThrowValidation() {
         BDDMockito
                 .willThrow(new NotValidActionException("unorderedCircleOfWriterStepExecutor", "error"))
-                .given(unorderedCircleOfWriterStepExecutor)
+                .given(unorderedCircleOfWritersStepExecutor)
                 .validate(any(), any(), any());
         BDDMockito
                 .willThrow(new NotValidActionException("circleStepExecutor", "error"))
@@ -121,9 +121,9 @@ public class WorkflowManageServiceTest {
 
         Assertions.assertEquals(2, aggregateException.getExceptions().size());
         BDDMockito.then(circleStepExecutor).should(never()).execute(any(), any(), any());
-        BDDMockito.then(unorderedCircleOfWriterStepExecutor).should(never()).execute(any(), any(), any());
+        BDDMockito.then(unorderedCircleOfWritersStepExecutor).should(never()).execute(any(), any(), any());
         BDDMockito.then(circleStepExecutor).should().validate(any(), any(), any());
-        BDDMockito.then(unorderedCircleOfWriterStepExecutor).should().validate(any(), any(), any());
+        BDDMockito.then(unorderedCircleOfWritersStepExecutor).should().validate(any(), any(), any());
     }
 
     @Test
@@ -137,7 +137,7 @@ public class WorkflowManageServiceTest {
 
         testThis.apply(activity, activity.getCreator(), new Document());
         BDDMockito.then(circleStepExecutor).should(never()).execute(any(), any(), any());
-        BDDMockito.then(unorderedCircleOfWriterStepExecutor).should(never()).execute(any(), any(), any());
+        BDDMockito.then(unorderedCircleOfWritersStepExecutor).should(never()).execute(any(), any(), any());
     }
 
     @Test
@@ -157,7 +157,7 @@ public class WorkflowManageServiceTest {
         activity.workflow = workflow;
 
         Assertions.assertThrows(IncompleteWorkflowException.class, () -> testThis.apply(activity, user, new Document()));
-        BDDMockito.then(unorderedCircleOfWriterStepExecutor).should(never()).execute(any(), any(), any());
+        BDDMockito.then(unorderedCircleOfWritersStepExecutor).should(never()).execute(any(), any(), any());
         BDDMockito.then(circleStepExecutor).should(never()).execute(any(), any(), any());
     }
 

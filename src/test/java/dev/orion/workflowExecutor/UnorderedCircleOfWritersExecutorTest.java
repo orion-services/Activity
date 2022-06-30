@@ -43,7 +43,7 @@ import static org.mockito.Mockito.*;
 @QuarkusTest
 public class UnorderedCircleOfWritersExecutorTest {
     @Inject
-    UnorderedCircleOfWriterStepExecutor testThis;
+    UnorderedCircleOfWritersStepExecutor testThis;
 
     @InjectMock
     Session session;
