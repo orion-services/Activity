@@ -1,10 +1,7 @@
 package dev.orion.workflowExecutor;
 
 import dev.orion.commom.exception.NotValidActionException;
-import dev.orion.entity.Document;
-import dev.orion.entity.GroupActivity;
-import dev.orion.entity.Step;
-import dev.orion.entity.User;
+import dev.orion.entity.*;
 import dev.orion.entity.step_type.UnorderedCircleOfWriters;
 import dev.orion.services.interfaces.DocumentService;
 import io.quarkus.arc.log.LoggerName;
@@ -25,10 +22,7 @@ public class UnorderedCircleOfWriterStepExecutor implements StepExecutor {
 
     @Override
     public void execute(Document document, User user, Step step) {
-        val isDocumentNull = Objects.isNull(document);
-        if (isDocumentNull) {
-            throw new NotValidActionException(getStepRepresentation(), "document must not be null");
-        }
+        documentNullValidation(document);
 
         val unorderedCircleOfWriter = (UnorderedCircleOfWriters) step;
 
@@ -47,7 +41,7 @@ public class UnorderedCircleOfWriterStepExecutor implements StepExecutor {
             return;
         }
 
-        if (doesAllParticipantsHaveParticipated(document, groupActivity)) {
+        if (doesAllParticipantsHaveParticipated(document)) {
             val newRoundValue = document.getRounds() + 1;
             logger.infov("The document {0} will advance the round from {1} to {2}", document.getExternalId(), document.getRounds(), newRoundValue);
             document.setRounds(newRoundValue);
@@ -60,26 +54,33 @@ public class UnorderedCircleOfWriterStepExecutor implements StepExecutor {
         return unorderedCircleOfWriters.getRounds() <= document.getRounds();
     }
 
-    private boolean doesAllParticipantsHaveParticipated(Document document, GroupActivity groupActivity) {
-        return document.getParticipantsAssigned().isEmpty() && document.getParticipantsThatEdited().containsAll(groupActivity.getParticipants());
+    private boolean doesAllParticipantsHaveParticipated(Document document) {
+        return document.getParticipantsAssigned().isEmpty();
     }
 
     @Override
     public void validate(Document document, User user, Step step) {
-        if (Objects.isNull(document)) {
-            val exceptionMessage = "the document can't be null";
-            throw new NotValidActionException(step.getType(), exceptionMessage);
-        }
+        documentNullValidation(document);
 
         if (!document.getParticipantsAssigned().contains(user)) {
             val exceptionMessage = MessageFormat.format("User {0} is not a participant in document {1}", user.getExternalId(), document.getExternalId());
-            throw new NotValidActionException(step.getType(), exceptionMessage);
+            throw new NotValidActionException(getStepRepresentation(), exceptionMessage);
         }
     }
 
     @Override
-    public <T extends Step> boolean isFinished(Document document, User user, T step) throws NotValidActionException {
-        return false;
+    public <T extends Step> boolean isFinished(Activity activity, Document document, T step) throws NotValidActionException {
+        documentNullValidation(document);
+        return doesAllParticipantsHaveParticipated(document) && isFinalRound(document, (UnorderedCircleOfWriters) step);
+
+    }
+
+
+    private void documentNullValidation(Document document) {
+        if (Objects.isNull(document)) {
+            val exceptionMessage = "document must not be null";
+            throw new NotValidActionException(getStepRepresentation(), exceptionMessage);
+        }
     }
 
     @Override

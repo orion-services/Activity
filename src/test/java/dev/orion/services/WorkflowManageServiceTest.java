@@ -12,10 +12,12 @@ import dev.orion.fixture.WorkflowFixture;
 import dev.orion.util.AggregateException;
 import dev.orion.workflowExecutor.CircleStepExecutor;
 import dev.orion.workflowExecutor.UnorderedCircleOfWriterStepExecutor;
+import io.quarkus.panache.mock.PanacheMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
 import lombok.val;
 import net.datafaker.Faker;
+import org.hibernate.Session;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -25,10 +27,9 @@ import org.mockito.MockitoAnnotations;
 
 import javax.inject.Inject;
 import javax.transaction.Transactional;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.BDDMockito.*;
 
 @QuarkusTest
 @Transactional
@@ -43,33 +44,32 @@ public class WorkflowManageServiceTest {
     @InjectMock
     UnorderedCircleOfWriterStepExecutor unorderedCircleOfWriterStepExecutor;
 
+    @InjectMock
+    Session session;
+
     @BeforeEach
     public void setup() {
         MockitoAnnotations.openMocks(this);
         when(circleStepExecutor.getStepRepresentation()).thenCallRealMethod();
         when(unorderedCircleOfWriterStepExecutor.getStepRepresentation()).thenCallRealMethod();
+        PanacheMock.mock(Workflow.class);
     }
 
     @Test
     @DisplayName("[apply] Should call the right step by activity phase")
     public void testShouldCallTheRightStepByActivityPhase() {
         User user = UserFixture.generateUser();
-        user.persist();
 
         Activity activity = new Activity();
         activity.creator = user;
         activity.workflow = generateWorkflow();
-        activity.persist();
 
-        //  Test incoming from database
-        Activity persistedActivity = Activity.findById(activity.uuid);
-
-        testThis.apply(persistedActivity, user, new Document());
+        testThis.apply(activity, user, new Document());
         BDDMockito.then(circleStepExecutor).should().execute(any(), any(), any());
         BDDMockito.then(unorderedCircleOfWriterStepExecutor).should(times(0)).execute(any(), any(), any());
 
-        persistedActivity.actualStage = ActivityStages.DURING;
-        testThis.apply(persistedActivity, user, new Document());
+        activity.actualStage = ActivityStages.DURING;
+        testThis.apply(activity, user, new Document());
         BDDMockito.then(circleStepExecutor).should(times(1)).execute(any(), any(), any());
         BDDMockito.then(unorderedCircleOfWriterStepExecutor).should().execute(any(), any(), any());
     }
@@ -78,21 +78,15 @@ public class WorkflowManageServiceTest {
     @DisplayName("[apply] Should call the validation of each step")
     public void testShouldCallValidationForEachStep() {
         User user = UserFixture.generateUser();
-        user.persist();
 
         Activity activity = new Activity();
         activity.creator = user;
-
-        //  Test incoming from database
         activity.workflow = generateWorkflow();
 
-        activity.persist();
 
-        Activity persistedActivity = Activity.findById(activity.uuid);
-
-        testThis.apply(persistedActivity, user, new Document());
-        persistedActivity.actualStage = ActivityStages.DURING;
-        testThis.apply(persistedActivity, user, new Document());
+        testThis.apply(activity, user, new Document());
+        activity.actualStage = ActivityStages.DURING;
+        testThis.apply(activity, user, new Document());
         BDDMockito.then(circleStepExecutor).should(atLeastOnce()).validate(any(), any(), any());
         BDDMockito.then(unorderedCircleOfWriterStepExecutor).should(atLeastOnce()).validate(any(), any(), any());
     }
@@ -139,7 +133,7 @@ public class WorkflowManageServiceTest {
         activity.creator = UserFixture.generateUser();
         activity.workflow = generateWorkflow();
 
-        activity.setActualStage(ActivityStages.AFTER);
+        activity.setActualStage(ActivityStages.POS);
 
         testThis.apply(activity, activity.getCreator(), new Document());
         BDDMockito.then(circleStepExecutor).should(never()).execute(any(), any(), any());
@@ -171,6 +165,12 @@ public class WorkflowManageServiceTest {
     @Test
     @DisplayName("[createOrUpdateWorkflow] Should create an workflow")
     public void testWorkflowCreation() {
+        given(Workflow.findByName(anyString())).willReturn(Optional.empty());
+        willAnswer(invocation -> {
+            val workflow = invocation.getArgument(0, Workflow.class);
+            workflow.id = 2L;
+            return null;
+        }).given(session).persist(any(Workflow.class));
         val name = Faker.instance().rickAndMorty().character();
         val description = Faker.instance().science().element();
         val stepList = List.of(new Step[]{new CircleOfWriters(CircularStepFlowDirectionTypes.FROM_BEGIN_TO_END)});
@@ -183,11 +183,12 @@ public class WorkflowManageServiceTest {
         Assertions.assertEquals(name, workflow.getName());
         Assertions.assertEquals(description, workflow.getDescription());
         Assertions.assertFalse(workflow.getStages().isEmpty());
+        then(session).should().persist(workflow);
     }
 
     @Test
     @DisplayName("[createOrUpdateWorkflow] Workflow creation must have at least stage for during phase")
-    public void test() {
+    public void testCreationWithoutDuringPhase() {
         val name = Faker.instance().rickAndMorty().character();
         val description = Faker.instance().science().element();
         val stepList = List.of(new Step[]{new CircleOfWriters(CircularStepFlowDirectionTypes.FROM_BEGIN_TO_END)});
@@ -199,21 +200,28 @@ public class WorkflowManageServiceTest {
     @Test
     @DisplayName("[createOrUpdateWorkflow] Should update an workflow")
     public void testWorkflowUpdate() {
-        val name = Faker.instance().rickAndMorty().character();
         val description = Faker.instance().science().element();
         val stepList = List.of(new Step[]{new CircleOfWriters(CircularStepFlowDirectionTypes.FROM_BEGIN_TO_END)});
-        val stages = Set.of(WorkflowFixture.generateStage(ActivityStages.DURING, stepList));
+        val stages = Arrays.asList(WorkflowFixture.generateStage(ActivityStages.DURING, stepList));
+        val workflow = WorkflowFixture.generateWorkflow(stages);
+        workflow.id = 1L;
 
-        var workflow = testThis.createOrUpdateWorkflow(stages, name, description);
+        given(Workflow.findByName(anyString())).willReturn(Optional.of(workflow));
         val expectedId = workflow.id;
         val workflowName = workflow.getName();
 
-        val newWorkflow = testThis.createOrUpdateWorkflow(stages, workflowName, Faker.instance().science().scientist());
+        val newWorkflow = testThis.createOrUpdateWorkflow(new HashSet<>(stages), workflowName, Faker.instance().science().scientist());
 
         newWorkflow.setName(Faker.instance().rickAndMorty().character());
         Assertions.assertNotNull(newWorkflow);
         Assertions.assertEquals(expectedId, newWorkflow.id);
         Assertions.assertNotEquals(newWorkflow.getDescription(), description);
+    }
+
+    @Test
+    @DisplayName("[isFinished] - ")
+    public void test() {
+
     }
 
     private Workflow generateWorkflow() {

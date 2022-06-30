@@ -38,8 +38,7 @@ import static dev.orion.fixture.UserFixture.generateUser;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.*;
 
 @QuarkusTest
 public class UnorderedCircleOfWritersExecutorTest {
@@ -193,7 +192,7 @@ public class UnorderedCircleOfWritersExecutorTest {
     }
 
     @Test
-    @DisplayName("[validate] - Should validate if user can execute activity")
+    @DisplayName("[validate] - Should validate and let user execute activity")
     public void testValidationOfUserTurn() {
         testThis.validate(usingDocument, usingParticipants.stream().findFirst().orElseThrow(),usingStep);
     }
@@ -220,8 +219,50 @@ public class UnorderedCircleOfWritersExecutorTest {
             testThis.validate(null, executor, usingStep);
         }).toString();
 
-        val expectedMessage = MessageFormat.format("Step name: {0} has error: the document can''t be null",
+        val expectedMessage = MessageFormat.format("Step name: {0} has error: document must not be null",
                 testThis.getStepRepresentation());
         Assertions.assertEquals(expectedMessage, exceptionString);
+    }
+
+    @Test
+    @DisplayName("[isFinished] - Should return true when task is finished")
+    public void testFinishedStepReturn() {
+        val documentSpy = spy(usingDocument);
+        usingParticipants.forEach(user -> {
+            testThis.execute(usingDocument, user, usingStep);
+        });
+
+        val stepFinished = testThis.isFinished(usingActivity, documentSpy, usingStep);
+        then(documentSpy).should().getParticipantsAssigned();
+        then(documentSpy).should().getRounds();
+        Assertions.assertTrue(stepFinished);
+    }
+
+    @Test
+    @DisplayName("[isFinished] - Should return false when there is participants that has no edited")
+    public void testFinishedStepReturnWhenThereIsUserToParticipate() {
+        val documentSpy = spy(usingDocument);
+
+        val stepFinished = testThis.isFinished(usingActivity, documentSpy, usingStep);
+        then(documentSpy).should().getParticipantsAssigned();
+        then(documentSpy).should(never()).getRounds();
+        Assertions.assertFalse(stepFinished);
+    }
+
+    @Test
+    @DisplayName("[isFinished] - Should return false when document round is not the less")
+    public void testFinishedStepReturnWhenThereIsMoreRoundsTo() {
+        val documentSpy = spy(usingDocument);
+        val expectedRounds = 2;
+        usingStep.setRounds(expectedRounds);
+
+        usingParticipants.forEach(user -> {
+            testThis.execute(usingDocument, user, usingStep);
+        });
+
+        val stepFinished = testThis.isFinished(usingActivity, documentSpy, usingStep);
+        then(documentSpy).should().getParticipantsAssigned();
+        then(documentSpy).should().getRounds();
+        Assertions.assertFalse(stepFinished);
     }
 }

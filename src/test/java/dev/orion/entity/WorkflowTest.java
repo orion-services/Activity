@@ -24,12 +24,12 @@ public class WorkflowTest {
         generateWorkflow(stage);
 
         testingThis.addStepStage(generateStepStage(ActivityStages.DURING));
-        testingThis.addStepStage(generateStepStage(ActivityStages.AFTER));
+        testingThis.addStepStage(generateStepStage(ActivityStages.POS));
 
         Assertions.assertEquals(testingThis.getStages().size(), EXPECTED_STEP_STAGES_QTD);
         Assertions.assertEquals(testingThis.getStages().stream().filter(stage1 -> stage1.getStage() == ActivityStages.PRE).findFirst().orElseThrow().getSteps().size(), EXPECTED_STEPS_QTD);
         Assertions.assertEquals(testingThis.getStages().stream().filter(stage1 -> stage1.getStage() == ActivityStages.DURING).findFirst().orElseThrow().getSteps().size(), EXPECTED_STEPS_QTD);
-        Assertions.assertEquals(testingThis.getStages().stream().filter(stage1 -> stage1.getStage() == ActivityStages.AFTER).findFirst().orElseThrow().getSteps().size(), EXPECTED_STEPS_QTD);
+        Assertions.assertEquals(testingThis.getStages().stream().filter(stage1 -> stage1.getStage() == ActivityStages.POS).findFirst().orElseThrow().getSteps().size(), EXPECTED_STEPS_QTD);
     }
 
     private void generateWorkflow(Stage stage) {

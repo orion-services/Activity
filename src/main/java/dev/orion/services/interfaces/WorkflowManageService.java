@@ -8,4 +8,6 @@ import java.util.Set;
 public interface WorkflowManageService {
     public void apply(Activity activity, User performer, Document document);
     public Workflow createOrUpdateWorkflow(Set<Stage> stages, String name, String description);
+
+    public boolean isFinished(Activity activity);
 }

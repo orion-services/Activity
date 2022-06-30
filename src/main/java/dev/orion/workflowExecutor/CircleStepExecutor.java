@@ -1,9 +1,7 @@
 package dev.orion.workflowExecutor;
 
 import dev.orion.commom.exception.NotValidActionException;
-import dev.orion.entity.Document;
-import dev.orion.entity.Step;
-import dev.orion.entity.User;
+import dev.orion.entity.*;
 import dev.orion.entity.step_type.CircleOfWriters;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -21,7 +19,7 @@ public class CircleStepExecutor implements StepExecutor {
     }
 
     @Override
-    public <T extends Step> boolean isFinished(Document document, User user, T step) throws NotValidActionException {
+    public <T extends Step> boolean isFinished(Activity activity, Document document, T step) throws NotValidActionException {
         return false;
     }
 

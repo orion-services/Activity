@@ -14,6 +14,7 @@ import io.quarkus.arc.log.LoggerName;
 import lombok.val;
 import org.jboss.logging.Logger;
 
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.transaction.Transactional;
@@ -37,6 +38,7 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
     @LoggerName("WorkflowManageServiceImpl")
     Logger logger;
 
+    @PostConstruct
     private void setupExecutorsMap() {
         stepExecutorsMap.put(circleStepExecutor.getStepRepresentation(), circleStepExecutor);
         stepExecutorsMap.put(reverseSnowBallStepExecutor.getStepRepresentation(), reverseSnowBallStepExecutor);
@@ -45,8 +47,6 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
 
     @Override
     public void apply(Activity activity, User performer, Document document) throws IncompleteWorkflowException {
-        setupExecutorsMap();
-
         val actualStageOpt = extractActualStage(activity);
         if (actualStageOpt.isEmpty()) {
             return;
@@ -72,7 +72,7 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
             throw new IncompleteWorkflowException("Cannot create workflow without have a DURING phase stage");
         }
 
-        val workflow = (Workflow) Workflow.find("name", name).firstResultOptional().orElse(new Workflow());
+        val workflow = (Workflow) Workflow.findByName(name).orElse(new Workflow());
         workflow.setName(name);
         workflow.setDescription(description);
         workflow.setStages(stages);
@@ -80,6 +80,11 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
         workflow.persist();
 
         return workflow;
+    }
+
+    @Override
+    public boolean isFinished(Activity activity) {
+        return false;
     }
 
 
