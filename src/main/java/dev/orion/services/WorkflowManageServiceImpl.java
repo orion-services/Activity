@@ -22,6 +22,7 @@ import javax.inject.Inject;
 import javax.transaction.Transactional;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 @Transactional
@@ -44,7 +45,7 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
     Logger logger;
 
     @PostConstruct
-    private void setupExecutorsMap() {
+    void setupExecutorsMap() {
         stepExecutorsMap.put(circleStepExecutor.getStepRepresentation(), circleStepExecutor);
         stepExecutorsMap.put(reverseSnowBallStepExecutor.getStepRepresentation(), reverseSnowBallStepExecutor);
         stepExecutorsMap.put(unorderedCircleOfWritersStepExecutor.getStepRepresentation(), unorderedCircleOfWritersStepExecutor);
@@ -72,37 +73,6 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
         }
     }
 
-    @Override
-    public Workflow createOrUpdateWorkflow(Set<Stage> stages, String name, String description) {
-        if (stages.stream().noneMatch(stage -> stage.getActivityStage().equals(ActivityStage.DURING))) {
-            throw new InvalidWorkflowConfiguration("Cannot create workflow without have a DURING phase stage");
-        }
-
-        val workflow = (Workflow) Workflow.findByName(name).orElse(new Workflow());
-        workflow.setName(name);
-        workflow.setDescription(description);
-        workflow.setStages(stages);
-
-        workflow.persist();
-
-        return workflow;
-    }
-
-    @Override
-    public boolean isFinished(Activity activity) {
-        val stage = extractActualStage(activity).orElseThrow();
-        if (Boolean.FALSE == activity.getActualStage().equals(ActivityStage.DURING)) {
-            val exceptionMessage = MessageFormat.format("To check if workflow is finished activity should be in stage {0}", ActivityStage.DURING);
-            logger.error(exceptionMessage);
-            throw new InvalidActivityActionException(exceptionMessage);
-        }
-        val steps = stage.getSteps();
-        val stepStream = steps.stream().filter(this::hasExecutorForStep);
-
-        return stepStream.allMatch(step -> stepExecutorsMap.get(step.getType()).isFinished(activity, step));
-    }
-
-
     private Queue<Runnable> createExecutionQueue(List<Step> steps, Activity activity, User performer, Document document) {
         Queue<Runnable> executionQueue = new LinkedList<>();
         List<RuntimeException> exceptionList = new ArrayList<>();
@@ -125,6 +95,67 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
 
         return executionQueue;
     }
+
+    @Override
+    public Workflow createOrUpdateWorkflow(Set<Stage> stages, String name, String description) {
+        validateIfWorkflowHasDuringStages(stages);
+        validateIfAllStagesAreWellConfigured(stages);
+
+        val workflow = (Workflow) Workflow.findByName(name).orElse(new Workflow());
+        workflow.setName(name);
+        workflow.setDescription(description);
+        workflow.setStages(stages);
+
+        workflow.persist();
+
+        return workflow;
+    }
+
+    private void validateIfWorkflowHasDuringStages(Set<Stage> stages) {
+        if (stages.stream().noneMatch(stage -> stage.getActivityStage().equals(ActivityStage.DURING))) {
+            throw new InvalidWorkflowConfiguration("Cannot create workflow without have a DURING phase stage");
+        }
+    }
+
+    private void validateIfAllStagesAreWellConfigured(Set<Stage> stages) {
+        stages.forEach(this::validateStage);
+    }
+
+    private void validateStage(Stage stage) {
+        List<RuntimeException> exceptionList = new ArrayList<>();
+
+        val stepsWithExecutors = stage.getSteps().stream().filter(this::hasExecutorForStep).collect(Collectors.toList());
+        stepsWithExecutors.forEach(step -> {
+            try {
+                val stepExecutor = stepExecutorsMap.get(step.getType());
+                stepExecutor.validateConfig(stage);
+            } catch (InvalidWorkflowConfiguration invalidWorkflowConfiguration) {
+                exceptionList.add(invalidWorkflowConfiguration);
+            }
+        });
+
+        if (!exceptionList.isEmpty()) {
+            logger.warnv("Workflow is not valid because of the following errors: {0}", exceptionList);
+            throw new AggregateException(exceptionList);
+        }
+    }
+
+    @Override
+    public boolean isFinished(Activity activity) {
+        val stage = extractActualStage(activity).orElseThrow();
+        if (Boolean.FALSE == activity.getActualStage().equals(ActivityStage.DURING)) {
+            val exceptionMessage = MessageFormat.format("To check if workflow is finished activity should be in stage {0}", ActivityStage.DURING);
+            logger.error(exceptionMessage);
+            throw new InvalidActivityActionException(exceptionMessage);
+        }
+        val steps = stage.getSteps();
+        val stepStream = steps.stream().filter(this::hasExecutorForStep);
+
+        return stepStream.allMatch(step -> stepExecutorsMap.get(step.getType()).isFinished(activity, step));
+    }
+
+
+
 
     private Optional<Stage> extractActualStage(Activity activity) {
         val actualStage = activity.workflow.getStages().stream().filter(stage -> stage.getActivityStage().equals(activity.actualStage)).findFirst();

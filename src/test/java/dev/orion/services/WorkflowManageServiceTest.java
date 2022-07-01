@@ -200,7 +200,7 @@ public class WorkflowManageServiceTest {
     }
 
     @Test
-    @DisplayName("[createOrUpdateWorkflow] Workflow creation must have at least stage for during phase")
+    @DisplayName("[createOrUpdateWorkflow] Workflow creation must have at least on DURING stage")
     public void testCreationWithoutDuringPhase() {
         val name = Faker.instance().rickAndMorty().character();
         val description = Faker.instance().science().element();
@@ -229,6 +229,21 @@ public class WorkflowManageServiceTest {
         Assertions.assertNotNull(newWorkflow);
         Assertions.assertEquals(expectedId, newWorkflow.id);
         Assertions.assertNotEquals(newWorkflow.getDescription(), description);
+    }
+
+    @Test
+    @DisplayName("[createOrUpdateWorkflow] Workflow creation must have validate the stage")
+    public void testCreationInvalidationOfExecutor() {
+        val name = Faker.instance().rickAndMorty().character();
+        val description = Faker.instance().science().element();
+        val stepList = Arrays.asList(unorderedCircleOfWriters, new SendEmailStep());
+
+        val stages = Set.of(WorkflowFixture.generateStage(ActivityStage.DURING, stepList));
+
+        willThrow(new InvalidWorkflowConfiguration(Faker.instance().witcher().quote())).given(unorderedCircleOfWritersStepExecutor).validateConfig(any(Stage.class));
+        willThrow(new InvalidWorkflowConfiguration(Faker.instance().yoda().quote())).given(sendEmailStepExecutor).validateConfig(any(Stage.class));
+
+        val exceptionMessage = Assertions.assertThrows(AggregateException.class, () -> testThis.createOrUpdateWorkflow(stages, name, description)).getMessage();
     }
 
     @Test

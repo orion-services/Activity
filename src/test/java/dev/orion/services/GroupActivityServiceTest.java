@@ -271,6 +271,29 @@ public class GroupActivityServiceTest {
         Assertions.assertNull(document.getGroupActivity());
     }
 
+    @Test
+    @DisplayName("[removeUserFromGroup] Test not clean group that has another groups")
+    public void testNotEmptyGroupAfterRemove() {
+        val activity = new Activity();
+        val user = UserFixture.generateUser();
+        val user2 = UserFixture.generateUser();
+        injectUserInActivity(activity, user);
+        injectUserInActivity(activity, user2);
+        injectWorkflowInActivity(activity);
+
+        val document = spy(documentService.createDocument(UUID.randomUUID(), "", Set.of(user)));
+        val group = testThis.createGroup(activity);
+        testThis.addUserToGroup(group, user, document);
+        testThis.addUserToGroup(group, user2, document);
+        testThis.removeUserFromGroup(activity, user);
+
+        Assertions.assertTrue(activity.getGroupActivities().contains(group));
+
+        Assertions.assertEquals(1L, GroupActivity.find("uuid", group.getUuid()).count());
+        Assertions.assertNotNull(document.getGroupActivity());
+        BDDMockito.then(document).should(never()).setGroupActivity(null);
+    }
+
 //  GROUP transferUserToGroup
     @Test
     @DisplayName("Should transfer an user between groups")
