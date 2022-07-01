@@ -8,7 +8,6 @@ import dev.orion.entity.*;
 import dev.orion.services.interfaces.WorkflowManageService;
 import dev.orion.util.AggregateException;
 import dev.orion.workflowExecutor.StepExecutor;
-import dev.orion.workflowExecutor.impl.ReverseSnowBallStepExecutor;
 import dev.orion.workflowExecutor.impl.SendEmailStepExecutor;
 import dev.orion.workflowExecutor.impl.UnorderedCircleOfWritersStepExecutor;
 import io.quarkus.arc.log.LoggerName;
@@ -29,9 +28,6 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
     private final Map<String, StepExecutor> stepExecutorsMap = new HashMap<>();
 
     @Inject
-    ReverseSnowBallStepExecutor reverseSnowBallStepExecutor;
-
-    @Inject
     UnorderedCircleOfWritersStepExecutor unorderedCircleOfWritersStepExecutor;
 
     @Inject
@@ -42,7 +38,6 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
 
     @PostConstruct
     void setupExecutorsMap() {
-        stepExecutorsMap.put(reverseSnowBallStepExecutor.getStepRepresentation(), reverseSnowBallStepExecutor);
         stepExecutorsMap.put(unorderedCircleOfWritersStepExecutor.getStepRepresentation(), unorderedCircleOfWritersStepExecutor);
         stepExecutorsMap.put(sendEmailStepExecutor.getStepRepresentation(), sendEmailStepExecutor);
     }
