@@ -7,6 +7,7 @@ quarkus:
       - "dev/orion/repository/**/*"
       - "dev/orion/api/endpoint/body/**/*"
       - "dev/orion/commom/exception/**/*"
+      - "dev/orion/util/setup/**/*"
     title: "Orion-services: Activity service"
 
 

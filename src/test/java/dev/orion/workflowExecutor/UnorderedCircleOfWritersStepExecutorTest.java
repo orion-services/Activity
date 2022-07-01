@@ -39,7 +39,7 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.*;
 
 @QuarkusTest
-public class SendEmailStepExecutorTest {
+public class UnorderedCircleOfWritersStepExecutorTest {
     @Inject
     UnorderedCircleOfWritersStepExecutor testThis;
 

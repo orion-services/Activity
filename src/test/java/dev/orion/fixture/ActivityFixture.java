@@ -20,6 +20,7 @@ public class ActivityFixture {
         activity.uuid = activityUuid;
         activity.isActive = true;
         activity.setCreator(user);
+        user.setActivity(activity);
 
         val stepList = List.of(new Step[]{new CircleOfWriters(CircularStepFlowDirectionTypes.FROM_BEGIN_TO_END)});
         val stage = WorkflowFixture.generateStage(ActivityStage.DURING, stepList);

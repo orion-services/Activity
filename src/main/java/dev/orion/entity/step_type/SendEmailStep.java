@@ -6,10 +6,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.persistence.CollectionTable;
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.ElementCollection;
-import javax.persistence.Entity;
+import javax.persistence.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -18,16 +15,18 @@ import java.util.Set;
 @Getter
 @Setter
 @DiscriminatorValue("SEND_EMAIL")
-public class SendEmail extends Step {
+public class SendEmailStep extends Step {
     @Getter(AccessLevel.NONE)
     final private String type = "SEND_EMAIL";
     final private String description = "Send email to advice when activity start or ends";
+    @Column(nullable = false)
+    private boolean onlyForCreator = false;
 
     @ElementCollection
     @CollectionTable(name = "ACTIVITY_STAGE_EMAIL_MESSAGE")
     private Map<ActivityStage, String> activityStageMessageMap = new HashMap<>();
 
-    public SendEmail() {
+    public SendEmailStep() {
         allowedStages = Set.of(ActivityStage.PRE, ActivityStage.POS);
     }
 

@@ -1,7 +1,7 @@
 package dev.orion.services;
 
 import dev.orion.commom.constant.ActivityStage;
-import dev.orion.commom.exception.IncompleteWorkflowException;
+import dev.orion.commom.exception.InvalidWorkflowConfiguration;
 import dev.orion.commom.exception.InvalidActivityActionException;
 import dev.orion.commom.exception.NotValidActionException;
 import dev.orion.entity.*;
@@ -52,7 +52,7 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
     }
 
     @Override
-    public void apply(Activity activity, User performer, Document document) throws IncompleteWorkflowException {
+    public void apply(Activity activity, User performer, Document document) throws InvalidWorkflowConfiguration {
         val actualStageOpt = extractActualStage(activity);
         if (actualStageOpt.isEmpty()) {
             return;
@@ -62,7 +62,7 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
         if (actualStage.getSteps().isEmpty()) {
             String errorMessage = MessageFormat.format("There is no steps on workflow \"{0}\" in stage {1}", activity.workflow.getName(), actualStageOpt.get().getActivityStage());
             logger.error(errorMessage);
-            throw new IncompleteWorkflowException(errorMessage);
+            throw new InvalidWorkflowConfiguration(errorMessage);
         }
 
         var executionQueue = createExecutionQueue(actualStage.getSteps(), activity, performer, document);
@@ -75,7 +75,7 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
     @Override
     public Workflow createOrUpdateWorkflow(Set<Stage> stages, String name, String description) {
         if (stages.stream().noneMatch(stage -> stage.getActivityStage().equals(ActivityStage.DURING))) {
-            throw new IncompleteWorkflowException("Cannot create workflow without have a DURING phase stage");
+            throw new InvalidWorkflowConfiguration("Cannot create workflow without have a DURING phase stage");
         }
 
         val workflow = (Workflow) Workflow.findByName(name).orElse(new Workflow());

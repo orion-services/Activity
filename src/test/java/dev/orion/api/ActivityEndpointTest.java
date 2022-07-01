@@ -210,6 +210,7 @@ public class ActivityEndpointTest {
 
         val activity = mockActivityCreation();
         val activityUuid = activity.uuid;
+        userCreator.getUserEntity().setActivity(null);
 
         val response = requestAddUserInActivity(activityUuid, AddUserToActivityResponseBody.class, Response.Status.OK.getStatusCode());
 

@@ -2,12 +2,12 @@ package dev.orion.services;
 
 import dev.orion.commom.constant.ActivityStage;
 import dev.orion.commom.constant.CircularStepFlowDirectionTypes;
-import dev.orion.commom.exception.IncompleteWorkflowException;
+import dev.orion.commom.exception.InvalidWorkflowConfiguration;
 import dev.orion.commom.exception.InvalidActivityActionException;
 import dev.orion.commom.exception.NotValidActionException;
 import dev.orion.entity.*;
 import dev.orion.entity.step_type.CircleOfWriters;
-import dev.orion.entity.step_type.SendEmail;
+import dev.orion.entity.step_type.SendEmailStep;
 import dev.orion.entity.step_type.UnorderedCircleOfWriters;
 import dev.orion.fixture.UserFixture;
 import dev.orion.fixture.WorkflowFixture;
@@ -67,7 +67,7 @@ public class WorkflowManageServiceTest {
     @Test
     @DisplayName("[apply] Should call the right step by activity phase")
     public void testShouldCallTheRightStepByActivityPhase() {
-        val sendEmail = new SendEmail();
+        val sendEmail = new SendEmailStep();
         val allowedStages = sendEmail.getAllowedStages();
         Assertions.assertEquals(2, allowedStages.size());
 
@@ -169,7 +169,7 @@ public class WorkflowManageServiceTest {
         activity.creator = user;
         activity.workflow = workflow;
 
-        Assertions.assertThrows(IncompleteWorkflowException.class, () -> testThis.apply(activity, user, new Document()));
+        Assertions.assertThrows(InvalidWorkflowConfiguration.class, () -> testThis.apply(activity, user, new Document()));
         BDDMockito.then(unorderedCircleOfWritersStepExecutor).should(never()).execute(any(), any(), any());
         BDDMockito.then(circleStepExecutor).should(never()).execute(any(), any(), any());
     }
@@ -207,7 +207,7 @@ public class WorkflowManageServiceTest {
         val stepList = List.of(new Step[]{new CircleOfWriters(CircularStepFlowDirectionTypes.FROM_BEGIN_TO_END)});
         val stages = Set.of(WorkflowFixture.generateStage(ActivityStage.PRE, stepList));
 
-        Assertions.assertThrows(IncompleteWorkflowException.class, () -> testThis.createOrUpdateWorkflow(stages, name, description));
+        Assertions.assertThrows(InvalidWorkflowConfiguration.class, () -> testThis.createOrUpdateWorkflow(stages, name, description));
     }
 
     @Test
