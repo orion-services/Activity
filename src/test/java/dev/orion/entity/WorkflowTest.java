@@ -1,8 +1,7 @@
 package dev.orion.entity;
 
 import dev.orion.commom.constant.ActivityStage;
-import dev.orion.commom.constant.CircularStepFlowDirectionTypes;
-import dev.orion.entity.step_type.CircleOfWriters;
+import dev.orion.entity.step_type.SendEmailStep;
 import io.quarkus.test.junit.QuarkusTest;
 import net.datafaker.Faker;
 import org.junit.jupiter.api.Assertions;
@@ -43,10 +42,7 @@ public class WorkflowTest {
         Stage stage = new Stage();
         stage.setActivityStage(activityStage);
 
-        CircleOfWriters circleOfWriters = new CircleOfWriters();
-        circleOfWriters.setFlowDirection(CircularStepFlowDirectionTypes.FROM_BEGIN_TO_END);
-
-        stage.addStep(circleOfWriters);
+        stage.addStep(new SendEmailStep());
 
         return stage;
     }

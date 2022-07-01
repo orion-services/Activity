@@ -1,15 +1,15 @@
 package dev.orion.services;
 
 import dev.orion.commom.constant.ActivityStage;
-import dev.orion.commom.exception.InvalidWorkflowConfiguration;
 import dev.orion.commom.exception.InvalidActivityActionException;
+import dev.orion.commom.exception.InvalidWorkflowConfiguration;
 import dev.orion.commom.exception.NotValidActionException;
 import dev.orion.entity.*;
 import dev.orion.services.interfaces.WorkflowManageService;
 import dev.orion.util.AggregateException;
+import dev.orion.workflowExecutor.StepExecutor;
 import dev.orion.workflowExecutor.impl.CircleStepExecutor;
 import dev.orion.workflowExecutor.impl.ReverseSnowBallStepExecutor;
-import dev.orion.workflowExecutor.StepExecutor;
 import dev.orion.workflowExecutor.impl.SendEmailStepExecutor;
 import dev.orion.workflowExecutor.impl.UnorderedCircleOfWritersStepExecutor;
 import io.quarkus.arc.log.LoggerName;
@@ -46,7 +46,6 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
 
     @PostConstruct
     void setupExecutorsMap() {
-        stepExecutorsMap.put(circleStepExecutor.getStepRepresentation(), circleStepExecutor);
         stepExecutorsMap.put(reverseSnowBallStepExecutor.getStepRepresentation(), reverseSnowBallStepExecutor);
         stepExecutorsMap.put(unorderedCircleOfWritersStepExecutor.getStepRepresentation(), unorderedCircleOfWritersStepExecutor);
         stepExecutorsMap.put(sendEmailStepExecutor.getStepRepresentation(), sendEmailStepExecutor);

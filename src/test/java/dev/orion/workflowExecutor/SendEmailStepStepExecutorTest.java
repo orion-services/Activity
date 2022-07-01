@@ -23,14 +23,15 @@ import org.mockito.MockitoAnnotations;
 
 import javax.inject.Inject;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 import static dev.orion.fixture.ActivityFixture.generateActivity;
-import static dev.orion.fixture.GroupFixture.*;
 import static dev.orion.fixture.GroupFixture.createGroup;
+import static dev.orion.fixture.GroupFixture.generateDocument;
 import static dev.orion.fixture.UserFixture.createParticipants;
 import static dev.orion.fixture.UserFixture.generateUser;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.then;
 
 @QuarkusTest

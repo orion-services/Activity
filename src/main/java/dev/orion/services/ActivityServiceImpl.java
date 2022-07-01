@@ -1,6 +1,5 @@
 package dev.orion.services;
 
-import dev.orion.broker.dto.ActivityUpdateMessageDto;
 import dev.orion.broker.producer.ActivityUpdateProducer;
 import dev.orion.commom.constant.ActivityStage;
 import dev.orion.commom.constant.UserRoles;
@@ -18,12 +17,12 @@ import dev.orion.services.interfaces.WorkflowManageService;
 import io.quarkus.arc.log.LoggerName;
 import lombok.val;
 import org.jboss.logging.Logger;
+import org.jboss.resteasy.spi.NotImplementedYetException;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.transaction.Transactional;
 import javax.ws.rs.NotFoundException;
-import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -163,43 +162,12 @@ public class ActivityServiceImpl implements ActivityService {
 
     @Override
     public void disconnectUserFromActivity(UUID activityUuid, String userExternalId) {
-        Optional<Activity> activityOptional = Activity
-                .findByIdOptional(activityUuid);
-        if (activityOptional.isPresent()) {
-            Optional<User> disconnectedUser = activityOptional
-                    .get()
-                    .userList
-                    .stream()
-                    .filter(user -> user.externalId.equals(userExternalId))
-                    .findFirst();
-
-            disconnectedUser.ifPresent(user -> {
-                user.status = UserStatus.DISCONNECTED;
-                Activity activity = activityOptional.get();
-                logger.info(MessageFormat.format("User {0} was disconnect from activity {1}", userExternalId, activityUuid));
-                if (Boolean.FALSE == this.activityHasOnlineParticipants(activity)) {
-                    endActivity(activityUuid);
-                    logger.info(MessageFormat.format("Activity {0} is deactivated due there is no online participants", activityUuid));
-                }
-            });
-        }
-
+        throw new NotImplementedYetException("disconnectUserFromActivity is not implemented");
     }
 
     @Override
     public Activity endActivity(UUID activityUuid) {
-        Optional<Activity> activityOptional = Activity.findByIdOptional(activityUuid);
-        if (activityOptional.isPresent()) {
-            var activity = activityOptional.get();
-            activity.isActive = false;
-
-//            Make all users available to get in another activity
-            List.copyOf(activity.userList).forEach(activity::remove);
-
-            return activity;
-        }
-
-        return null;
+        throw new NotImplementedYetException("endActivity");
     }
 
     @Override
@@ -249,87 +217,4 @@ public class ActivityServiceImpl implements ActivityService {
 
         groupService.createGroup(activity, activity.getUserList());
     }
-
-    @Override
-    public Boolean canUserEditDocument(UUID activityUuid, String userExternalId) {
-        Optional<Activity> activityOptional = Activity.findByIdOptional(activityUuid);
-        UserEnhancedWithExternalData user = userService.getCompleteUserData(userExternalId);
-
-        if (activityOptional.isEmpty() || user == null) {
-            logger.warn(MessageFormat.format("Activity {0} not found", activityUuid));
-            return false;
-        }
-
-        Activity activity = activityOptional.get();
-        if (Boolean.TRUE.equals(user.isActive)
-                && user.status.equals(UserStatus.CONNECTED)
-                && Boolean.TRUE.equals(activity.isActive)) {
-            return true;
-        }
-
-        logger.info(MessageFormat.format("User {0} CANNOT edit activity {1}", userExternalId, activityUuid));
-
-        ActivityUpdateMessageDto activityUpdateMessageDto = new ActivityUpdateMessageDto(activity);
-        var errorType = activityUpdateMessageDto.getErrorType();
-        var userError = activityUpdateMessageDto.getUserError();
-
-        errorType.code = 1;
-        errorType.message = MessageFormat.format("User {0} CANNOT edit activity", userExternalId);
-        userError.externalUserId = userExternalId;
-        userError.type = errorType;
-        activityUpdateMessageDto.addError(userError);
-
-
-        try {
-            activityUpdateProducer.sendMessage(activityUpdateMessageDto);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
-    @Override
-    public void nextRound(UUID activityUuid) throws UserInvalidOperationException {
-        Optional<Activity> activityOpt = Activity.findByIdOptional(activityUuid);
-        if (activityOpt.isPresent()) {
-            Activity activity = activityOpt.get();
-            if (Boolean.FALSE.equals(activityHasOnlineParticipants(activity))) {
-                this.endActivity(activity.uuid);
-                throw new UserInvalidOperationException(MessageFormat.format("Activity {0} is deactivated due there is no online participants", activityUuid));
-            }
-//            User nextUserRound = getNextUserRound(activity);
-
-//            logger.info(MessageFormat.format("Activity: {0} set the user {1} to next round", activity.uuid, nextUserRound.externalId));
-
-//            activity.userRound = nextUserRound;
-            ActivityUpdateMessageDto activityUpdateMessageDto = new ActivityUpdateMessageDto(activity);
-            try {
-                activityUpdateProducer.sendMessage(activityUpdateMessageDto);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    private boolean activityHasOnlineParticipants(Activity activity) {
-        return activity.userList.stream().anyMatch(user -> user.status == UserStatus.CONNECTED);
-    }
-
-//    private User getNextUserRound(Activity activity) {
-//        User userRound = activity.userRound;
-//        List<User> userQueue = new ArrayList<>(activity.userList);
-//
-//        int userIndexOnQueue = userQueue.indexOf(userRound);
-//
-//        if (userIndexOnQueue == activity.userList.size()) {
-//            return userQueue.get(0);
-//        }
-//
-//        return activity
-//                .userList
-//                .stream()
-//                .skip(userIndexOnQueue)
-//                .findFirst()
-//                .get();
-//    }
 }

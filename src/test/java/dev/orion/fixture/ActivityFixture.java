@@ -1,12 +1,11 @@
 package dev.orion.fixture;
 
 import dev.orion.commom.constant.ActivityStage;
-import dev.orion.commom.constant.CircularStepFlowDirectionTypes;
 import dev.orion.entity.Activity;
 import dev.orion.entity.Step;
 import dev.orion.entity.User;
 import dev.orion.entity.Workflow;
-import dev.orion.entity.step_type.CircleOfWriters;
+import dev.orion.entity.step_type.SendEmailStep;
 import dev.orion.util.setup.WorkflowStarter;
 import lombok.val;
 
@@ -22,7 +21,7 @@ public class ActivityFixture {
         activity.setCreator(user);
         user.setActivity(activity);
 
-        val stepList = List.of(new Step[]{new CircleOfWriters(CircularStepFlowDirectionTypes.FROM_BEGIN_TO_END)});
+        val stepList = List.of(new Step[]{new SendEmailStep()});
         val stage = WorkflowFixture.generateStage(ActivityStage.DURING, stepList);
         val workflow = WorkflowFixture.generateWorkflow(List.of(stage));
         workflow.setName(WorkflowStarter.GENERIC_WORKFLOW_NAME);

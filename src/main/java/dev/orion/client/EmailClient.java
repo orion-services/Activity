@@ -1,6 +1,5 @@
 package dev.orion.client;
 
-import dev.orion.client.dto.CreateDocumentRequest;
 import dev.orion.client.dto.CreateDocumentResponse;
 import dev.orion.client.dto.SendEmailRequest;
 import org.eclipse.microprofile.faulttolerance.Timeout;

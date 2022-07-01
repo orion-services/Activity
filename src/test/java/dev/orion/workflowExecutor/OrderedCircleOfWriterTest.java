@@ -7,8 +7,8 @@ import dev.orion.entity.Activity;
 import dev.orion.entity.Document;
 import dev.orion.entity.GroupActivity;
 import dev.orion.entity.User;
-import dev.orion.entity.step_type.CircleOfWriters;
 import dev.orion.entity.step_type.OrderedCircleOfWriter;
+import dev.orion.entity.step_type.SendEmailStep;
 import dev.orion.fixture.DocumentFixture;
 import dev.orion.services.interfaces.GroupService;
 import dev.orion.workflowExecutor.impl.CircleStepExecutor;
@@ -93,11 +93,11 @@ public class OrderedCircleOfWriterTest {
     }
 
     @Test
-    @DisplayName("[getStepRepresentation] - Should return the CircleOfWriters name")
+    @DisplayName("[getStepRepresentation] - Should return the step name")
     public void testGetStepRepresentationReturn() {
         val stepRepresentation = testThis.getStepRepresentation();
 
-        Assertions.assertEquals(new CircleOfWriters().getStepType(), stepRepresentation);
+        Assertions.assertEquals(new SendEmailStep().getStepType(), stepRepresentation);
     }
 
     @Test

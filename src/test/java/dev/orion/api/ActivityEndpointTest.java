@@ -381,6 +381,7 @@ public class ActivityEndpointTest {
         then(documentClient).should(never()).createDocument(any());
         then(groupService).should(never()).createGroup(any(), any());
     }
+
     @Test
     @DisplayName("[/{activityUuid}/start - PATCH] Should not start when has no connected user")
     public void testApplicationStartValidationIfThereAreNotConnectedUser() {
@@ -441,11 +442,47 @@ public class ActivityEndpointTest {
                 .as(responseClass);
     }
 
+    @Test
+    @DisplayName("[/{activityUuid} - GET] Should get activity By UUID")
+    public void testFindActivity() {
+        mockHibernateSession();
+        val activity = mockActivityCreation();
+        val responseBody = requestFindActivity(activity.uuid, Activity.class, Response.Status.OK.getStatusCode());
+
+        Assertions.assertEquals(activity.uuid, responseBody.uuid);
+    }
+
+    @Test
+    @DisplayName("[/{activityUuid} - GET] Should throw when not find the activity")
+    public void testFindActivityWithoutActivity() {
+        mockHibernateSession();
+        val invalidActivityUUID = UUID.randomUUID();
+
+        val responseBody = requestFindActivity(invalidActivityUUID, DefaultErrorResponseBody.class, Response.Status.BAD_REQUEST.getStatusCode());
+        val expectedMessage = MessageFormat.format("Activity {0} not found", invalidActivityUUID);
+        Assertions.assertTrue(responseBody.getErrors().contains(expectedMessage));
+    }
+
+    private <T> T requestFindActivity(UUID activityUuid, Class<T> responseClass, int expectedStatusCode) {
+        return given()
+                .contentType(MediaType.APPLICATION_JSON)
+                .pathParam("activityUuid", activityUuid)
+                .when()
+                .get("/{activityUuid}")
+                .then()
+                .statusCode(expectedStatusCode)
+                .extract()
+                .body()
+                .as(responseClass);
+    }
+
+
     private void mockHibernateSession() {
         session = Mockito.mock(Session.class);
         QuarkusMock.installMockForType(session, Session.class);
         BDDMockito.doNothing().when(session).persist(any());
     }
+
     private Activity mockActivityCreation() {
         Activity activity = ActivityFixture.generateActivity(userCreator.getUserEntity());
 

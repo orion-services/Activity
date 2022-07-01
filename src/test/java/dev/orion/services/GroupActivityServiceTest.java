@@ -8,7 +8,7 @@ import dev.orion.entity.Activity;
 import dev.orion.entity.Document;
 import dev.orion.entity.GroupActivity;
 import dev.orion.entity.User;
-import dev.orion.entity.step_type.CircleOfWriters;
+import dev.orion.entity.step_type.SendEmailStep;
 import dev.orion.fixture.UserFixture;
 import dev.orion.fixture.WorkflowFixture;
 import dev.orion.services.interfaces.DocumentService;
@@ -441,8 +441,6 @@ public class GroupActivityServiceTest {
     }
 
 
-//    Document scenarios
-//    @TODO Create document implementation first
     @Test
     @DisplayName("Should add document when create a group with list")
     public void testAddDocumentAndUsers() {
@@ -461,6 +459,12 @@ public class GroupActivityServiceTest {
         Assertions.assertFalse(group.getDocuments().isEmpty());
     }
 
+    @Test
+    @DisplayName("[transferUserToGroup] Not implemented yet")
+    public void testNotImplementedDisconnectUserFromActivity() {
+        Assertions.assertThrows(RuntimeException.class, () -> testThis.transferUserToGroup(new Activity(), new User(), new GroupActivity()));
+    }
+
     private Set<User> generateSetUsers() {
         return Stream.of(new User[]{
                 UserFixture.generateUser(), UserFixture.generateUser(),
@@ -471,7 +475,7 @@ public class GroupActivityServiceTest {
     private void injectWorkflowInActivity(Activity activity) {
         val workflow = WorkflowFixture.generateWorkflow(
                 List.of(WorkflowFixture.generateStage(
-                        ActivityStage.PRE, List.of(new CircleOfWriters()))));
+                        ActivityStage.PRE, List.of(new SendEmailStep()))));
 
         activity.setWorkflow(workflow);
     }
