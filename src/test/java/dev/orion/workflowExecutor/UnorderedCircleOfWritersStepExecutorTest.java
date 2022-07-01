@@ -3,11 +3,10 @@ package dev.orion.workflowExecutor;
 import dev.orion.broker.producer.DocumentUpdateProducer;
 import dev.orion.client.DocumentClient;
 import dev.orion.client.dto.CreateDocumentResponse;
+import dev.orion.commom.constant.ActivityStage;
+import dev.orion.commom.exception.InvalidWorkflowConfiguration;
 import dev.orion.commom.exception.NotValidActionException;
-import dev.orion.entity.Activity;
-import dev.orion.entity.Document;
-import dev.orion.entity.GroupActivity;
-import dev.orion.entity.User;
+import dev.orion.entity.*;
 import dev.orion.entity.step_type.UnorderedCircleOfWriters;
 import dev.orion.fixture.DocumentFixture;
 import dev.orion.services.interfaces.DocumentService;
@@ -283,5 +282,53 @@ public class UnorderedCircleOfWritersStepExecutorTest {
         then(spyDocument).should().getParticipantsAssigned();
         then(spyDocument).should().getRounds();
         Assertions.assertFalse(stepFinished);
+    }
+
+    @Test
+    @DisplayName("[validateConfig] - Should validate the configuration of step")
+    public void testChosenStepStageConfigValidation() {
+        val stage = new Stage();
+        stage.addStep(usingStep);
+
+        stage.setActivityStage(ActivityStage.DURING);
+        testThis.validateConfig(stage);
+    }
+
+    @Test
+    @DisplayName("[validateConfig] - Should throw when step is saved with invalid stages (PRE)")
+    public void testChosenInvalidStepStageConfigValidationPRE() {
+        val stage = new Stage();
+        stage.addStep(usingStep);
+        stage.setActivityStage(ActivityStage.PRE);
+
+        val exceptionMessage = Assertions.assertThrows(InvalidWorkflowConfiguration.class, () -> testThis.validateConfig(stage)).getMessage();
+        val expectedMessage = MessageFormat.format("The step {0} can be placed only in stages {1}", usingStep.getStepType(), usingStep.getAllowedStages());
+
+        Assertions.assertEquals(expectedMessage, exceptionMessage);
+    }
+
+    @Test
+    @DisplayName("[validateConfig] - Should throw when step is saved with invalid stages (POS)")
+    public void testChosenInvalidStepStageConfigValidationPOS() {
+        val stage = new Stage();
+        stage.addStep(usingStep);
+        stage.setActivityStage(ActivityStage.POS);
+
+        val exceptionMessage = Assertions.assertThrows(InvalidWorkflowConfiguration.class, () -> testThis.validateConfig(stage)).getMessage();
+        val expectedMessage = MessageFormat.format("The step {0} can be placed only in stages {1}", usingStep.getStepType(), usingStep.getAllowedStages());
+
+        Assertions.assertEquals(expectedMessage, exceptionMessage);
+    }
+
+    @Test
+    @DisplayName("[validateConfig] - Should throw when step is saved with invalid stages")
+    public void testPassingWrongStep() {
+        val stage = new Stage();
+        stage.id = 1L;
+
+        val exceptionMessage = Assertions.assertThrows(InvalidWorkflowConfiguration.class, () -> testThis.validateConfig(stage)).getMessage();
+        val expectedMessage = MessageFormat.format("There is no step {0} on the stage with ID {1}", usingStep.getStepType(), stage.id);
+
+        Assertions.assertEquals(expectedMessage, exceptionMessage);
     }
 }

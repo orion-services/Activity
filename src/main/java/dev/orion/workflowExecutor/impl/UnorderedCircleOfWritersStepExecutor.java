@@ -1,5 +1,6 @@
 package dev.orion.workflowExecutor.impl;
 
+import dev.orion.commom.exception.InvalidWorkflowConfiguration;
 import dev.orion.commom.exception.NotValidActionException;
 import dev.orion.entity.*;
 import dev.orion.entity.step_type.UnorderedCircleOfWriters;
@@ -82,7 +83,16 @@ public class UnorderedCircleOfWritersStepExecutor implements StepExecutor {
 
     @Override
     public void validateConfig(Stage stage) {
-
+        val step = stage.getSteps().stream()
+                .filter(stepFilter -> stepFilter.getStepType() == getStepRepresentation())
+                .findFirst()
+                .orElseThrow(() -> {
+                    throw new InvalidWorkflowConfiguration(MessageFormat.format("There is no step {0} on the stage with ID {1}", getStepRepresentation(), stage.id));
+                });
+        if (!step.getAllowedStages().contains(stage.getActivityStage())) {
+            val message = MessageFormat.format("The step {0} can be placed only in stages {1}", step.getStepType(), step.getAllowedStages());
+            throw new InvalidWorkflowConfiguration(message);
+        }
     }
 
 
