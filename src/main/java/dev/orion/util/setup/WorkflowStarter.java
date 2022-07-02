@@ -1,6 +1,6 @@
 package dev.orion.util.setup;
 
-import dev.orion.commom.constant.ActivityStages;
+import dev.orion.commom.constant.ActivityStage;
 import dev.orion.entity.Stage;
 import dev.orion.entity.step_type.UnorderedCircleOfWriters;
 import dev.orion.services.interfaces.WorkflowManageService;
@@ -40,7 +40,7 @@ public class WorkflowStarter {
 
     private Set<Stage> generateMockStages() {
         val stage = new Stage();
-        stage.setActivityStage(ActivityStages.DURING);
+        stage.setActivityStage(ActivityStage.DURING);
         stage.addStep(new UnorderedCircleOfWriters());
 
         return Set.of(stage);

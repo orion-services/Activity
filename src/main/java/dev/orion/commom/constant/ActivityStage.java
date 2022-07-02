@@ -1,11 +1,11 @@
 package dev.orion.commom.constant;
 
-public enum ActivityStages {
+public enum ActivityStage {
     PRE("pre"), DURING("during"), POS("pos");
 
     public final String label;
 
-    ActivityStages(String label) {
+    ActivityStage(String label) {
         this.label = label;
     }
 }

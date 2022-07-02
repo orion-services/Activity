@@ -1,9 +1,11 @@
-package dev.orion.workflowExecutor;
+package dev.orion.workflowExecutor.impl;
 
+import dev.orion.commom.exception.InvalidWorkflowConfiguration;
 import dev.orion.commom.exception.NotValidActionException;
 import dev.orion.entity.*;
 import dev.orion.entity.step_type.UnorderedCircleOfWriters;
 import dev.orion.services.interfaces.DocumentService;
+import dev.orion.workflowExecutor.StepExecutor;
 import io.quarkus.arc.log.LoggerName;
 import lombok.val;
 import org.jboss.logging.Logger;
@@ -69,7 +71,7 @@ public class UnorderedCircleOfWritersStepExecutor implements StepExecutor {
     }
 
     @Override
-    public <T extends Step> boolean isFinished(Activity activity, T step) throws NotValidActionException {
+    public boolean isFinished(Activity activity, Step step) throws NotValidActionException {
         val documents = Document.findAllByGroupActivity(activity.uuid);
         if (documents.isEmpty()) {
             throw new NotValidActionException(getStepRepresentation(), "document must not be null");
@@ -77,6 +79,20 @@ public class UnorderedCircleOfWritersStepExecutor implements StepExecutor {
         val document = documents.get(0);
         return doesAllParticipantsHaveParticipated(document) && isFinalRound(document, (UnorderedCircleOfWriters) step);
 
+    }
+
+    @Override
+    public void validateConfig(Stage stage) {
+        val step = stage.getSteps().stream()
+                .filter(stepFilter -> stepFilter.getStepType() == getStepRepresentation())
+                .findFirst()
+                .orElseThrow(() -> {
+                    throw new InvalidWorkflowConfiguration(MessageFormat.format("There is no step {0} on the stage with ID {1}", getStepRepresentation(), stage.id));
+                });
+        if (!step.getAllowedStages().contains(stage.getActivityStage())) {
+            val message = MessageFormat.format("The step {0} can be placed only in stages {1}", step.getStepType(), step.getAllowedStages());
+            throw new InvalidWorkflowConfiguration(message);
+        }
     }
 
 

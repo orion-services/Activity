@@ -1,7 +1,6 @@
 package dev.orion.api.endpoint;
 
 import dev.orion.api.endpoint.body.*;
-import dev.orion.commom.exception.UserInvalidOperationException;
 import dev.orion.entity.Activity;
 import dev.orion.services.interfaces.ActivityService;
 import lombok.val;
@@ -35,8 +34,9 @@ public class ActivityEndpoint {
     public Response findActivity(@Parameter(description = "UUID of activity to be started", example = "372bf2a5-0da3-47bd-8c94-4a09d25d362a") @PathParam String activityUuid) {
         Activity activity = (Activity) Activity
                 .findByIdOptional(UUID.fromString(activityUuid))
-                .orElseThrow(() -> new UserInvalidOperationException(
+                .orElseThrow(() -> new NotFoundException(
                         MessageFormat.format("Activity {0} not found", activityUuid)));
+
         return Response
                 .ok(activity)
                 .build();
@@ -114,15 +114,5 @@ public class ActivityEndpoint {
                 .ok(new StartActivityResponseBody(activity))
                 .build();
     }
-
-    @PATCH
-    @Path("/{activityUuid}/disconnectUser/{userExternalId}")
-    public Response disconnectUserToActivity(@PathParam String activityUuid, @PathParam String userExternalId) {
-        activityService.disconnectUserFromActivity(UUID.fromString(activityUuid), userExternalId);
-        return Response
-                .ok()
-                .build();
-    }
-
 
 }

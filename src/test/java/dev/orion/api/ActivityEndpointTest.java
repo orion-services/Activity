@@ -7,7 +7,7 @@ import dev.orion.client.DocumentClient;
 import dev.orion.client.UserClient;
 import dev.orion.client.dto.CreateDocumentResponse;
 import dev.orion.client.dto.UserClientResponse;
-import dev.orion.commom.constant.ActivityStages;
+import dev.orion.commom.constant.ActivityStage;
 import dev.orion.commom.constant.UserStatus;
 import dev.orion.entity.Activity;
 import dev.orion.entity.GroupActivity;
@@ -210,6 +210,7 @@ public class ActivityEndpointTest {
 
         val activity = mockActivityCreation();
         val activityUuid = activity.uuid;
+        userCreator.getUserEntity().setActivity(null);
 
         val response = requestAddUserInActivity(activityUuid, AddUserToActivityResponseBody.class, Response.Status.OK.getStatusCode());
 
@@ -291,7 +292,7 @@ public class ActivityEndpointTest {
     public void testAddUserValidateActivityHasNotStarted() {
         val activityUuid = activityService.createActivity(userUuid, WorkflowStarter.GENERIC_WORKFLOW_NAME);
         Activity activity = Activity.findById(activityUuid);
-        activity.setActualStage(ActivityStages.DURING);
+        activity.setActualStage(ActivityStage.DURING);
 
         PanacheMock.mock(Activity.class);
         when(Activity.findByIdOptional(any())).thenReturn(Optional.of(activity));
@@ -380,6 +381,7 @@ public class ActivityEndpointTest {
         then(documentClient).should(never()).createDocument(any());
         then(groupService).should(never()).createGroup(any(), any());
     }
+
     @Test
     @DisplayName("[/{activityUuid}/start - PATCH] Should not start when has no connected user")
     public void testApplicationStartValidationIfThereAreNotConnectedUser() {
@@ -440,11 +442,47 @@ public class ActivityEndpointTest {
                 .as(responseClass);
     }
 
+    @Test
+    @DisplayName("[/{activityUuid} - GET] Should get activity By UUID")
+    public void testFindActivity() {
+        mockHibernateSession();
+        val activity = mockActivityCreation();
+        val responseBody = requestFindActivity(activity.uuid, Activity.class, Response.Status.OK.getStatusCode());
+
+        Assertions.assertEquals(activity.uuid, responseBody.uuid);
+    }
+
+    @Test
+    @DisplayName("[/{activityUuid} - GET] Should throw when not find the activity")
+    public void testFindActivityWithoutActivity() {
+        mockHibernateSession();
+        val invalidActivityUUID = UUID.randomUUID();
+
+        val responseBody = requestFindActivity(invalidActivityUUID, DefaultErrorResponseBody.class, Response.Status.BAD_REQUEST.getStatusCode());
+        val expectedMessage = MessageFormat.format("Activity {0} not found", invalidActivityUUID);
+        Assertions.assertTrue(responseBody.getErrors().contains(expectedMessage));
+    }
+
+    private <T> T requestFindActivity(UUID activityUuid, Class<T> responseClass, int expectedStatusCode) {
+        return given()
+                .contentType(MediaType.APPLICATION_JSON)
+                .pathParam("activityUuid", activityUuid)
+                .when()
+                .get("/{activityUuid}")
+                .then()
+                .statusCode(expectedStatusCode)
+                .extract()
+                .body()
+                .as(responseClass);
+    }
+
+
     private void mockHibernateSession() {
         session = Mockito.mock(Session.class);
         QuarkusMock.installMockForType(session, Session.class);
         BDDMockito.doNothing().when(session).persist(any());
     }
+
     private Activity mockActivityCreation() {
         Activity activity = ActivityFixture.generateActivity(userCreator.getUserEntity());
 

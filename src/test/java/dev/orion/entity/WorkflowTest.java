@@ -1,8 +1,7 @@
 package dev.orion.entity;
 
-import dev.orion.commom.constant.ActivityStages;
-import dev.orion.commom.constant.CircularStepFlowDirectionTypes;
-import dev.orion.entity.step_type.CircleOfWriters;
+import dev.orion.commom.constant.ActivityStage;
+import dev.orion.entity.step_type.SendEmailStep;
 import io.quarkus.test.junit.QuarkusTest;
 import net.datafaker.Faker;
 import org.junit.jupiter.api.Assertions;
@@ -20,16 +19,16 @@ public class WorkflowTest {
     public void shouldCreateWorkflowWithAllSteps() {
         final Integer EXPECTED_STEP_STAGES_QTD = 3;
         final Integer EXPECTED_STEPS_QTD = 1;
-        Stage stage = generateStepStage(ActivityStages.PRE);
+        Stage stage = generateStepStage(ActivityStage.PRE);
         generateWorkflow(stage);
 
-        testingThis.addStepStage(generateStepStage(ActivityStages.DURING));
-        testingThis.addStepStage(generateStepStage(ActivityStages.POS));
+        testingThis.addStepStage(generateStepStage(ActivityStage.DURING));
+        testingThis.addStepStage(generateStepStage(ActivityStage.POS));
 
         Assertions.assertEquals(testingThis.getStages().size(), EXPECTED_STEP_STAGES_QTD);
-        Assertions.assertEquals(testingThis.getStages().stream().filter(stage1 -> stage1.getActivityStage() == ActivityStages.PRE).findFirst().orElseThrow().getSteps().size(), EXPECTED_STEPS_QTD);
-        Assertions.assertEquals(testingThis.getStages().stream().filter(stage1 -> stage1.getActivityStage() == ActivityStages.DURING).findFirst().orElseThrow().getSteps().size(), EXPECTED_STEPS_QTD);
-        Assertions.assertEquals(testingThis.getStages().stream().filter(stage1 -> stage1.getActivityStage() == ActivityStages.POS).findFirst().orElseThrow().getSteps().size(), EXPECTED_STEPS_QTD);
+        Assertions.assertEquals(testingThis.getStages().stream().filter(stage1 -> stage1.getActivityStage() == ActivityStage.PRE).findFirst().orElseThrow().getSteps().size(), EXPECTED_STEPS_QTD);
+        Assertions.assertEquals(testingThis.getStages().stream().filter(stage1 -> stage1.getActivityStage() == ActivityStage.DURING).findFirst().orElseThrow().getSteps().size(), EXPECTED_STEPS_QTD);
+        Assertions.assertEquals(testingThis.getStages().stream().filter(stage1 -> stage1.getActivityStage() == ActivityStage.POS).findFirst().orElseThrow().getSteps().size(), EXPECTED_STEPS_QTD);
     }
 
     private void generateWorkflow(Stage stage) {
@@ -39,14 +38,11 @@ public class WorkflowTest {
         testingThis.persist();
     }
 
-    private Stage generateStepStage(ActivityStages activityStages) {
+    private Stage generateStepStage(ActivityStage activityStage) {
         Stage stage = new Stage();
-        stage.setActivityStage(activityStages);
+        stage.setActivityStage(activityStage);
 
-        CircleOfWriters circleOfWriters = new CircleOfWriters();
-        circleOfWriters.setFlowDirection(CircularStepFlowDirectionTypes.FROM_BEGIN_TO_END);
-
-        stage.addStep(circleOfWriters);
+        stage.addStep(new SendEmailStep());
 
         return stage;
     }

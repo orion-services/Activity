@@ -159,4 +159,10 @@ public class DocumentServiceTest {
         Assertions.assertEquals(participants.size(), document.getParticipantsThatEdited().size());
         Assertions.assertEquals(expectedMessage, expectedMessage);
     }
+
+    @Test
+    @DisplayName("[editContent] Not implemented yet")
+    public void testNotImplementedDisconnectUserFromActivity() {
+        Assertions.assertThrows(RuntimeException.class, () -> testThis.editContent(new Document(), Faker.instance().backToTheFuture().quote(),documentExternalId.toString()));
+    }
 }

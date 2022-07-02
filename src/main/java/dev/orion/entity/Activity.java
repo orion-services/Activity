@@ -1,10 +1,15 @@
 package dev.orion.entity;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import dev.orion.commom.constant.ActivityStages;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.deser.std.UUIDDeserializer;
+import com.fasterxml.jackson.databind.ser.std.UUIDSerializer;
+import dev.orion.commom.constant.ActivityStage;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
-import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
 
@@ -15,12 +20,15 @@ import java.util.*;
 @Entity
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Activity extends PanacheEntityBase {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @GenericGenerator(name = "activity_uuid", strategy = "uuid")
-    @Column(columnDefinition = "BINARY(16)")
-    @Setter(AccessLevel.NONE)
+    @Column(columnDefinition = "BINARY(16)", insertable = false)
+    @JsonSerialize(using = UUIDSerializer.class)
+    @JsonDeserialize(using = UUIDDeserializer.class)
     public UUID uuid;
 
     @OneToMany(mappedBy = "activityOwner", cascade = CascadeType.ALL)
@@ -38,7 +46,7 @@ public class Activity extends PanacheEntityBase {
     @ManyToOne(optional = false, cascade = CascadeType.PERSIST)
     public User creator;
 
-    public ActivityStages actualStage = ActivityStages.PRE;
+    public ActivityStage actualStage = ActivityStage.PRE;
 
     @Column(nullable = false)
     public Boolean isActive = true;

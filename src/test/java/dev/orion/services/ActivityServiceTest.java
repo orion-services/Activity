@@ -2,16 +2,13 @@ package dev.orion.services;
 
 import dev.orion.client.DocumentClient;
 import dev.orion.client.dto.CreateDocumentResponse;
-import dev.orion.commom.constant.ActivityStages;
+import dev.orion.commom.constant.ActivityStage;
 import dev.orion.commom.constant.UserRoles;
 import dev.orion.commom.constant.UserStatus;
 import dev.orion.commom.exception.InvalidActivityActionException;
 import dev.orion.commom.exception.UserInvalidOperationException;
-import dev.orion.entity.Activity;
-import dev.orion.entity.Step;
-import dev.orion.entity.User;
-import dev.orion.entity.Workflow;
-import dev.orion.entity.step_type.CircleOfWriters;
+import dev.orion.entity.*;
+import dev.orion.entity.step_type.UnorderedCircleOfWriters;
 import dev.orion.fixture.ActivityFixture;
 import dev.orion.fixture.UserFixture;
 import dev.orion.fixture.WorkflowFixture;
@@ -29,6 +26,7 @@ import lombok.val;
 import net.datafaker.Faker;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.hibernate.Session;
+import org.jboss.resteasy.spi.NotImplementedYetException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -45,6 +43,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.never;
 
 @QuarkusTest
 @Transactional
@@ -79,8 +79,8 @@ public class ActivityServiceTest {
     }
 
     private void setWorkflow() {
-        List<Step> circleOfWriters = List.of(new CircleOfWriters());
-        val stage = WorkflowFixture.generateStage(ActivityStages.DURING, circleOfWriters);
+        List<Step> steps = List.of(new UnorderedCircleOfWriters());
+        val stage = WorkflowFixture.generateStage(ActivityStage.DURING, steps);
         val generateWorkflow = WorkflowFixture.generateWorkflow(List.of(stage));
         workflow = workflowManageService.createOrUpdateWorkflow(generateWorkflow.getStages(), generateWorkflow.getName(), generateWorkflow.getDescription());
     }
@@ -110,7 +110,7 @@ public class ActivityServiceTest {
 
         val exceptionMessage = Assertions.assertThrows(UserInvalidOperationException.class, () -> testingThis.createActivity(userCreatorUUID, workflow.getName())).getMessage();
 
-        BDDMockito.then(userService).should().getCompleteUserData(userCreatorUUID);
+        then(userService).should().getCompleteUserData(userCreatorUUID);
         val expectedException = MessageFormat.format("The user {0} must be active to create an activity", userCreator.uuid);
         Assertions.assertEquals(expectedException, exceptionMessage);
     }
@@ -122,7 +122,7 @@ public class ActivityServiceTest {
 
         val exceptionMessage = Assertions.assertThrows(UserInvalidOperationException.class, () -> testingThis.createActivity(userCreatorUUID, workflow.getName())).getMessage();
 
-        BDDMockito.then(userService).should().getCompleteUserData(userCreatorUUID);
+        then(userService).should().getCompleteUserData(userCreatorUUID);
         val expectedException = MessageFormat.format("The user {0} must have role {1} to create an activity", userCreator.uuid, UserRoles.CREATOR);
         Assertions.assertEquals(expectedException, exceptionMessage);
     }
@@ -248,7 +248,7 @@ public class ActivityServiceTest {
         val activityUuid = testingThis.createActivity(userCreatorUUID, workflow.getName());
 
         Activity activity = Activity.findById(activityUuid);
-        activity.setActualStage(ActivityStages.DURING);
+        activity.setActualStage(ActivityStage.DURING);
 
         val exceptionMessage = Assertions.assertThrows(UserInvalidOperationException.class, () -> {
             testingThis.addUserInActivity(activityUuid, userCreator.uuid);
@@ -270,8 +270,24 @@ public class ActivityServiceTest {
 
         testingThis.startActivity(activityUuid);
 
-        Assertions.assertEquals(ActivityStages.DURING, activity.getActualStage());
-        BDDMockito.then(workflowManageService).should().apply(activity, activity.getCreator(), null);
+        Assertions.assertEquals(ActivityStage.DURING, activity.getActualStage());
+        then(workflowManageService).should().apply(activity, activity.getCreator(), null);
+    }
+
+    @Test
+    @DisplayName("[startActivity] Should start activity normally")
+    public void testActivityStartingWithGroupRegistered() {
+        val activityUuid = testingThis.createActivity(userCreatorUUID, workflow.getName());
+        val activity = (Activity) Activity.findById(activityUuid);
+        activity.addGroup(new GroupActivity());
+        val user = userCreator.getUserEntity();
+
+        user.status = UserStatus.CONNECTED;
+        activity.addParticipant(user);
+
+        testingThis.startActivity(activityUuid);
+
+        then(groupService).should(never()).createGroup(any(), anySet());
     }
 
     @Test
@@ -288,7 +304,7 @@ public class ActivityServiceTest {
         val expectedMessage = MessageFormat.format("Activity {0} must be active", activity.uuid);
 
         Assertions.assertEquals(expectedMessage, exceptionMessage);
-        BDDMockito.then(workflowManageService).should(BDDMockito.never()).apply(activity, activity.getCreator(), null);
+        then(workflowManageService).should(never()).apply(activity, activity.getCreator(), null);
     }
 
     @Test
@@ -307,7 +323,7 @@ public class ActivityServiceTest {
         val expectedMessage = MessageFormat.format("Activity {0} has the following users not connected: {1}", activity.uuid, List.of(user.getExternalId()));
 
         Assertions.assertEquals(expectedMessage, exceptionMessage);
-        BDDMockito.then(workflowManageService).should(BDDMockito.never()).apply(any(Activity.class), any(User.class), eq(null));
+        then(workflowManageService).should(never()).apply(any(Activity.class), any(User.class), eq(null));
     }
 
     @Test
@@ -321,7 +337,7 @@ public class ActivityServiceTest {
         val expectedMessage = MessageFormat.format("Activity {0} has no participants to start", activityUuid);
 
         Assertions.assertEquals(expectedMessage, exceptionMessage);
-        BDDMockito.then(workflowManageService).should(BDDMockito.never()).apply(any(Activity.class), any(User.class), any());
+        then(workflowManageService).should(never()).apply(any(Activity.class), any(User.class), any());
     }
 
     @Test
@@ -335,7 +351,7 @@ public class ActivityServiceTest {
         val expectedMessage = MessageFormat.format("Activity {0} not found", activityUuid);
 
         Assertions.assertEquals(expectedMessage, exceptionMessage);
-        BDDMockito.then(workflowManageService).should(BDDMockito.never()).apply(any(Activity.class), any(User.class), any());
+        then(workflowManageService).should(never()).apply(any(Activity.class), any(User.class), any());
     }
 
     @Test
@@ -354,8 +370,31 @@ public class ActivityServiceTest {
 
         testingThis.startActivity(activity.getUuid());
         Assertions.assertFalse(activity.getGroupActivities().isEmpty());
-        BDDMockito.then(groupService).should().createGroup(eq(activity), anySet());
-        BDDMockito.then(workflowManageService).should().apply(activity, activity.getCreator(), null);
+        then(groupService).should().createGroup(eq(activity), anySet());
+        then(workflowManageService).should().apply(activity, activity.getCreator(), null);
+    }
+
+    @Test
+    @DisplayName("[removeUserFromActivity] Not implemented yet")
+    public void testNotImplementedRemoveUserFromActivity() {
+        mockHibernateSession();
+        val activity = ActivityFixture.generateActivity(userCreator.getUserEntity());
+        Assertions.assertThrows(RuntimeException.class, () -> testingThis.removeUserFromActivity(activity.uuid, userCreatorUUID));
+    }
+
+    @Test
+    @DisplayName("[disconnectUserFromActivity] Not implemented yet")
+    public void testNotImplementedDisconnectUserFromActivity() {
+        val activity = ActivityFixture.generateActivity(userCreator.getUserEntity());
+        Assertions.assertThrows(RuntimeException.class, () -> testingThis.disconnectUserFromActivity(activity.uuid, userCreatorUUID));
+    }
+
+
+
+    @Test
+    @DisplayName("[endActivity] - Not implemented yed")
+    public void testEndActivityNotImplementedYes() {
+        Assertions.assertThrows(NotImplementedYetException.class,() -> testingThis.endActivity(UUID.randomUUID()));
     }
 
     private void mockHibernateSession() {
