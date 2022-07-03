@@ -27,8 +27,6 @@ public class DocumentServiceImpl implements DocumentService {
     @RestClient
     DocumentClient documentClient;
 
-    @Inject
-    DocumentUpdateProducer documentUpdateProducer;
 
     @Override
     public void editContent(Document document, String content, String externalUserId) {

@@ -5,8 +5,12 @@ import com.rabbitmq.client.DeliverCallback;
 import dev.orion.broker.RabbitConnection;
 import dev.orion.broker.dto.DocumentEditDto;
 import dev.orion.broker.producer.DocumentUpdateProducer;
+import dev.orion.entity.Activity;
+import dev.orion.services.dto.ActivityExecutionDto;
+import dev.orion.services.interfaces.ActivityService;
 import dev.orion.services.interfaces.DocumentService;
 import io.quarkus.arc.log.LoggerName;
+import lombok.val;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.jboss.logging.Logger;
 
@@ -24,7 +28,7 @@ import java.util.concurrent.TimeoutException;
 public class DocumentEditorConsumer extends RabbitConnection {
 
     @Inject
-    DocumentService documentService;
+    ActivityService activityService;
 
     @Inject
     DocumentUpdateProducer documentUpdateProducer;
@@ -46,18 +50,14 @@ public class DocumentEditorConsumer extends RabbitConnection {
 
     DeliverCallback deliverCallback = (consumerTag, delivery) -> {
         ObjectMapper objectMapper = new ObjectMapper();
-        var message = objectMapper.readValue(delivery.getBody(), DocumentEditDto.class);
-        logger.info(MessageFormat.format("Message received with {0}", message.toString()));
+        val documentEdit = objectMapper.readValue(delivery.getBody(), DocumentEditDto.class);
+        logger.info(MessageFormat.format("Message received with {0}", documentEdit.toString()));
 
-//        var newDocumentOption = documentService.editContent(message.documentContent, message.uuid, message.externalUserId);
-//        if (newDocumentOption.isPresent()) {
-//            var newDocument = newDocumentOption.get();
-//            var updatedDocumentDto = new DocumentUpdateDto();
-//
-//            documentUpdateProducer.sendMessage(updatedDocumentDto);
-//
-//            logger.info(MessageFormat.format("Document id({0}) sent to broker", newDocument.id));
-//        }
+        val activityExecutionDto = new ActivityExecutionDto(documentEdit.uuid, documentEdit.documentUUID, documentEdit.externalUserId, documentEdit.documentContent);
+
+        activityService.execute(activityExecutionDto);
+
+        logger.info(MessageFormat.format("Document id({0}) sent to broker", documentEdit.documentUUID));
     };
 
     @PostConstruct

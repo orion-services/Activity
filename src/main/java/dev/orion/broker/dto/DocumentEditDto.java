@@ -13,4 +13,7 @@ public class DocumentEditDto {
 
     @NotBlank
     public String documentContent;
+
+    @NotBlank
+    public  String documentUUID;
 }

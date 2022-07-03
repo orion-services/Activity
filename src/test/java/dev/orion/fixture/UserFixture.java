@@ -34,8 +34,9 @@ final public class UserFixture {
     }
 
     static public UserEnhancedWithExternalData generateUserEnhancedWithExternalDataDto() {
-        var user = generateUser();
-        var userClientDto = generateClientResponseDto();
+        val user = generateUser();
+        val userClientDto = generateClientResponseDto();
+        userClientDto.uuid = user.getExternalId();
 
         return new UserEnhancedWithExternalData(user, userClientDto);
     }

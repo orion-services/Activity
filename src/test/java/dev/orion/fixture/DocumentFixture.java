@@ -1,9 +1,13 @@
 package dev.orion.fixture;
 
+import dev.orion.client.dto.CreateDocumentRequest;
 import dev.orion.entity.Activity;
 import dev.orion.entity.Document;
+import dev.orion.entity.User;
 import lombok.val;
 
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -27,5 +31,14 @@ public class DocumentFixture {
 
             return userDocument;
         });
+    }
+
+    public static Document createDocument(Set<User> editors) {
+        val document = new Document();
+
+        document.setExternalId(UUID.randomUUID().toString());
+        document.assignMultipleParticipants(editors);
+
+        return document;
     }
 }

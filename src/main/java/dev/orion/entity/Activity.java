@@ -85,11 +85,11 @@ public class Activity extends PanacheEntityBase {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Activity activity = (Activity) o;
-        return uuid.equals(activity.uuid) && workflow.equals(activity.workflow) && isActive.equals(activity.isActive);
+        return uuid.equals(activity.uuid) && isActive.equals(activity.isActive);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(uuid, workflow, isActive);
+        return Objects.hash(uuid, isActive);
     }
 }

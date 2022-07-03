@@ -6,6 +6,7 @@ import dev.orion.commom.constant.ActivityStage;
 import dev.orion.commom.exception.InvalidWorkflowConfiguration;
 import dev.orion.entity.*;
 import dev.orion.entity.step_type.SendEmailStep;
+import dev.orion.entity.step_type.UnorderedCircleOfWriters;
 import dev.orion.workflowExecutor.impl.SendEmailStepExecutor;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
@@ -14,10 +15,7 @@ import net.datafaker.Faker;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.hibernate.Session;
 import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockitoAnnotations;
 
@@ -33,6 +31,7 @@ import static dev.orion.fixture.GroupFixture.generateDocument;
 import static dev.orion.fixture.UserFixture.createParticipants;
 import static dev.orion.fixture.UserFixture.generateUser;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.mock;
 
 @QuarkusTest
 public class SendEmailStepStepExecutorTest {
@@ -187,6 +186,7 @@ public class SendEmailStepStepExecutorTest {
     public void testPassingWrongStep() {
         val stage = new Stage();
         stage.id = 1L;
+        stage.addStep(mock(Step.class));
 
         val exceptionMessage = Assertions.assertThrows(InvalidWorkflowConfiguration.class, () -> testThis.validateConfig(stage)).getMessage();
         val expectedMessage = MessageFormat.format("There is no step {0} on the stage with ID {1}", usingStep.getStepType(), stage.id);

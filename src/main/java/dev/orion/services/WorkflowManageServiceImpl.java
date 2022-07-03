@@ -58,6 +58,7 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
 
         var executionQueue = createExecutionQueue(actualStage.getSteps(), activity, performer, document);
 
+        logger.infov("User {0} can edit the document {1} in activity {2}", performer.getExternalId(), document.getExternalId(), activity.getUuid());
         while (!executionQueue.isEmpty()) {
             executionQueue.poll().run();
         }

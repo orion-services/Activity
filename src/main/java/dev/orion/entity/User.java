@@ -19,6 +19,11 @@ import java.util.Optional;
 @NoArgsConstructor
 @JsonIgnoreProperties(value = {"id"})
 public class User extends PanacheEntity {
+    public User(String externalId) {
+        this.externalId = externalId;
+        this.status = UserStatus.DISCONNECTED;
+    }
+
     @Column(nullable = false, unique = true)
     public String externalId;
 
@@ -46,11 +51,6 @@ public class User extends PanacheEntity {
     @PreUpdate
     void updatedAtUpdate() {
         this.updatedAt = LocalDateTime.now();
-    }
-
-    public User(String externalId) {
-        this.externalId = externalId;
-        this.status = UserStatus.DISCONNECTED;
     }
 
     public static Optional<User> findUserByExternalId(String externalId) {

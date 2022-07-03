@@ -44,6 +44,7 @@ import javax.transaction.Transactional;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -53,8 +54,7 @@ import static org.hamcrest.CoreMatchers.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @QuarkusTest
 @TestHTTPEndpoint(ActivityEndpoint.class)
