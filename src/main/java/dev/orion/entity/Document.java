@@ -1,5 +1,7 @@
 package dev.orion.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import lombok.Getter;
 import lombok.Setter;
@@ -15,7 +17,7 @@ public class Document extends PanacheEntity {
     private String externalId;
 
     @OrderColumn
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "DOCUMENT_EDITORS",
             joinColumns = @JoinColumn(name = "document_id"),
@@ -24,7 +26,7 @@ public class Document extends PanacheEntity {
     private Set<User> participantsThatEdited = new LinkedHashSet<>();
 
     @OrderColumn
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "ASSIGNED_PARTICIPANTS",
             joinColumns = @JoinColumn(name = "document_id"),
@@ -34,6 +36,7 @@ public class Document extends PanacheEntity {
 
     @ManyToOne
     @JoinColumn(name = "groupActivity_id")
+    @JsonBackReference
     private GroupActivity groupActivity;
 
     @ManyToOne()

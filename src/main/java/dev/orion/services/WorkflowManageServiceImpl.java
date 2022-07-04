@@ -58,6 +58,7 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
 
         var executionQueue = createExecutionQueue(actualStage.getSteps(), activity, performer, document);
 
+        logger.infov("User {0} can edit the document {1} in activity {2}", performer.getExternalId(), document.getExternalId(), activity.getUuid());
         while (!executionQueue.isEmpty()) {
             executionQueue.poll().run();
         }
@@ -73,7 +74,7 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
                 stepExecutor.validate(document, performer, step);
                 executionQueue.add(() -> stepExecutor.execute(document, performer, step));
             } catch (NotValidActionException notValidActionException) {
-                logger.warn("Step: '" + notValidActionException.getStepName() + "' validation throw when trying to apply to activity: " + activity.uuid);
+                logger.warnv("Step: {0} validation throw when trying to apply to activity: {1}. Message: {2}", notValidActionException.getStepName(), activity.uuid, notValidActionException.getMessage());
                 exceptionList.add(notValidActionException);
             }
         });
@@ -143,8 +144,6 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
 
         return stepStream.allMatch(step -> stepExecutorsMap.get(step.getType()).isFinished(activity, step));
     }
-
-
 
 
     private Optional<Stage> extractActualStage(Activity activity) {

@@ -13,6 +13,7 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.jboss.resteasy.annotations.jaxrs.PathParam;
 
 import javax.inject.Inject;
+import javax.transaction.Transactional;
 import javax.validation.Valid;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -108,8 +109,10 @@ public class ActivityEndpoint {
             content = @Content(schema = @Schema(implementation = StartActivityResponseBody.class))
     )
     @Produces(MediaType.APPLICATION_JSON)
+    @Transactional
     public Response startActivity(@Parameter(description = "UUID of activity to be started", example = "372bf2a5-0da3-47bd-8c94-4a09d25d362a") @PathParam String activityUuid) {
         val activity = activityService.startActivity(UUID.fromString(activityUuid));
+
         return Response
                 .ok(new StartActivityResponseBody(activity))
                 .build();

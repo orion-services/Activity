@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.AMQP;
 import dev.orion.broker.RabbitConnection;
 import dev.orion.broker.dto.DocumentUpdateDto;
+import dev.orion.entity.Document;
+import dev.orion.entity.User;
 import org.eclipse.microprofile.config.ConfigProvider;
 
 import javax.enterprise.context.ApplicationScoped;

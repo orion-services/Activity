@@ -13,7 +13,6 @@ import java.util.UUID;
 public class CreateDocumentRequest {
     @JsonSerialize(using = UUIDSerializer.class)
     @NotBlank
-    private UUID ownerId;
-
+    private UUID id;
     private String initialText;
 }

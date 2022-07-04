@@ -29,7 +29,7 @@ public class UnorderedCircleOfWritersStepExecutor implements StepExecutor {
         val unorderedCircleOfWriter = (UnorderedCircleOfWriters) step;
 
         val groupActivity = user.getGroupActivity();
-        if (!document.getParticipantsAssigned().contains(user)) {
+        if (!document.getParticipantsAssigned().contains(user) && !document.getParticipantsThatEdited().contains(user)) {
             logger.warnv("User {0} is not a participant in document {1}", user.getExternalId(), document.getExternalId());
             return;
         }

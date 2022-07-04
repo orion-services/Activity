@@ -21,7 +21,7 @@ public abstract class RabbitConnection {
     protected static Connection connection;
     protected Channel channel;
     protected String queueName;
-    private static final Logger LOG = Logger.getLogger(RabbitConnection.class);
+    private static final Logger logger = Logger.getLogger(RabbitConnection.class);
 
 
     protected RabbitConnection(String queueName) throws IOException, TimeoutException, URISyntaxException, NoSuchAlgorithmException, KeyManagementException {
@@ -29,7 +29,7 @@ public abstract class RabbitConnection {
         final Optional<String> optHostString = ConfigProvider.getConfig().getOptionalValue("rabbit.host",String.class);
 
         if (optHostString.isEmpty()) {
-            LOG.warn("Hosting of rabbitMq empty, not connecting to the broker");
+            logger.warn("Hosting of rabbitMq empty, not connecting to the broker");
             return;
         }
 
@@ -53,8 +53,8 @@ public abstract class RabbitConnection {
         }
 
         this.channel = connection.createChannel();
-
         channel.queueDeclare(queueName,false,false,false,null);
+        logger.infov("Listening to queue {0}", queueName);
     }
 
     private void setLocalHost() {

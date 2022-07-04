@@ -4,9 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.DeliverCallback;
 import dev.orion.broker.RabbitConnection;
 import dev.orion.broker.dto.DocumentEditDto;
-import dev.orion.broker.producer.DocumentUpdateProducer;
-import dev.orion.services.interfaces.DocumentService;
+import dev.orion.services.dto.ActivityExecutionDto;
+import dev.orion.services.interfaces.ActivityService;
 import io.quarkus.arc.log.LoggerName;
+import lombok.val;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.jboss.logging.Logger;
 
@@ -23,17 +24,25 @@ import java.util.concurrent.TimeoutException;
 @ApplicationScoped
 public class DocumentEditorConsumer extends RabbitConnection {
 
-    @Inject
-    DocumentService documentService;
-
-    @Inject
-    DocumentUpdateProducer documentUpdateProducer;
-
-    @LoggerName("DocumentEditorConsumer")
-    Logger logger;
-
     static final String QUEUE_NAME = ConfigProvider.getConfig().getOptionalValue("rabbit.queue.consumer.document", String.class).get();
     static final Boolean AUTO_ACK = true;
+    @Inject
+    ActivityService activityService;
+    @LoggerName("DocumentEditorConsumer")
+    Logger logger;
+    DeliverCallback deliverCallback = (consumerTag, delivery) -> {
+        ObjectMapper objectMapper = new ObjectMapper();
+        val documentEdit = objectMapper.readValue(delivery.getBody(), DocumentEditDto.class);
+        logger.info(MessageFormat.format("Message received with {0}", documentEdit.toString()));
+        try {
+            val activityExecutionDto = new ActivityExecutionDto(documentEdit.activityId, documentEdit.documentId, documentEdit.externalUserId, documentEdit.documentContent);
+            activityService.execute(activityExecutionDto);
+        } catch (RuntimeException e) {
+            logger.warnv("Activity {0} not let the user {1} edit document", documentEdit.activityId, documentEdit.externalUserId);
+            e.printStackTrace();
+        }
+
+    };
     private Boolean hasStarted = false;
 
     public DocumentEditorConsumer() throws IOException, TimeoutException, URISyntaxException, NoSuchAlgorithmException, KeyManagementException {
@@ -44,22 +53,6 @@ public class DocumentEditorConsumer extends RabbitConnection {
         super(queue);
     }
 
-    DeliverCallback deliverCallback = (consumerTag, delivery) -> {
-        ObjectMapper objectMapper = new ObjectMapper();
-        var message = objectMapper.readValue(delivery.getBody(), DocumentEditDto.class);
-        logger.info(MessageFormat.format("Message received with {0}", message.toString()));
-
-//        var newDocumentOption = documentService.editContent(message.documentContent, message.uuid, message.externalUserId);
-//        if (newDocumentOption.isPresent()) {
-//            var newDocument = newDocumentOption.get();
-//            var updatedDocumentDto = new DocumentUpdateDto();
-//
-//            documentUpdateProducer.sendMessage(updatedDocumentDto);
-//
-//            logger.info(MessageFormat.format("Document id({0}) sent to broker", newDocument.id));
-//        }
-    };
-
     @PostConstruct
     void setupDependencies() {
 
@@ -68,7 +61,8 @@ public class DocumentEditorConsumer extends RabbitConnection {
     public void attachQueueListener() throws IOException {
         if (!hasStarted) {
             logger.info(MessageFormat.format("Started listening queue: {0}", QUEUE_NAME));
-            channel.basicConsume(QUEUE_NAME, AUTO_ACK, deliverCallback, consumerTag -> {});
+            channel.basicConsume(QUEUE_NAME, AUTO_ACK, deliverCallback, consumerTag -> {
+            });
             hasStarted = true;
         }
     }

@@ -9,7 +9,11 @@ quarkus:
       - "dev/orion/commom/exception/**/*"
       - "dev/orion/util/setup/**/*"
     title: "Orion-services: Activity service"
-
+  log:
+    category:
+      "org.apache.http":
+        level:
+          DEBUG
 
 "%dev":
   quarkus:
@@ -21,7 +25,7 @@ quarkus:
         url: jdbc:mysql://localhost:3306/activity_db
     hibernate-orm:
       database:
-        generation: "drop-and-create"
+#        generation: "drop-and-create"
     live-reload:
       instrumentation: true
   api:
@@ -32,8 +36,8 @@ quarkus:
     email-service:
       "client/mp-rest/url": "http://localhost:5000"
   rabbit:
-    username: "guest"
-    password: "guest"
+    username: "activity"
+    password: "activity"
     virtualHost: "/"
     host: "localhost"
     port: 5672

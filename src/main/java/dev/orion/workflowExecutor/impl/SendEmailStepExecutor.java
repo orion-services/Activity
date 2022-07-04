@@ -37,7 +37,7 @@ public class SendEmailStepExecutor implements StepExecutor {
 
     SendEmailRequest createSendRequest(Activity activity, SendEmailStep sendEmailStep, String emailMessage) {
         val sendEmailRequest = new SendEmailRequest();
-        val participants = sendEmailStep.isOnlyForCreator() ? new HashSet<User>() : activity.getUserList();
+        val participants = sendEmailStep.isOnlyForCreator() ? new HashSet<User>() : activity.getParticipants();
         participants.add(activity.getCreator());
 
         participants.forEach(user -> {

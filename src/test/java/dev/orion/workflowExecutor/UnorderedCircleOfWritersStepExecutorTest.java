@@ -45,9 +45,6 @@ public class UnorderedCircleOfWritersStepExecutorTest {
     @InjectMock
     Session session;
 
-    @InjectMock
-    DocumentUpdateProducer documentUpdateProducer;
-
     @RestClient
     @InjectMock
     DocumentClient documentClient;
@@ -325,6 +322,7 @@ public class UnorderedCircleOfWritersStepExecutorTest {
     public void testPassingWrongStep() {
         val stage = new Stage();
         stage.id = 1L;
+        stage.addStep(mock(Step.class));
 
         val exceptionMessage = Assertions.assertThrows(InvalidWorkflowConfiguration.class, () -> testThis.validateConfig(stage)).getMessage();
         val expectedMessage = MessageFormat.format("There is no step {0} on the stage with ID {1}", usingStep.getStepType(), stage.id);

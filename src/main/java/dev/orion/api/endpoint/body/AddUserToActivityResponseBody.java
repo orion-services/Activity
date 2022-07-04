@@ -25,7 +25,7 @@ public class AddUserToActivityResponseBody {
     public AddUserToActivityResponseBody(Activity activity) {
         this.uuid = activity.uuid;
         this.participants = activity
-                .userList
+                .participants
                 .stream()
                 .map(item -> item.externalId)
                 .collect(Collectors.toSet());

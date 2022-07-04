@@ -31,18 +31,12 @@ public class GroupActivity extends PanacheEntityBase {
     @JsonManagedReference
     private Set<User> participants = new LinkedHashSet<>();
 
-    @OrderColumn
-    @OneToMany
-    private Set<User> alreadyPlayedParticipants = new LinkedHashSet<>();
-
     @ManyToOne(cascade = CascadeType.ALL, optional = false)
     @JsonBackReference
     private Activity activityOwner;
 
-    @OneToMany
-    private List<User> participantsRound;
-
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "groupActivity")
+    @JsonManagedReference
     List<Document> documents = new ArrayList<>();
 
     public void addDocument(Document document) {
@@ -50,9 +44,6 @@ public class GroupActivity extends PanacheEntityBase {
         documents.add(document);
     }
 
-    public void addParticipantsRound(User participant) {
-        participantsRound.add(participant);
-    }
     public void addParticipant(User participant) {
         participant.setGroupActivity(this);
         participants.add(participant);
