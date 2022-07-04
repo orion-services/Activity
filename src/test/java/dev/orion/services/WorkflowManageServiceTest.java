@@ -281,7 +281,7 @@ public class WorkflowManageServiceTest {
     }
 
     @Test
-    @DisplayName("[isFinished] - Should validate if stage of is activity DURING")
+    @DisplayName("[isFinished] - Should validate if stage of activity is not PRE")
     public void testWorkflowStageValidationInIsFinished() {
         Workflow workflow = generateWorkflow();
         Activity activity = new Activity();
@@ -290,6 +290,20 @@ public class WorkflowManageServiceTest {
         Assertions.assertThrows(InvalidActivityActionException.class, () -> testThis.isFinished(activity));
 
         then(unorderedCircleOfWritersStepExecutor).should(never()).isFinished(any(Activity.class), any());
+    }
+
+    @Test
+    @DisplayName("[isFinished] - Should return true if activity stage is POS")
+    public void testIsFinishedTrueIfActivityStageIsPOS() {
+        Workflow workflow = generateWorkflow();
+        Activity activity = new Activity();
+        activity.setActualStage(ActivityStage.POS);
+        activity.workflow = workflow;
+
+        val finished = testThis.isFinished(activity);
+
+        then(unorderedCircleOfWritersStepExecutor).should(never()).isFinished(any(Activity.class), any());
+        Assertions.assertTrue(finished);
     }
 
     private Workflow generateWorkflow() {

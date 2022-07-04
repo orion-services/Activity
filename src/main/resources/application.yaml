@@ -8,6 +8,7 @@ quarkus:
       - "dev/orion/api/endpoint/body/**/*"
       - "dev/orion/commom/exception/**/*"
       - "dev/orion/util/setup/**/*"
+      - "dev/orion/client/mapper/**/*"
     title: "Orion-services: Activity service"
   log:
     category:
@@ -25,7 +26,7 @@ quarkus:
         url: jdbc:mysql://localhost:3306/activity_db
     hibernate-orm:
       database:
-#        generation: "drop-and-create"
+        generation: "drop-and-create"
     live-reload:
       instrumentation: true
   api:

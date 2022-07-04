@@ -67,7 +67,7 @@ public class SendEmailStepExecutor implements StepExecutor {
     @Override
     public void validateConfig(Stage stage) {
         val step = stage.getSteps().stream()
-                .filter(stepFilter -> stepFilter.getStepType() == getStepRepresentation())
+                .filter(stepFilter -> stepFilter.getStepType().equals(getStepRepresentation()))
                 .findFirst()
                 .orElseThrow(() -> {
                     throw new InvalidWorkflowConfiguration(MessageFormat.format("There is no step {0} on the stage with ID {1}", getStepRepresentation(), stage.id));

@@ -133,12 +133,18 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
 
     @Override
     public boolean isFinished(Activity activity) {
-        val stage = extractActualStage(activity).orElseThrow();
-        if (Boolean.FALSE == activity.getActualStage().equals(ActivityStage.DURING)) {
-            val exceptionMessage = MessageFormat.format("To check if workflow is finished activity should be in stage {0}", ActivityStage.DURING);
+        if (ActivityStage.POS.equals(activity.getActualStage())) {
+            return true;
+        }
+
+        if (Boolean.TRUE == activity.getActualStage().equals(ActivityStage.PRE)) {
+            val exceptionMessage = MessageFormat.format("To check if workflow is finished activity should be in stage {0}, but it is in stage {1}", ActivityStage.DURING, activity.getActualStage());
             logger.error(exceptionMessage);
             throw new InvalidActivityActionException(exceptionMessage);
         }
+
+        val stage = extractActualStage(activity).orElseThrow();
+
         val steps = stage.getSteps();
         val stepStream = steps.stream().filter(this::hasExecutorForStep);
 

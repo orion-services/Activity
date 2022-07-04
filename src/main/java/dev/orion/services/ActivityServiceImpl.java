@@ -179,8 +179,24 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
     @Override
-    public Activity endActivity(UUID activityUuid) {
-        throw new NotImplementedYetException("endActivity");
+    public Activity endActivity(Activity activity) {
+        logger.infov("Command to end activity {0}", activity.getUuid());
+        validateActivityIsActive(activity);
+
+        activity.setActualStage(ActivityStage.POS);
+        activity.setIsActive(false);
+        if (executeWorkflow(activity, activity.getCreator(), null)) {
+            sendActivityToProducer(activity, List.of(), UUID.randomUUID());
+        }
+
+
+        cleanUpParticipants(activity);
+        activity.persist();
+        return activity;
+    }
+
+    private void cleanUpParticipants(Activity activity) {
+        activity.getParticipants().clear();
     }
 
     @Override
@@ -221,6 +237,7 @@ public class ActivityServiceImpl implements ActivityService {
             logger.error(e.getMessage());
             return null;
         } catch (InvalidActivityActionException e) {
+            logger.warnv("Exception in execution: {0}", e.getMessage());
             val errorBuilder = ActivityUpdateMessageDto.getErrorBuilder();
             val userError = errorBuilder
                     .externalUserId(userExternalId)
@@ -233,10 +250,10 @@ public class ActivityServiceImpl implements ActivityService {
             return null;
         }
 
+
         if (FALSE == executeWorkflow(activity, participant, document)) {
             return null;
         }
-
 
         try {
             val messageKey = UUID.randomUUID();
@@ -244,11 +261,21 @@ public class ActivityServiceImpl implements ActivityService {
             sendActivityToProducer(activity, List.of(), messageKey);
         } catch (RuntimeException exception) {
             documentQueueErrorHandler(exception, activity, userExternalId);
+            exception.printStackTrace();
+            return null;
         }
+
+        checkAndEndActivity(activity);
 
         logger.infov("activity {0} successfully executed with user {1} and document {2} was execution.", activityUUID, userExternalId, documentExternalId);
 
         return activity;
+    }
+
+    private void checkAndEndActivity(Activity activity) {
+        if (workflowManageService.isFinished(activity)) {
+            endActivity(activity);
+        }
     }
 
     private boolean executeWorkflow(Activity activity, User participant, Document document) {
@@ -328,6 +355,10 @@ public class ActivityServiceImpl implements ActivityService {
         validateActivityIsActive(activity);
         if (FALSE == activity.getParticipants().contains(participant)) {
             throw new InvalidActivityActionException(MessageFormat.format("User {0} is not in activity {1} ", participant.getExternalId(), activity.getUuid()));
+        }
+
+        if (workflowManageService.isFinished(activity)) {
+            throw new InvalidActivityActionException(MessageFormat.format("Activity {0} is finished, can''t be edited", activity.getUuid()));
         }
     }
 

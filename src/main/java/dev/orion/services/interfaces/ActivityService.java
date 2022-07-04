@@ -17,7 +17,7 @@ public interface ActivityService {
 
     void disconnectUserFromActivity(UUID activityUuid, String userExternalId);
 
-    Activity endActivity(UUID activityUuid) throws NotFoundException, InvalidActivityActionException;
+    Activity endActivity(Activity activity) throws NotFoundException, InvalidActivityActionException;
 
     Activity startActivity(UUID activityUUID);
 

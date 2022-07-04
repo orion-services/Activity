@@ -23,6 +23,7 @@ import dev.orion.services.interfaces.ActivityService;
 import dev.orion.services.interfaces.GroupService;
 import dev.orion.services.interfaces.UserService;
 import dev.orion.services.interfaces.WorkflowManageService;
+import dev.orion.util.AggregateException;
 import io.quarkus.panache.mock.PanacheMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
@@ -32,7 +33,6 @@ import lombok.val;
 import net.datafaker.Faker;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.hibernate.Session;
-import org.jboss.resteasy.spi.NotImplementedYetException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -88,8 +88,9 @@ public class ActivityServiceTest {
 
     Document usingDocument;
 
-
     Workflow usingWorkflow;
+
+    Set<User> usingParticipants;
 
     @BeforeEach
     public void setup() {
@@ -100,7 +101,13 @@ public class ActivityServiceTest {
         BDDMockito.given(documentClient.createDocument(any())).willReturn(createDocumentResponse);
 
         usingActivity = ActivityFixture.generateActivity(userCreator);
+        usingParticipants = UserFixture.createParticipants(usingActivity, 5);
+        usingParticipants.forEach(user -> {
+            user.setStatus(UserStatus.CONNECTED);
+        });
+        usingParticipants.add(userCreator);
         usingActivity.addParticipant(userCreator);
+
         setWorkflow();
         mockActivityQueries(usingActivity);
         mockDocumentQueries(Set.of(userCreator));
@@ -201,7 +208,7 @@ public class ActivityServiceTest {
         testingThis.addUserInActivity(activityUuid, userEnhancedCreator.uuid);
         Activity activity = Activity.findById(activityUuid);
 
-        Assertions.assertEquals(1, activity.getParticipants().size());
+        Assertions.assertEquals(usingParticipants.size(), activity.getParticipants().size());
         Assertions.assertEquals(activity, userCreator.activity);
         Assertions.assertTrue(activity.getParticipants().contains(userCreator));
         Assertions.assertEquals(UserStatus.DISCONNECTED, userCreator.status);
@@ -259,7 +266,7 @@ public class ActivityServiceTest {
 
         val activity = testingThis.addUserInActivity(usingActivity.getUuid(), userEnhancedCreator.uuid);
 
-        Assertions.assertEquals(1, activity.getParticipants().size());
+        Assertions.assertEquals(usingParticipants.size(), activity.getParticipants().size());
         Assertions.assertEquals(activity, userEntity.activity);
         Assertions.assertTrue(activity.getParticipants().contains(userEntity));
         Assertions.assertEquals(UserStatus.CONNECTED, userEntity.status);
@@ -452,6 +459,7 @@ public class ActivityServiceTest {
 
         val activityUpdateMessageDtoArgumentCaptor = ArgumentCaptor.forClass(ActivityUpdateMessageDto.class);
         then(workflowManageService).should().apply(activity, userCreator, usingDocument);
+
         val documentUpdateDtoArgumentCaptor = ArgumentCaptor.forClass(DocumentUpdateDto.class);
         then(documentUpdateProducer).should().sendMessage(documentUpdateDtoArgumentCaptor.capture());
         then(activityUpdateProducer).should().sendMessage(activityUpdateMessageDtoArgumentCaptor.capture());
@@ -463,6 +471,7 @@ public class ActivityServiceTest {
         Assertions.assertEquals(usingActivity.uuid, activityUpdateMessageDto.uuid);
         Assertions.assertTrue(activityUpdateMessageDto.isActive);
         Assertions.assertEquals(documentUpdateDto.getMessageKey(), activityUpdateMessageDto.getMessageKey());
+        then(workflowManageService).should(times(2)).isFinished(usingActivity);
     }
 
     @Test
@@ -599,6 +608,48 @@ public class ActivityServiceTest {
         then(documentUpdateProducer).should().sendMessage(any());
     }
 
+    @Test
+    @DisplayName("[execute] Should validate if activity is finished")
+    @SneakyThrows
+    public void testExecuteCheckIfWorkflowIsFinished() {
+        given(workflowManageService.isFinished(usingActivity)).willReturn(true);
+
+        val activity = testingThis.execute(generateActivityExecution(""));
+
+        val activityUpdateMessageDtoArgumentCaptor = ArgumentCaptor.forClass(ActivityUpdateMessageDto.class);
+        then(activityUpdateProducer).should().sendMessage(activityUpdateMessageDtoArgumentCaptor.capture());
+        then(workflowManageService).should(never()).apply(any(), any(), any());
+        then(documentUpdateProducer).should(never()).sendMessage(any());
+
+        val messageParameter = activityUpdateMessageDtoArgumentCaptor.getValue();
+        val expectedExceptionMessage = MessageFormat.format("Activity {0} is finished, can''t be edited", usingActivity.getUuid());
+        val userError = messageParameter.performErrors.stream().findFirst().orElseThrow();
+
+        Assertions.assertFalse(messageParameter.performErrors.isEmpty());
+        Assertions.assertEquals(expectedExceptionMessage, userError.message);
+        Assertions.assertNull(activity);
+    }
+
+    @Test
+    @DisplayName("[execute] Should validate if activity is finished")
+    @SneakyThrows
+    public void testExecuteWhenWorkflowFinishesMethodOrder() {
+        given(workflowManageService.isFinished(usingActivity)).willReturn(false).willReturn(true);
+        val content = Faker.instance().howIMetYourMother().catchPhrase();
+
+        val activity = testingThis.execute(generateActivityExecution(content));
+
+        then(workflowManageService).should().apply(activity, userCreator, usingDocument);
+
+        val orderCheck = inOrder(documentUpdateProducer, activityUpdateProducer, workflowManageService);
+        orderCheck.verify(workflowManageService).isFinished(usingActivity);
+        orderCheck.verify(documentUpdateProducer).sendMessage(any(DocumentUpdateDto.class));
+        orderCheck.verify(activityUpdateProducer).sendMessage(any());
+        orderCheck.verify(workflowManageService).isFinished(usingActivity);
+
+        Assertions.assertNotNull(activity);
+    }
+
     private ActivityExecutionDto generateActivityExecution(String content) {
         return new ActivityExecutionDto(
                 usingActivity.getUuid(),
@@ -622,8 +673,56 @@ public class ActivityServiceTest {
     }
 
     @Test
-    @DisplayName("[endActivity] - Not implemented yed")
-    public void testEndActivityNotImplementedYes() {
-        Assertions.assertThrows(NotImplementedYetException.class, () -> testingThis.endActivity(UUID.randomUUID()));
+    @DisplayName("[endActivity] - Should set activity to end")
+    @SneakyThrows
+    public void testEndActivity() {
+        val activity = testingThis.endActivity(usingActivity);
+
+        Assertions.assertNotNull(activity);
+        Assertions.assertEquals(ActivityStage.POS, activity.getActualStage());
+        Assertions.assertFalse(activity.isActive);
+        Assertions.assertTrue(activity.getParticipants().isEmpty());
+
+        then(workflowManageService).should().apply(usingActivity, userCreator, null);
+        val captorActivityProducer = ArgumentCaptor.forClass(ActivityUpdateMessageDto.class);
+        then(activityUpdateProducer).should().sendMessage(captorActivityProducer.capture());
+        then(session).should().persist(activity);
+
+        val activityProducerArguments = captorActivityProducer.getValue();
+        Assertions.assertTrue(usingParticipants.stream().allMatch(user -> activityProducerArguments.getParticipants().contains(user.getExternalId())));
+    }
+
+    @Test
+    @DisplayName("[endActivity] - Should validate activity that are already is ended")
+    @SneakyThrows
+    public void testEndActivityThatIsAlreadyDone() {
+        usingActivity.setIsActive(false);
+        val exceptionMessage = Assertions.assertThrows(InvalidActivityActionException.class, () -> testingThis.endActivity(usingActivity)).getMessage();
+
+        val expectedExceptionMessage = MessageFormat.format("Activity {0} must be active", usingActivity.uuid);
+        Assertions.assertEquals(expectedExceptionMessage, exceptionMessage);
+
+        then(workflowManageService).should(never()).apply(any(), any(), any());
+        then(activityUpdateProducer).should(never()).sendMessage(any());
+        then(session).should(never()).persist(any());
+    }
+
+    @Test
+    @DisplayName("[endActivity] - Should continue flow when workflow can't apply")
+    @SneakyThrows
+    public void testEndActivityWhenWorkflowThrows() {
+        val aggregateException = new AggregateException(List.of(new RuntimeException()));
+
+        willThrow(aggregateException).given(workflowManageService).apply(usingActivity, userCreator, null);
+        val activity = testingThis.endActivity(usingActivity);
+
+        Assertions.assertNotNull(activity);
+        Assertions.assertEquals(ActivityStage.POS, activity.getActualStage());
+        Assertions.assertFalse(activity.isActive);
+        Assertions.assertTrue(activity.getParticipants().isEmpty());
+
+        then(workflowManageService).should().apply(usingActivity, userCreator, null);
+        then(activityUpdateProducer).should(atMostOnce()).sendMessage(any());
+        then(session).should().persist(any());
     }
 }
