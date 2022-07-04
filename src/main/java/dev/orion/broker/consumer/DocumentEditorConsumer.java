@@ -38,7 +38,7 @@ public class DocumentEditorConsumer extends RabbitConnection {
             val activityExecutionDto = new ActivityExecutionDto(documentEdit.activityId, documentEdit.documentId, documentEdit.externalUserId, documentEdit.documentContent);
             activityService.execute(activityExecutionDto);
         } catch (RuntimeException e) {
-            logger.warnv("Activity {0} not let the user {1) edit document", documentEdit.activityId, documentEdit.externalUserId);
+            logger.warnv("Activity {0} not let the user {1} edit document", documentEdit.activityId, documentEdit.externalUserId);
             e.printStackTrace();
         }
 

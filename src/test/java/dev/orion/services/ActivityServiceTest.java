@@ -331,7 +331,7 @@ public class ActivityServiceTest {
     }
 
     @Test
-    @DisplayName("[startActivity] Should start activity normally")
+    @DisplayName("[startActivity] Should start activity normally - with group registered")
     public void testActivityStartingWithGroupRegistered() {
         usingActivity.addGroup(new GroupActivity());
         val user = userCreator;
@@ -355,6 +355,22 @@ public class ActivityServiceTest {
         }).getMessage();
 
         val expectedMessage = MessageFormat.format("Activity {0} must be active", usingActivity.uuid);
+
+        Assertions.assertEquals(expectedMessage, exceptionMessage);
+        then(workflowManageService).should(never()).apply(usingActivity, usingActivity.getCreator(), null);
+    }
+
+    @Test
+    @DisplayName("[startActivity] Should not start activity in other phase than PRE")
+    public void testValidationOfNotPreStageActivity() {
+        val activityUuid = usingActivity.getUuid();
+        usingActivity.setActualStage(ActivityStage.DURING);
+
+        val exceptionMessage = Assertions.assertThrows(InvalidActivityActionException.class, () -> {
+            testingThis.startActivity(activityUuid);
+        }).getMessage();
+
+        val expectedMessage = MessageFormat.format("Activity {0} has already started", usingActivity.getUuid());
 
         Assertions.assertEquals(expectedMessage, exceptionMessage);
         then(workflowManageService).should(never()).apply(usingActivity, usingActivity.getCreator(), null);

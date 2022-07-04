@@ -333,8 +333,8 @@ public class ActivityEndpointTest {
         GroupActivity groupActivity = activity.getGroupActivities().get(0);
 
         Assertions.assertEquals(activity.uuid, responseBody.getActivityUUID());
-        Assertions.assertTrue(responseBody.getGroups().containsKey(groupActivity.getUuid()));
-        Assertions.assertTrue(responseBody.getGroups().get(groupActivity.getUuid()).getParticipantId().contains(userEntity.externalId));
+        Assertions.assertEquals(groupActivity.getUuid(), responseBody.getGroups().get(0).getId());
+        Assertions.assertTrue(responseBody.getGroups().get(0).getParticipantId().contains(userEntity.externalId));
         then(documentClient).should().createDocument(any());
         then(groupService).should().createGroup(activity, activity.getParticipants());
         then(workflowManageService).should().apply(activity, activity.getCreator(), null);
@@ -376,6 +376,27 @@ public class ActivityEndpointTest {
         val responseBody = requestStartActivity(activity.uuid, DefaultErrorResponseBody.class, Response.Status.BAD_REQUEST.getStatusCode());
 
         val expectedMessage = MessageFormat.format("Activity {0} must be active", activity.uuid);
+        Assertions.assertTrue(responseBody.getErrors().contains(expectedMessage));
+        then(documentClient).should(never()).createDocument(any());
+        then(groupService).should(never()).createGroup(any(), any());
+    }
+
+    @Test
+    @DisplayName("[/{activityUuid}/start - PATCH] Should not start activity in other phase than PRE")
+    public void testApplicationStartValidationOfNotPreStageActivity() {
+        mockHibernateSession();
+        val groupUUID = UUID.randomUUID();
+        val activity = mockActivityCreation();
+        activity.setActualStage(ActivityStage.DURING);
+
+        User userEntity = userCreator.getUserEntity();
+        userEntity.setStatus(UserStatus.CONNECTED);
+
+        BDDMockito.doAnswer(injectIdIntoGroup(groupUUID)).when(session).persist(any(activity.getClass()));
+
+        val responseBody = requestStartActivity(activity.uuid, DefaultErrorResponseBody.class, Response.Status.BAD_REQUEST.getStatusCode());
+
+        val expectedMessage = MessageFormat.format("Activity {0} has already started", activity.getUuid());
         Assertions.assertTrue(responseBody.getErrors().contains(expectedMessage));
         then(documentClient).should(never()).createDocument(any());
         then(groupService).should(never()).createGroup(any(), any());

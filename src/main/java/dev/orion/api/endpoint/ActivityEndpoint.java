@@ -112,6 +112,7 @@ public class ActivityEndpoint {
     @Transactional
     public Response startActivity(@Parameter(description = "UUID of activity to be started", example = "372bf2a5-0da3-47bd-8c94-4a09d25d362a") @PathParam String activityUuid) {
         val activity = activityService.startActivity(UUID.fromString(activityUuid));
+
         return Response
                 .ok(new StartActivityResponseBody(activity))
                 .build();

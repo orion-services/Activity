@@ -65,6 +65,10 @@ public class Activity extends PanacheEntityBase {
         this.updatedAt = LocalDateTime.now();
     }
 
+    public static Optional<Activity> findByIdOptional(UUID id) {
+        return Activity.findByIdOptional((Object) id);
+    }
+
     public void addParticipant(User user) {
         user.setActivity(this);
         participants.add(user);

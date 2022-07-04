@@ -332,7 +332,7 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
     private ExecutionDto getEntitiesToExecute(UUID activityUUID, String documentExternalId, String userExternalId) throws NotFoundException {
-        val activity = (Activity) Activity.findByIdOptional(activityUUID).orElseThrow(() -> {
+        val activity = Activity.findByIdOptional(activityUUID).orElseThrow(() -> {
             throw new NotFoundException(MessageFormat.format("Activity {0} not found", activityUUID));
         });
 
@@ -353,6 +353,10 @@ public class ActivityServiceImpl implements ActivityService {
 
     private void validateActivityToStart(Activity activity) {
         validateActivityIsActive(activity);
+        if (FALSE == activity.getActualStage().equals(ActivityStage.PRE)) {
+            val exceptionMessage = MessageFormat.format("Activity {0} has already started", activity.getUuid());
+            throw new InvalidActivityActionException(exceptionMessage);
+        }
 
         val notConnectedUsers = getNotConnectedUsers(activity);
         if (FALSE == notConnectedUsers.isEmpty()) {

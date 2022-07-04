@@ -1,8 +1,12 @@
 package dev.orion.api.endpoint.body;
 
 import dev.orion.entity.Activity;
+import dev.orion.entity.Document;
 import dev.orion.entity.GroupActivity;
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.val;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 import java.util.*;
@@ -11,8 +15,8 @@ import java.util.*;
 @Getter
 @NoArgsConstructor
 public class StartActivityResponseBody {
-    @Schema(required = true, example = "{70f4bb61-4c6e-4aac-bb1d-56e4247e16b3: [participantId: be638c24-34de-4771-8e18-7af05ab8962d]}")
-    private final Map<UUID, Participants> groups = new HashMap<>();
+    @Schema(required = true)
+    private final List<GroupDto> groups = new ArrayList<>();
 
     @Schema(required = true, example = "372bf2a5-0da3-47bd-8c94-4a09d25d362a")
     private UUID activityUUID;
@@ -24,19 +28,33 @@ public class StartActivityResponseBody {
     }
 
     public void addGroup(GroupActivity groupActivity) {
-        val participants = new Participants();
-        groupActivity.getParticipants().stream().forEach(user -> participants.add(user.externalId));
-        groups.put(groupActivity.getUuid(), participants);
+        val group = new GroupDto();
+        group.Id = groupActivity.getUuid();
+        groupActivity.getParticipants().stream().forEach(user -> group.addParticipant(user.externalId));
+        groupActivity.getDocuments().stream().forEach(document -> group.addDocument(document));
+
+        groups.add(group);
     }
 
     @Getter
     @NoArgsConstructor
     @Setter
-    public static class Participants {
+    public static class GroupDto {
+        @Schema(required = true)
         Set<String> participantId = new HashSet<>();
 
-        public void add(String externalId) {
+        @Schema(required = true)
+        Set<Document> documents = new HashSet<>();
+
+        @Schema(required = true)
+        UUID Id;
+
+        public void addParticipant(String externalId) {
             participantId.add(externalId);
+        }
+
+        public void addDocument(Document document) {
+            documents.add(document);
         }
     }
 }

@@ -146,8 +146,6 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
     }
 
 
-
-
     private Optional<Stage> extractActualStage(Activity activity) {
         val actualStage = activity.workflow.getStages().stream().filter(stage -> stage.getActivityStage().equals(activity.actualStage)).findFirst();
 
