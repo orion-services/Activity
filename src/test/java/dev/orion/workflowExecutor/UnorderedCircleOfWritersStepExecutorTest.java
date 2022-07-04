@@ -45,9 +45,6 @@ public class UnorderedCircleOfWritersStepExecutorTest {
     @InjectMock
     Session session;
 
-    @InjectMock
-    DocumentUpdateProducer documentUpdateProducer;
-
     @RestClient
     @InjectMock
     DocumentClient documentClient;

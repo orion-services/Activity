@@ -43,6 +43,7 @@ public class GroupActivity extends PanacheEntityBase {
     private List<User> participantsRound;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "groupActivity")
+    @JsonManagedReference
     List<Document> documents = new ArrayList<>();
 
     public void addDocument(Document document) {

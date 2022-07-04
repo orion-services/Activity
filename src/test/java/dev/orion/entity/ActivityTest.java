@@ -29,13 +29,13 @@ public class ActivityTest {
         activity.creator = users.get(0);
 
 //        Prevent share the same instance of user list
-        activity.userList.addAll(new ArrayList<>(users));
+        activity.participants.addAll(new ArrayList<>(users));
         activity.persist();
 
 
         Activity testingThis = Activity.findById(activity.uuid);
         AtomicInteger counter = new AtomicInteger();
-        assertThat(testingThis.userList, contains(users.toArray()));
+        assertThat(testingThis.participants, contains(users.toArray()));
     }
 
 

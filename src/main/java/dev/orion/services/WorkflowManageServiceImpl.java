@@ -74,7 +74,7 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
                 stepExecutor.validate(document, performer, step);
                 executionQueue.add(() -> stepExecutor.execute(document, performer, step));
             } catch (NotValidActionException notValidActionException) {
-                logger.warn("Step: '" + notValidActionException.getStepName() + "' validation throw when trying to apply to activity: " + activity.uuid);
+                logger.warnv("Step: {0} validation throw when trying to apply to activity: {1}. Message: {2}", notValidActionException.getStepName(), activity.uuid, notValidActionException.getMessage());
                 exceptionList.add(notValidActionException);
             }
         });

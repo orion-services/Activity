@@ -1,5 +1,7 @@
 package dev.orion.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import lombok.Getter;
 import lombok.Setter;
@@ -34,6 +36,7 @@ public class Document extends PanacheEntity {
 
     @ManyToOne
     @JoinColumn(name = "groupActivity_id")
+    @JsonBackReference
     private GroupActivity groupActivity;
 
     @ManyToOne()

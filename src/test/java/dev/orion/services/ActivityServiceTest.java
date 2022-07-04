@@ -1,6 +1,8 @@
 package dev.orion.services;
 
+import dev.orion.broker.dto.ActivityUpdateMessageDto;
 import dev.orion.broker.dto.DocumentUpdateDto;
+import dev.orion.broker.producer.ActivityUpdateProducer;
 import dev.orion.broker.producer.DocumentUpdateProducer;
 import dev.orion.client.DocumentClient;
 import dev.orion.client.dto.CreateDocumentResponse;
@@ -35,6 +37,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.BDDMockito;
 
 import javax.inject.Inject;
@@ -46,7 +49,6 @@ import java.util.*;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.*;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 
 @QuarkusTest
@@ -63,6 +65,9 @@ public class ActivityServiceTest {
 
     @InjectMock
     DocumentUpdateProducer documentUpdateProducer;
+
+    @InjectMock
+    ActivityUpdateProducer activityUpdateProducer;
 
     @InjectMock
     @RestClient
@@ -190,15 +195,15 @@ public class ActivityServiceTest {
     @DisplayName("[addUserInActivity] It must let add users to participate")
     public void testAddUserIntoActivity() {
         val activityUuid = usingActivity.getUuid();
-        usingActivity.getUserList().remove(userEnhancedCreator);
+        usingActivity.getParticipants().remove(userEnhancedCreator);
         userEnhancedCreator.userEntity.setActivity(null);
 
         testingThis.addUserInActivity(activityUuid, userEnhancedCreator.uuid);
         Activity activity = Activity.findById(activityUuid);
 
-        Assertions.assertEquals(1, activity.getUserList().size());
+        Assertions.assertEquals(1, activity.getParticipants().size());
         Assertions.assertEquals(activity, userCreator.activity);
-        Assertions.assertTrue(activity.getUserList().contains(userCreator));
+        Assertions.assertTrue(activity.getParticipants().contains(userCreator));
         Assertions.assertEquals(UserStatus.DISCONNECTED, userCreator.status);
     }
 
@@ -254,9 +259,9 @@ public class ActivityServiceTest {
 
         val activity = testingThis.addUserInActivity(usingActivity.getUuid(), userEnhancedCreator.uuid);
 
-        Assertions.assertEquals(1, activity.getUserList().size());
+        Assertions.assertEquals(1, activity.getParticipants().size());
         Assertions.assertEquals(activity, userEntity.activity);
-        Assertions.assertTrue(activity.getUserList().contains(userEntity));
+        Assertions.assertTrue(activity.getParticipants().contains(userEntity));
         Assertions.assertEquals(UserStatus.CONNECTED, userEntity.status);
     }
 
@@ -378,7 +383,7 @@ public class ActivityServiceTest {
     @DisplayName("[startActivity] Should not start when has no users in activity")
     public void testValidationOfEmptyActivity() {
         val activityUuid = usingActivity.getUuid();
-        usingActivity.setUserList(new HashSet<>());
+        usingActivity.setParticipants(new HashSet<>());
 
         val exceptionMessage = Assertions.assertThrows(InvalidActivityActionException.class, () -> {
             testingThis.startActivity(activityUuid);
@@ -429,9 +434,19 @@ public class ActivityServiceTest {
         val content = Faker.instance().howIMetYourMother().catchPhrase();
         val activity = testingThis.execute(generateActivityExecution(content));
 
-        Assertions.assertNotNull(activity);
+        val activityUpdateMessageDtoArgumentCaptor = ArgumentCaptor.forClass(ActivityUpdateMessageDto.class);
         then(workflowManageService).should().apply(activity, userCreator, usingDocument);
-        then(documentUpdateProducer).should().sendMessage(any(DocumentUpdateDto.class));
+        val documentUpdateDtoArgumentCaptor = ArgumentCaptor.forClass(DocumentUpdateDto.class);
+        then(documentUpdateProducer).should().sendMessage(documentUpdateDtoArgumentCaptor.capture());
+        then(activityUpdateProducer).should().sendMessage(activityUpdateMessageDtoArgumentCaptor.capture());
+
+        val activityUpdateMessageDto = activityUpdateMessageDtoArgumentCaptor.getValue();
+        val documentUpdateDto = documentUpdateDtoArgumentCaptor.getValue();
+        Assertions.assertNotNull(activity);
+        Assertions.assertTrue(activityUpdateMessageDto.performErrors.isEmpty());
+        Assertions.assertEquals(usingActivity.uuid, activityUpdateMessageDto.uuid);
+        Assertions.assertTrue(activityUpdateMessageDto.isActive);
+        Assertions.assertEquals(documentUpdateDto.getMessageKey(), activityUpdateMessageDto.getMessageKey());
     }
 
     @Test
@@ -442,13 +457,13 @@ public class ActivityServiceTest {
         val activityExecutionDto = generateActivityExecution("");
         activityExecutionDto.setActivityUUID(randomActivityId);
 
-        val exceptionMessage = Assertions.assertThrows(NotFoundException.class,
-                () -> testingThis.execute(activityExecutionDto)).getMessage();
+        val activity = testingThis.execute(activityExecutionDto);
 
-        val expectedExceptionMessage = MessageFormat.format("Activity {0} not found", randomActivityId);
-        Assertions.assertEquals(expectedExceptionMessage, exceptionMessage);
+        then(activityUpdateProducer).should(never()).sendMessage(any());
         then(workflowManageService).should(never()).apply(any(), any(), any());
         then(documentUpdateProducer).should(never()).sendMessage(any());
+
+        Assertions.assertNull(activity);
     }
 
     @Test
@@ -459,13 +474,13 @@ public class ActivityServiceTest {
         val activityExecutionDto = generateActivityExecution("");
         activityExecutionDto.setDocumentExternalId(randomDocumentId);
 
-        val exceptionMessage = Assertions.assertThrows(NotFoundException.class,
-                () -> testingThis.execute(activityExecutionDto)).getMessage();
+        val activity = testingThis.execute(activityExecutionDto);
 
-        val expectedExceptionMessage = MessageFormat.format("Document {0} not found", randomDocumentId);
-        Assertions.assertEquals(expectedExceptionMessage, exceptionMessage);
+        then(activityUpdateProducer).should(never()).sendMessage(any());
         then(workflowManageService).should(never()).apply(any(), any(), any());
         then(documentUpdateProducer).should(never()).sendMessage(any());
+
+        Assertions.assertNull(activity);
     }
 
     @Test
@@ -476,13 +491,13 @@ public class ActivityServiceTest {
         val activityExecutionDto = generateActivityExecution("");
         activityExecutionDto.setUserExternalId(randomUserId);
 
-        val exceptionMessage = Assertions.assertThrows(NotFoundException.class,
-                () -> testingThis.execute(activityExecutionDto)).getMessage();
+        val activity = testingThis.execute(activityExecutionDto);
 
-        val expectedExceptionMessage = MessageFormat.format("User {0} not found", randomUserId);
-        Assertions.assertEquals(expectedExceptionMessage, exceptionMessage);
+        then(activityUpdateProducer).should(never()).sendMessage(any());
         then(workflowManageService).should(never()).apply(any(), any(), any());
         then(documentUpdateProducer).should(never()).sendMessage(any());
+
+        Assertions.assertNull(activity);
     }
 
     @Test
@@ -491,40 +506,78 @@ public class ActivityServiceTest {
     public void testExecuteInactiveActivity() {
         usingActivity.setIsActive(false);
 
-        val exceptionMessage = Assertions.assertThrows(InvalidActivityActionException.class,
-                () -> testingThis.execute(generateActivityExecution(""))).getMessage();
+        val activity = testingThis.execute(generateActivityExecution(""));
 
-        val expectedExceptionMessage = MessageFormat.format("Activity {0} must be active", usingActivity.getUuid());
-        Assertions.assertEquals(expectedExceptionMessage, exceptionMessage);
+        val activityUpdateMessageDtoArgumentCaptor = ArgumentCaptor.forClass(ActivityUpdateMessageDto.class);
+        then(activityUpdateProducer).should().sendMessage(activityUpdateMessageDtoArgumentCaptor.capture());
         then(workflowManageService).should(never()).apply(any(), any(), any());
         then(documentUpdateProducer).should(never()).sendMessage(any());
+
+        val messageParameter = activityUpdateMessageDtoArgumentCaptor.getValue();
+        val expectedExceptionMessage = MessageFormat.format("Activity {0} must be active", usingActivity.getUuid());
+        val userError = messageParameter.performErrors.stream().findFirst().orElseThrow();
+
+        Assertions.assertFalse(messageParameter.performErrors.isEmpty());
+        Assertions.assertEquals(expectedExceptionMessage, userError.message);
+        Assertions.assertNull(activity);
     }
 
     @Test
     @DisplayName("[execute] Should validate if participant is in activity")
     @SneakyThrows
     public void testExecuteParticipantNotInActivity() {
-        usingActivity.getUserList().remove(userCreator);
+        usingActivity.getParticipants().remove(userCreator);
 
-        val exceptionMessage = Assertions.assertThrows(InvalidActivityActionException.class,
-                () -> testingThis.execute(generateActivityExecution(""))).getMessage();
+        val activity = testingThis.execute(generateActivityExecution(""));
 
-        val expectedExceptionMessage = MessageFormat.format("User {0} is not in activity {1} ", userCreator.getExternalId(), usingActivity.getUuid());
-        Assertions.assertEquals(expectedExceptionMessage, exceptionMessage);
+        val activityUpdateMessageDtoArgumentCaptor = ArgumentCaptor.forClass(ActivityUpdateMessageDto.class);
+        then(activityUpdateProducer).should().sendMessage(activityUpdateMessageDtoArgumentCaptor.capture());
         then(workflowManageService).should(never()).apply(any(), any(), any());
         then(documentUpdateProducer).should(never()).sendMessage(any());
+
+        val messageParameter = activityUpdateMessageDtoArgumentCaptor.getValue();
+        val expectedExceptionMessage = MessageFormat.format("User {0} is not in activity {1} ", userCreator.getExternalId(), usingActivity.getUuid());
+        val userError = messageParameter.performErrors.stream().findFirst().orElseThrow();
+
+        Assertions.assertFalse(messageParameter.performErrors.isEmpty());
+        Assertions.assertEquals(expectedExceptionMessage, userError.message);
+        Assertions.assertNull(activity);
     }
 
     @Test
-    @DisplayName("[execute] Should throw message when broker cant send message")
+    @DisplayName("[execute] Should throw message when broker can't send message to DOCUMENT queue")
     @SneakyThrows
-    public void testBrokerCantSendMessage() {
+    public void testBrokerCantSendDocumentMessage() {
         willThrow(new IOException("Error")).given(documentUpdateProducer).sendMessage(any());
 
         val exceptionMessage = Assertions.assertThrows(RuntimeException.class,
                 () -> testingThis.execute(generateActivityExecution(""))).getMessage();
 
-        val expectedExceptionMessage = "Error when trying to send update of document to document queue";
+        val activityUpdateMessageDtoArgumentCaptor = ArgumentCaptor.forClass(ActivityUpdateMessageDto.class);
+        then(activityUpdateProducer).should().sendMessage(activityUpdateMessageDtoArgumentCaptor.capture());
+        then(workflowManageService).should().apply(usingActivity, userCreator, usingDocument);
+        then(documentUpdateProducer).should().sendMessage(any());
+        then(session).should().persist(any(Activity.class));
+
+        val expectedExceptionMessage = "Error when trying to send update of document to Document queue";
+        Assertions.assertEquals(expectedExceptionMessage, exceptionMessage);
+        Assertions.assertFalse(usingActivity.getIsActive());
+        val updateMessageDto = activityUpdateMessageDtoArgumentCaptor.getValue();
+        val errorInMessage = MessageFormat.format("Document queue is out, setting activity {0} to inactivate until it comeback.", usingActivity.getUuid());
+
+        Assertions.assertTrue(updateMessageDto.performErrors.stream().anyMatch(userError -> errorInMessage.equals(userError.message)));
+    }
+
+    @Test
+    @DisplayName("[execute] Should throw message when broker cant send message to ACTIVITY queue")
+    @SneakyThrows
+    public void testBrokerCantSendActivityMessage() {
+        willThrow(new IOException("Error")).given(activityUpdateProducer).sendMessage(any());
+
+        val exceptionMessage = Assertions.assertThrows(RuntimeException.class,
+                () -> testingThis.execute(generateActivityExecution(""))).getMessage();
+
+        val expectedExceptionMessage = "Error when trying to send update of activity to Activity queue";
         Assertions.assertEquals(expectedExceptionMessage, exceptionMessage);
         then(workflowManageService).should().apply(usingActivity, userCreator, usingDocument);
         then(documentUpdateProducer).should().sendMessage(any());

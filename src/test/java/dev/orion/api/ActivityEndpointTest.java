@@ -44,7 +44,6 @@ import javax.transaction.Transactional;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.text.MessageFormat;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -335,9 +334,9 @@ public class ActivityEndpointTest {
 
         Assertions.assertEquals(activity.uuid, responseBody.getActivityUUID());
         Assertions.assertTrue(responseBody.getGroups().containsKey(groupActivity.getUuid()));
-        Assertions.assertTrue(responseBody.getGroups().get(groupActivity.getUuid()).contains(userEntity.externalId));
+        Assertions.assertTrue(responseBody.getGroups().get(groupActivity.getUuid()).getParticipantId().contains(userEntity.externalId));
         then(documentClient).should().createDocument(any());
-        then(groupService).should().createGroup(activity, activity.getUserList());
+        then(groupService).should().createGroup(activity, activity.getParticipants());
         then(workflowManageService).should().apply(activity, activity.getCreator(), null);
     }
 

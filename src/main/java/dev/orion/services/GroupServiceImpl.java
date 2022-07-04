@@ -36,7 +36,7 @@ public class GroupServiceImpl implements GroupService {
     public GroupActivity createGroup(Activity activity) {
         val group = new GroupActivity();
         group.setActivityOwner(activity);
-        group.setCapacity(activity.userList.size());
+        group.setCapacity(activity.participants.size());
         activity.groupActivities.add(group);
 
         return group;
@@ -120,7 +120,7 @@ public class GroupServiceImpl implements GroupService {
     private void userBelongsToSameActivityOfGroup(GroupActivity groupActivity, Set<User> users) {
         val usersNotValid = users
                 .stream()
-                .filter(user -> !groupActivity.getActivityOwner().userList.contains(user))
+                .filter(user -> !groupActivity.getActivityOwner().participants.contains(user))
                 .collect(Collectors.toSet());
 
         if (!usersNotValid.isEmpty()) {
@@ -172,7 +172,7 @@ public class GroupServiceImpl implements GroupService {
             throw new IllegalArgumentException(message);
         }
 
-        val totalActivityParticipants = activity.getUserList().size();
+        val totalActivityParticipants = activity.getParticipants().size();
         if (newCapacity > totalActivityParticipants) {
             String message = MessageFormat.format("Capacity {0} is more than the number of activity {1} participants ({2})", newCapacity, activity.getUuid(), totalActivityParticipants);
             logger.error(message);

@@ -343,7 +343,7 @@ public class GroupActivityServiceTest {
         group.persist();
 
         Assertions.assertEquals(3, group.getCapacity());
-        Assertions.assertEquals(activity.getUserList().size(), group.getCapacity());
+        Assertions.assertEquals(activity.getParticipants().size(), group.getCapacity());
     }
 
     @Test
@@ -353,7 +353,7 @@ public class GroupActivityServiceTest {
         val author = UserFixture.generateUser();
 
         var users = generateSetUsers();
-        activity.getUserList().addAll(users);
+        activity.getParticipants().addAll(users);
         injectUserInActivity(activity, author);
         injectWorkflowInActivity(activity);
 
@@ -375,7 +375,7 @@ public class GroupActivityServiceTest {
         injectWorkflowInActivity(activity);
 
         val users = generateSetUsers();
-        activity.getUserList().addAll(users);
+        activity.getParticipants().addAll(users);
 
         users.add(author);
         val group = testThis.createGroup(activity, users);
@@ -397,7 +397,7 @@ public class GroupActivityServiceTest {
         injectWorkflowInActivity(activity);
 
         val users = generateSetUsers();
-        activity.getUserList().addAll(users);
+        activity.getParticipants().addAll(users);
 
         val group = testThis.createGroup(activity, users);
         group.persist();
@@ -423,19 +423,19 @@ public class GroupActivityServiceTest {
         injectWorkflowInActivity(activity);
 
         val users = generateSetUsers();
-        activity.getUserList().addAll(users);
+        activity.getParticipants().addAll(users);
         activity.persist();
 
         val group = testThis.createGroup(activity, users);
         val groupCapacityHolder = group.getCapacity();
 
-        val overCapacity = activity.getUserList().size() + 1;
+        val overCapacity = activity.getParticipants().size() + 1;
 
         val errorMessage = Assertions.assertThrows(IllegalArgumentException.class, () -> {
             testThis.changeGroupCapacity(activity, group, overCapacity);
         }).getMessage();
 
-        String expectedMessage = MessageFormat.format("Capacity {0} is more than the number of activity {1} participants ({2})", overCapacity, activity.getUuid(), activity.getUserList().size());
+        String expectedMessage = MessageFormat.format("Capacity {0} is more than the number of activity {1} participants ({2})", overCapacity, activity.getUuid(), activity.getParticipants().size());
         Assertions.assertEquals(expectedMessage, errorMessage);
         Assertions.assertEquals(groupCapacityHolder, group.getCapacity());
     }
@@ -451,7 +451,7 @@ public class GroupActivityServiceTest {
         injectWorkflowInActivity(activity);
 
         val users = generateSetUsers();
-        activity.getUserList().addAll(users);
+        activity.getParticipants().addAll(users);
         activity.persist();
 
         val group = testThis.createGroup(activity, users);

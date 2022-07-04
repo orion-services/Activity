@@ -88,7 +88,7 @@ public class DocumentServiceTest {
         testThis.createDocument(requestUuid, initialText, new HashSet<>(List.of(user)));
 
         BDDMockito.then(documentClient).should().createDocument(createDocumentRequestArgumentCaptor.capture());
-        Assertions.assertEquals(createDocumentRequestArgumentCaptor.getValue().getOwnerId(), requestUuid);
+        Assertions.assertEquals(createDocumentRequestArgumentCaptor.getValue().getId(), requestUuid);
         Assertions.assertEquals(createDocumentRequestArgumentCaptor.getValue().getInitialText(), initialText);
     }
 

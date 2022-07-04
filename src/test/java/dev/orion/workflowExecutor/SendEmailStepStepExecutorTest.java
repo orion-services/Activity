@@ -14,7 +14,6 @@ import lombok.val;
 import net.datafaker.Faker;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.hibernate.Session;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.*;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockitoAnnotations;
@@ -143,7 +142,7 @@ public class SendEmailStepStepExecutorTest {
         Assertions.assertEquals(requestBody.getUserMessageMap(), sendEmailRequestArgumentCaptor.getValue().getUserMessageMap());
     }
 
-    private @NotNull SendEmailRequest createSendRequest(Set<User> users, String message) {
+    private SendEmailRequest createSendRequest(Set<User> users, String message) {
         val sendEmailRequest = new SendEmailRequest();
         val participants = new HashSet<>(users);
         participants.add(usingActivity.getCreator());

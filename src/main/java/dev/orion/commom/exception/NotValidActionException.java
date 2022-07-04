@@ -14,5 +14,7 @@ public class NotValidActionException extends RuntimeException {
         return "Step name: " + stepName + " has error: " + message;
     }
 
-
+    public String getMessage() {
+        return message;
+    }
 }
