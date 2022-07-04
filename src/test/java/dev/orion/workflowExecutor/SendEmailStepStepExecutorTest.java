@@ -1,24 +1,24 @@
 package dev.orion.workflowExecutor;
 
-import dev.orion.client.EmailClient;
-import dev.orion.client.dto.SendEmailRequest;
+import dev.orion.broker.producer.EmailProducer;
+import dev.orion.broker.dto.SendEmailProduceBody;
 import dev.orion.commom.constant.ActivityStage;
 import dev.orion.commom.exception.InvalidWorkflowConfiguration;
 import dev.orion.entity.*;
 import dev.orion.entity.step_type.SendEmailStep;
-import dev.orion.entity.step_type.UnorderedCircleOfWriters;
 import dev.orion.workflowExecutor.impl.SendEmailStepExecutor;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
+import lombok.SneakyThrows;
 import lombok.val;
 import net.datafaker.Faker;
-import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.hibernate.Session;
 import org.junit.jupiter.api.*;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockitoAnnotations;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -29,7 +29,8 @@ import static dev.orion.fixture.GroupFixture.createGroup;
 import static dev.orion.fixture.GroupFixture.generateDocument;
 import static dev.orion.fixture.UserFixture.createParticipants;
 import static dev.orion.fixture.UserFixture.generateUser;
-import static org.mockito.BDDMockito.then;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.*;
 import static org.mockito.Mockito.mock;
 
 @QuarkusTest
@@ -40,9 +41,8 @@ public class SendEmailStepStepExecutorTest {
     @InjectMock
     Session session;
 
-    @RestClient
     @InjectMock
-    EmailClient emailClient;
+    EmailProducer emailProducer;
 
     private User userCreator;
 
@@ -102,26 +102,28 @@ public class SendEmailStepStepExecutorTest {
 
     @Test
     @DisplayName("[execute] - Should send e-mail for each activity participant")
+    @SneakyThrows
     public void testNormalExecution() {
         testThis.execute(usingDocument, userCreator, usingStep);
 
         val requestBody = createSendRequest(usingParticipants, preStageEmailMessage);
 
-        val sendEmailRequestArgumentCaptor = ArgumentCaptor.forClass(SendEmailRequest.class);
-        then(emailClient).should().sendEmails(sendEmailRequestArgumentCaptor.capture());
+        val sendEmailRequestArgumentCaptor = ArgumentCaptor.forClass(SendEmailProduceBody.class);
+        then(emailProducer).should().sendMessage(sendEmailRequestArgumentCaptor.capture());
 
         Assertions.assertEquals(requestBody.getUserMessageMap(), sendEmailRequestArgumentCaptor.getValue().getUserMessageMap());
     }
 
     @Test
     @DisplayName("[execute] - Should send e-mail only for the activity creator")
+    @SneakyThrows
     public void testExecutionToONly() {
         usingStep.setOnlyForCreator(true);
         testThis.execute(usingDocument, userCreator, usingStep);
         val requestBody = createSendRequest(Set.of(userCreator), preStageEmailMessage);
 
-        val sendEmailRequestArgumentCaptor = ArgumentCaptor.forClass(SendEmailRequest.class);
-        then(emailClient).should().sendEmails(sendEmailRequestArgumentCaptor.capture());
+        val sendEmailRequestArgumentCaptor = ArgumentCaptor.forClass(SendEmailProduceBody.class);
+        then(emailProducer).should().sendMessage(sendEmailRequestArgumentCaptor.capture());
 
         val userMessageMap = sendEmailRequestArgumentCaptor.getValue().getUserMessageMap();
         Assertions.assertEquals(requestBody.getUserMessageMap(), userMessageMap);
@@ -130,28 +132,44 @@ public class SendEmailStepStepExecutorTest {
 
     @Test
     @DisplayName("[execute] - Should send e-mail for chosen stage")
+    @SneakyThrows
     public void testChosenStageExecution() {
         usingActivity.setActualStage(ActivityStage.POS);
         testThis.execute(usingDocument, userCreator, usingStep);
 
         val requestBody = createSendRequest(usingParticipants, posStageEmailMessage);
 
-        val sendEmailRequestArgumentCaptor = ArgumentCaptor.forClass(SendEmailRequest.class);
-        then(emailClient).should().sendEmails(sendEmailRequestArgumentCaptor.capture());
+        val sendEmailRequestArgumentCaptor = ArgumentCaptor.forClass(SendEmailProduceBody.class);
+        then(emailProducer).should().sendMessage(sendEmailRequestArgumentCaptor.capture());
 
         Assertions.assertEquals(requestBody.getUserMessageMap(), sendEmailRequestArgumentCaptor.getValue().getUserMessageMap());
     }
 
-    private SendEmailRequest createSendRequest(Set<User> users, String message) {
-        val sendEmailRequest = new SendEmailRequest();
+    @Test
+    @DisplayName("[execute] - Should not throw exception when e-mail producer throws")
+    @SneakyThrows
+    public void testEmailProducerThrowsExecute() {
+        willThrow(IOException.class).given(emailProducer).sendMessage(any());
+        testThis.execute(usingDocument, userCreator, usingStep);
+
+        val requestBody = createSendRequest(usingParticipants, preStageEmailMessage);
+
+        val sendEmailRequestArgumentCaptor = ArgumentCaptor.forClass(SendEmailProduceBody.class);
+        then(emailProducer).should().sendMessage(sendEmailRequestArgumentCaptor.capture());
+
+        Assertions.assertEquals(requestBody.getUserMessageMap(), sendEmailRequestArgumentCaptor.getValue().getUserMessageMap());
+    }
+
+    private SendEmailProduceBody createSendRequest(Set<User> users, String message) {
+        val emailProduceBody = new SendEmailProduceBody();
         val participants = new HashSet<>(users);
         participants.add(usingActivity.getCreator());
 
         participants.forEach(user -> {
-            sendEmailRequest.addMessage(user.externalId, message);
+            emailProduceBody.addMessage(user.externalId, message);
         });
 
-        return sendEmailRequest;
+        return emailProduceBody;
     }
 
     @Test

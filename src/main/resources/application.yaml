@@ -44,11 +44,12 @@ quarkus:
     port: 5672
     queue:
       consumer:
-        document: "document-edit"
+        document: "activity-execution"
       producer:
         exchange: ""
         activity: "activity-update"
         document: "document-update"
+        email: "email-send"
 "%test":
   quarkus:
     datasource:
@@ -72,3 +73,4 @@ quarkus:
         exchange: ""
         activity: "activity-update"
         document: "document-update"
+        email: "email-send"

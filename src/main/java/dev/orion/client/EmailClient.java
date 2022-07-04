@@ -1,7 +1,7 @@
 package dev.orion.client;
 
 import dev.orion.client.dto.CreateDocumentResponse;
-import dev.orion.client.dto.SendEmailRequest;
+import dev.orion.broker.dto.SendEmailProduceBody;
 import org.eclipse.microprofile.faulttolerance.Timeout;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
@@ -19,5 +19,5 @@ public interface EmailClient {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Timeout(1000)
-    CreateDocumentResponse sendEmails(SendEmailRequest sendEmailRequest);
+    CreateDocumentResponse sendEmails(SendEmailProduceBody sendEmailProduceBody);
 }
