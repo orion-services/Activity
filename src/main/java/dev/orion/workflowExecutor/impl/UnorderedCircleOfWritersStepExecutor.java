@@ -13,7 +13,9 @@ import org.jboss.logging.Logger;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.text.MessageFormat;
+import java.util.Collection;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class UnorderedCircleOfWritersStepExecutor implements StepExecutor {
@@ -72,7 +74,10 @@ public class UnorderedCircleOfWritersStepExecutor implements StepExecutor {
 
     @Override
     public boolean isFinished(Activity activity, Step step) throws NotValidActionException {
-        val documents = Document.findAllByGroupActivity(activity.uuid);
+        val documents = activity.getGroupActivities()
+                .stream()
+                .map(groupActivity -> groupActivity.getDocuments())
+                .flatMap(Collection::stream).collect(Collectors.toList());
         if (documents.isEmpty()) {
             throw new NotValidActionException(getStepRepresentation(), "document must not be null");
         }

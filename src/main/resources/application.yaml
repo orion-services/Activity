@@ -14,7 +14,7 @@ quarkus:
     category:
       "org.apache.http":
         level:
-          DEBUG
+#          DEBUG
 
 "%dev":
   quarkus:

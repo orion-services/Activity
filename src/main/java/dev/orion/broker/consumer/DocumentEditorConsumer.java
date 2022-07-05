@@ -32,8 +32,8 @@ public class DocumentEditorConsumer extends RabbitConnection {
     Logger logger;
     DeliverCallback deliverCallback = (consumerTag, delivery) -> {
         ObjectMapper objectMapper = new ObjectMapper();
+        logger.info(MessageFormat.format("Message received with in queue {0}", QUEUE_NAME));
         val documentEdit = objectMapper.readValue(delivery.getBody(), DocumentEditDto.class);
-        logger.info(MessageFormat.format("Message received with {0}", documentEdit.toString()));
         try {
             val activityExecutionDto = new ActivityExecutionDto(documentEdit.activityId, documentEdit.documentId, documentEdit.externalUserId, documentEdit.documentContent);
             activityService.execute(activityExecutionDto);

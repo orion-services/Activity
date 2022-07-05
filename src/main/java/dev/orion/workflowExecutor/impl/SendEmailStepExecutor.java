@@ -1,7 +1,6 @@
 package dev.orion.workflowExecutor.impl;
 
 import dev.orion.broker.producer.EmailProducer;
-import dev.orion.client.EmailClient;
 import dev.orion.broker.dto.SendEmailProduceBody;
 import dev.orion.commom.exception.InvalidWorkflowConfiguration;
 import dev.orion.commom.exception.NotValidActionException;
@@ -10,17 +9,19 @@ import dev.orion.entity.step_type.SendEmailStep;
 import dev.orion.workflowExecutor.StepExecutor;
 import io.quarkus.arc.log.LoggerName;
 import lombok.val;
-import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.logging.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.transaction.Transactional;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.Optional;
 
 @ApplicationScoped
+@Transactional
 public class SendEmailStepExecutor implements StepExecutor {
     @LoggerName("SendEmailStepExecutor")
     Logger logger;
@@ -32,11 +33,14 @@ public class SendEmailStepExecutor implements StepExecutor {
     public void execute(Document document, User user, Step step) {
         logger.infov("Executing step {0} ", getStepRepresentation());
         val sendEmailStep = (SendEmailStep) step;
-        val activity = user.getActivity();
+        val activity = Optional
+                .ofNullable(user.getActivity())
+                .orElseGet(() -> Activity.findByCreator(user.getExternalId()).orElseThrow());
+
         val actualStage = activity.getActualStage();
 
         val emailMessage = sendEmailStep.getActivityStageMessageMap().get(actualStage);
-        val sendEmailRequestBody = createSendRequest(activity, sendEmailStep, emailMessage);
+        val sendEmailRequestBody = createEmailProduceBody(activity, sendEmailStep, emailMessage);
 
         try {
             emailProducer.sendMessage(sendEmailRequestBody);
@@ -46,7 +50,7 @@ public class SendEmailStepExecutor implements StepExecutor {
         }
     }
 
-    SendEmailProduceBody createSendRequest(Activity activity, SendEmailStep sendEmailStep, String emailMessage) {
+    SendEmailProduceBody createEmailProduceBody(Activity activity, SendEmailStep sendEmailStep, String emailMessage) {
         val sendEmailRequest = new SendEmailProduceBody();
         val participants = sendEmailStep.isOnlyForCreator() ? new HashSet<User>() : activity.getParticipants();
         participants.add(activity.getCreator());
@@ -61,7 +65,9 @@ public class SendEmailStepExecutor implements StepExecutor {
     @Override
     public void validate(Document document, User user, Step step) {
         val sendEmailStep = (SendEmailStep) step;
-        val activity = user.getActivity();
+        val activity = Optional
+                .ofNullable(user.getActivity())
+                .orElseGet(() -> Activity.findByCreator(user.getExternalId()).orElseThrow());
         val messageFromStage = sendEmailStep.getActivityStageMessageMap().get(activity.getActualStage());
 
         if (Objects.isNull(messageFromStage)) {

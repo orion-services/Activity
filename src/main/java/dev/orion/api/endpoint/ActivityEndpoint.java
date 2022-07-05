@@ -32,8 +32,8 @@ public class ActivityEndpoint {
     @Path("/{activityUuid}")
     @Produces(MediaType.APPLICATION_JSON)
     @APIResponseSchema(Activity.class)
-    public Response findActivity(@Parameter(description = "UUID of activity to be started", example = "372bf2a5-0da3-47bd-8c94-4a09d25d362a") @PathParam String activityUuid) {
-        Activity activity = (Activity) Activity
+    public Response findActivity(@Parameter(description = "UUID of activity to be be found", example = "372bf2a5-0da3-47bd-8c94-4a09d25d362a") @PathParam String activityUuid) {
+        Activity activity = Activity
                 .findByIdOptional(UUID.fromString(activityUuid))
                 .orElseThrow(() -> new NotFoundException(
                         MessageFormat.format("Activity {0} not found", activityUuid)));

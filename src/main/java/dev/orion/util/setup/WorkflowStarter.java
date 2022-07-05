@@ -34,7 +34,7 @@ public class WorkflowStarter {
     void onStart(@Observes StartupEvent ev) {
         LOGGER.info("Creating or updating workflows");
         try {
-            generateCompleteWorkflow();
+            generateCompleteWorkflow(); // <<<<<------ USING THIS!
             generateSimpleWorkflow();
         } catch (AggregateException aggregateException) {
             aggregateException.getExceptions().forEach(runtimeException -> {

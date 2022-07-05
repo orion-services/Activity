@@ -201,7 +201,7 @@ public class ActivityServiceImpl implements ActivityService {
 
     @Override
     public Activity startActivity(UUID activityUUID) {
-        val activity = (Activity) Activity.findByIdOptional(activityUUID).orElseThrow(() -> {
+        val activity = Activity.findByIdOptional(activityUUID).orElseThrow(() -> {
             throw new NotFoundException(MessageFormat.format("Activity {0} not found", activityUUID));
         });
 

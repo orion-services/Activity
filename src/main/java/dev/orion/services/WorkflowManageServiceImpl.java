@@ -58,7 +58,10 @@ public class WorkflowManageServiceImpl implements WorkflowManageService {
 
         var executionQueue = createExecutionQueue(actualStage.getSteps(), activity, performer, document);
 
-        logger.infov("User {0} can edit the document {1} in activity {2}", performer.getExternalId(), document.getExternalId(), activity.getUuid());
+        val documentIdMessage = Objects.nonNull(document) ? document.getExternalId() : "not identified";
+        val participantIdentification = Objects.nonNull(performer) ? performer.getExternalId() : "not identified";
+
+        logger.infov("User {0} has executed workflow in activity {1}", participantIdentification, activity.getUuid());
         while (!executionQueue.isEmpty()) {
             executionQueue.poll().run();
         }

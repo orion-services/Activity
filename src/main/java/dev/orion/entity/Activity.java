@@ -69,6 +69,10 @@ public class Activity extends PanacheEntityBase {
         return Activity.findByIdOptional((Object) id);
     }
 
+    public static Optional<Activity> findByCreator(String userExternalId) {
+        return Activity.find("creator.externalId", userExternalId).firstResultOptional();
+    }
+
     public void addParticipant(User user) {
         user.setActivity(this);
         participants.add(user);

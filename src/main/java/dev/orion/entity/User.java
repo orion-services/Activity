@@ -39,7 +39,7 @@ public class User extends PanacheEntity {
 
     LocalDateTime updatedAt;
 
-    @ManyToOne(cascade = CascadeType.REFRESH)
+    @ManyToOne(cascade = CascadeType.ALL)
     @JsonBackReference
     private GroupActivity groupActivity;
 
