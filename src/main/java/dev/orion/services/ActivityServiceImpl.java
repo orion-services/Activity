@@ -207,8 +207,8 @@ public class ActivityServiceImpl implements ActivityService {
 
         validateActivityToStart(activity);
 
+        createGroupIfNotExists(activity);
         executeWorkflow(activity, activity.getCreator(), null);
-        createGroupIfNotExists(activityUUID);
 
         activity.setActualStage(ActivityStage.DURING);
         activity.persist();
@@ -409,8 +409,7 @@ public class ActivityServiceImpl implements ActivityService {
         }
     }
 
-    private void createGroupIfNotExists(UUID activityUUID) {
-        val activity = (Activity) Activity.findById(activityUUID);
+    private void createGroupIfNotExists(Activity activity) {
         if (!activity.getGroupActivities().isEmpty()) {
             return;
         }
